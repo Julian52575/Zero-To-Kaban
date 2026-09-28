@@ -10,6 +10,6 @@
 | Maintainability | A · 20 smell(s) |
 | Coverage | 91.9% |
 | Duplication | 0.0% |
-| Lines of code | 2180 |
+| Lines of code | 2319 |
 
-_Analysis `7f8a00f2-2c1c-424a-8d4a-7e713c7f7c5f` · refreshed 2026-09-28T09:07:54Z._
+_Analysis `772e4cc6-d4ea-49cf-9996-a0b80ab36336` · refreshed 2026-09-28T13:08:47Z._
