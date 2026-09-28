@@ -11,8 +11,13 @@ name: bump-helm-chart
 # 1. bump-chart:  writes the new tag into values-prod.yaml / Chart.yaml
 # 2. smoke-test:  actually deploys the bumped chart, with the prod values,
 #                 into a real k3s node (deployment/flake.nix -- the same
-#                 rootless k3s + helm tooling used for local dev) and waits
-#                 for it to go Ready
+#                 k3s + helm tooling used for local dev, but with
+#                 K3S_ROOT_MODE=1: a plain rootful k3s instead of the
+#                 rootless mode local dev uses, since rootless needs no-root
+#                 support this runner doesn't need and has repeatedly hit
+#                 environment-specific rootlesskit bugs here -- see the
+#                 K3S_ROOT_MODE comment in flake.nix) and waits for it to go
+#                 Ready
 # 3. open-pr:     only runs if the smoke test passed; opens a PR rather than
 #                 pushing to main directly, mirroring the release-please
 #                 PR-then-merge pattern already used in this repo
@@ -21,34 +26,62 @@ on:
   workflow_run:
     workflows: ["release-to-container-registry"]
     types: [completed]
+  # Manual re-run against an already-released tag (e.g. to retest the
+  # smoke-test job itself without cutting a new release). Dispatched from a
+  # branch (GitHub only offers workflow_dispatch from a ref that already has
+  # this trigger in its own workflow file -- existing release tags predate
+  # it, so dispatching *from* a tag isn't possible). "Validate tag" below
+  # checks the given tag actually exists instead. The tag must already have
+  # images published on ghcr.io -- this workflow only deploys, it doesn't
+  # build/push anything.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to deploy (must already exist on ghcr.io, e.g. 2.1.0)"
+        required: true
+        type: string
 
 permissions:
   contents: write
   pull-requests: write
 
 concurrency:
-  group: bump-helm-chart-${{ github.event.workflow_run.head_branch }}
+  group: bump-helm-chart-${{ github.event.workflow_run.head_branch || inputs.tag }}
   cancel-in-progress: true
 
 jobs:
   bump-chart:
     if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'release'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'release')
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
       # For a `release` triggered run, head_branch is the release tag itself
-      # (no "v" prefix, matching release-please's tagging scheme).
+      # (no "v" prefix, matching release-please's tagging scheme). For a
+      # manual workflow_dispatch run, use the given input instead -- "Validate
+      # tag" below checks it's a real, existing tag.
       - name: Resolve release tag
         id: tag
-        run: echo "tag=${{ github.event.workflow_run.head_branch }}" >> "$GITHUB_OUTPUT"
+        run: echo "tag=${{ github.event.workflow_run.head_branch || inputs.tag }}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: main
+          fetch-depth: 0 # need the tags for "Validate tag" below
+
+      - name: Validate tag
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::'$TAG' is not an existing tag in this repository -- it must already have images published on ghcr.io from a real release." >&2
+            exit 1
+          fi
 
       # ubuntu-latest ships yq (mikefarah/yq) preinstalled -- no extra install step.
       - name: Bump chart image tags and appVersion
@@ -94,22 +127,24 @@ jobs:
         with:
           warm: "false" # we build deployment/flake.nix below, not the root one
 
-      # Rootless k3s can't grow its netlink send buffer past this default
-      # (208 KB on ubuntu-latest), so its NetworkPolicy controller would only
-      # apply some of the chart's policies and pods could hang unreachable.
-      # See "Requirements" in deployment/README.md.
-      - name: Raise the default socket send buffer for rootless k3s
-        run: sudo sysctl -w net.core.wmem_default=4194304
-
       # Everything that touches the cluster has to run inside ONE
       # `nix develop --command` invocation: flake.nix's shellHook starts the
-      # rootless k3s node via a systemd --user scope and registers a trap
-      # that STOPS it when that shell exits. Splitting this across multiple
-      # steps (each its own `nix develop --command`) would tear the node
-      # down again right after the first step.
+      # k3s node in the background and registers a trap that STOPS it when
+      # that shell exits. Splitting this across multiple steps (each its own
+      # `nix develop --command`) would tear the node down again right after
+      # the first step.
+      #
+      # K3S_ROOT_MODE=1: this runner already has full sudo, so there's no
+      # reason to fight rootless k3s's cgroup/user-namespace requirements
+      # here -- see the K3S_ROOT_MODE comment in deployment/flake.nix for
+      # the rootless-specific failures this sidesteps (this workflow hit
+      # three of them in a row: an AppArmor unprivileged-userns restriction,
+      # a missing cpuset cgroup delegation, and finally an open upstream
+      # rootlesskit bug, k3s-io/k3s#13667).
       - name: Deploy bumped chart into k3s and smoke test
         env:
           TAG: ${{ needs.bump-chart.outputs.tag }}
+          K3S_ROOT_MODE: "1"
         run: |
           # shellcheck disable=SC2016 # expanded by the inner bash, not here
           nix develop ./deployment --command bash -euo pipefail -c '
@@ -127,6 +162,18 @@ jobs:
             done
             kubectl -n ztk-smoke create secret generic zero-to-kanban-prod-rabbitmq \
               --from-literal=password="$(openssl rand -hex 16)"
+
+            # k3s bundles Traefik as its own HelmChart addon, applied
+            # asynchronously after the API server reports ready -- the chart'"'"'s
+            # IngressRoute/Middleware resources can lose that race against a
+            # plain `helm upgrade --install` (unlike Argo CD, which retries a
+            # failed sync until the CRDs show up). Wait for them explicitly.
+            echo "waiting for k3s'"'"'s bundled Traefik CRDs..."
+            for _ in $(seq 60); do
+              kubectl get crd ingressroutes.traefik.io middlewares.traefik.io >/dev/null 2>&1 && break
+              sleep 2
+            done
+            kubectl get crd ingressroutes.traefik.io middlewares.traefik.io
 
             helm dependency build deployment/helm/zero-to-kanban
 
@@ -179,6 +226,17 @@ jobs:
             fi
           '
 
+      # Covers failures before the deploy_ok diagnostics above ever run (e.g.
+      # the k3s node itself never came up) -- dump the whole log, not just
+      # the short tail flake.nix already prints inline.
+      - name: Dump full k3s log on failure
+        if: failure()
+        run: |
+          LOG="${XDG_STATE_HOME:-$HOME/.local/state}/zero-to-kanban-k3s/.k3s/k3s.log"
+          echo "::group::full k3s.log ($LOG)"
+          cat "$LOG" 2>/dev/null || echo "(no log file found at $LOG)"
+          echo "::endgroup::"
+
   open-pr:
     needs: [bump-chart, smoke-test]
     runs-on: ubuntu-latest
@@ -199,20 +257,20 @@ jobs:
       - name: Open pull request
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PR_TOKEN }}
           commit-message: "chore(helm): bump image tag to ${{ needs.bump-chart.outputs.tag }}"
           branch: bump-helm-chart-${{ needs.bump-chart.outputs.tag }}
           delete-branch: true
           title: "chore(helm): bump image tag to ${{ needs.bump-chart.outputs.tag }}"
           body: |
-            Bumps `backend.image.tag` / `frontend.image.tag` / `auth.image.tag` in
+            🤖 Bumps `backend.image.tag` / `frontend.image.tag` / `auth.image.tag` in
             `values-prod.yaml` and `appVersion` in `Chart.yaml` to
             `${{ needs.bump-chart.outputs.tag }}`, matching the images just
             published to ghcr.io by release `${{ needs.bump-chart.outputs.tag }}`.
 
             Verified by the `smoke-test` job: the bumped chart was deployed with the
-            prod values into a real k3s node (rootless, via `deployment/flake.nix`)
-            and reached Ready.
+            prod values into a real k3s node (via `deployment/flake.nix`) and reached
+            Ready.
 
             Merging does not deploy: `ztk-prod` is synced by hand in Argo CD.
           labels: helm,automated

@@ -60,13 +60,13 @@ spec:
               value: "5672"
           readinessProbe:
             httpGet:
-              path: /items
+              path: /health
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /items
+              path: /health
               port: http
             initialDelaySeconds: 10
             periodSeconds: 20
