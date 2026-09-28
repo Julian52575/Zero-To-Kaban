@@ -3,7 +3,7 @@ name: zero-to-kanban
 description: Helm chart for the Zero To Kanban Test app (backend, frontend, auth, RabbitMQ, 2x Postgres)
 type: application
 version: 0.1.0
-appVersion: "1.0.0"
+appVersion: "2.1.0"
 dependencies:
   # charts.bitnami.com (the classic Helm repo) now just redirects to
   # repo.broadcom.com -- still works, but going straight to Bitnami's OCI
