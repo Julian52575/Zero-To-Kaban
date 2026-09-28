@@ -144,7 +144,7 @@ jobs:
   # alongside `frontend` (no `needs` between them = parallel scheduling), on
   # its own build of `dist/` rather than sharing one across jobs.
   frontend-a11y:
-    name: Frontend Accessibility
+    name: frontend accessibility
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -177,11 +177,84 @@ jobs:
             echo '### Frontend accessibility (Lighthouse CI)'
             echo
             if [ -f lhci-reports/manifest.json ]; then
-              echo '| URL | Accessibility score |'
-              echo '| --- | --- |'
+              min_score=$(jq '.ci.assert.assertions["categories:accessibility"][1].minScore' lighthouserc.json)
+              min_pct=$(jq -n --argjson s "$min_score" '$s * 100 | round')
+
               jq -r '.[] | select(.isRepresentativeRun)
-                | "| \(.url) | \((.summary.accessibility * 100 | round))% |"' \
-                lhci-reports/manifest.json
+                | [.url, (.summary.accessibility * 100 | round), .jsonPath] | @tsv' \
+                lhci-reports/manifest.json > /tmp/lhci-runs.tsv
+
+              echo "| Route | Score (${min_pct}% required) | Passing audits |"
+              echo '| --- | --- | --- |'
+              while IFS=$'\t' read -r url pct jsonPath; do
+                route="${url#http://127.0.0.1:4173}"
+                [ -z "$route" ] && route="/"
+                if [ "$pct" -ge "$min_pct" ]; then icon="✅"; else icon="❌"; fi
+                passed=$(jq '[.categories.accessibility.auditRefs[].id as $id
+                  | .audits[$id] | select(.scoreDisplayMode == "binary" and .score == 1)] | length' "$jsonPath")
+                total=$(jq '[.categories.accessibility.auditRefs[].id as $id
+                  | .audits[$id] | select(.scoreDisplayMode == "binary")] | length' "$jsonPath")
+                echo "| \`$route\` | ${icon} ${pct}% | ${passed} / ${total} |"
+              done < /tmp/lhci-runs.tsv
+
+              echo
+              echo '#### Failing elements'
+              while IFS=$'\t' read -r url pct jsonPath; do
+                route="${url#http://127.0.0.1:4173}"
+                [ -z "$route" ] && route="/"
+                issues=$(jq -r '
+                  . as $r
+                  | ($r.categories.accessibility.auditRefs // [])[] as $ref
+                  | ($r.audits[$ref.id]) as $a
+                  | select($a.scoreDisplayMode == "binary" and $a.score != 1)
+                  | (($r.categoryGroups[$ref.group].title) // "Other") as $group
+                  | (($a.details.debugData.tags // []) | map(select(test("^RGAA-"))) | map(ltrimstr("RGAA-")) | join(", ")) as $rgaa
+                  | (($a.details.items // [null]))[] as $item
+                  | (($item.node.explanation // $a.description)
+                      | gsub("\n"; " ")
+                      | gsub("^Fix any of the following:\\s*"; "")
+                      | gsub(" {2,}"; " ")) as $explanation
+                  | [$group, ($item.node.selector // $a.title), $explanation, $rgaa] | @tsv
+                ' "$jsonPath" | sort -t $'\t' -k1,1)
+
+                echo
+                if [ -z "$issues" ]; then
+                  echo "<details><summary>\`$route\` — no failing elements</summary></details>"
+                  continue
+                fi
+                count=$(printf '%s\n' "$issues" | wc -l)
+                echo "<details open><summary>\`$route\` — $count issue(s)</summary>"
+                last_group=""
+                while IFS=$'\t' read -r group selector explanation rgaa; do
+                  if [ "$group" != "$last_group" ]; then
+                    echo
+                    echo "**$group**"
+                    echo
+                    last_group="$group"
+                  fi
+                  if [ -n "$rgaa" ]; then
+                    echo "- \`$selector\` — $explanation _(RGAA $rgaa)_"
+                  else
+                    echo "- \`$selector\` — $explanation"
+                  fi
+                done <<< "$issues"
+                echo
+                echo '</details>'
+              done < /tmp/lhci-runs.tsv
+
+              echo
+              echo '---'
+              ref_json=$(head -1 /tmp/lhci-runs.tsv | cut -f3)
+              lh_version=$(jq -r '.lighthouseVersion' "$ref_json")
+              axe_version=$(jq -r '.environment.credits["axe-core"] // "n/a"' "$ref_json")
+              fetch_time=$(jq -r '.fetchTime' "$ref_json")
+              total_ms=0
+              while IFS=$'\t' read -r _ _ jsonPath; do
+                t=$(jq '.timing.total' "$jsonPath")
+                total_ms=$(awk -v a="$total_ms" -v b="$t" 'BEGIN { printf "%.0f", a + b }')
+              done < /tmp/lhci-runs.tsv
+              total_s=$(awk -v ms="$total_ms" 'BEGIN { printf "%.1f", ms / 1000 }')
+              echo "<sub>Lighthouse $lh_version · axe-core $axe_version · audited $fetch_time · total audit time ${total_s}s</sub>"
             else
               echo '_Lighthouse CI produced no report -- see the job logs._'
             fi
