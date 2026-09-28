@@ -168,7 +168,7 @@ async function getProjectsFromUser(userId) {
 async function getProjectCollaborators(projectId) {
   if (!projectId) throw new Error("getProjectCollaborators: projectId is required");
 
-  const project = await prisma.project.findUnique({
+  const project = await prisma.project.findMany({
     where: { id: projectId },
     select: { collaborators: true } 
   });
