@@ -2961,7 +2961,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/controllers/projectController.js",
+                      "uri": "backend/src/controllers/ColumnController.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 0
                     }
@@ -2990,7 +2990,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/app.js",
+                      "uri": "backend/src/controllers/itemController.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 1
                     }
@@ -3019,7 +3019,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/controllers/ColumnController.js",
+                      "uri": "backend/src/app.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 2
                     }
@@ -3048,7 +3048,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/controllers/itemController.js",
+                      "uri": "backend/src/controllers/projectController.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 3
                     }
@@ -3193,7 +3193,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/schemas/project.js",
+                      "uri": "backend/src/events/rabbitmq.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 8
                     }
@@ -3222,7 +3222,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/rabbitmq.js",
+                      "uri": "backend/src/events/schemas/project.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 9
                     }
@@ -3251,7 +3251,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/schemas/projectCreated.js",
+                      "uri": "backend/src/events/schemas/projectDeleted.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 10
                     }
@@ -3280,7 +3280,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/schemas/projectDeleted.js",
+                      "uri": "backend/src/events/schemas/projectCreated.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 11
                     }
@@ -3309,7 +3309,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/schemas/projectUpdated.js",
+                      "uri": "backend/src/events/schemas/task.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 12
                     }
@@ -3338,7 +3338,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/schemas/task.js",
+                      "uri": "backend/src/events/schemas/projectUpdated.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 13
                     }
@@ -3541,7 +3541,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/repositories/itemRepository.js",
+                      "uri": "backend/src/persistence/index.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 20
                     }
@@ -3570,7 +3570,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/repositories/projectRepository.js",
+                      "uri": "backend/src/repositories/itemRepository.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 21
                     }
@@ -3599,7 +3599,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/persistence/index.js",
+                      "uri": "backend/src/repositories/taskRepository.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 22
                     }
@@ -3628,7 +3628,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/repositories/taskRepository.js",
+                      "uri": "backend/src/repositories/projectRepository.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 23
                     }
@@ -3686,7 +3686,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/item/deleteItem.js",
+                      "uri": "backend/src/routes/item/getItem.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 25
                     }
@@ -3773,7 +3773,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/item/getItem.js",
+                      "uri": "backend/src/routes/item/deleteItem.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 28
                     }
@@ -3802,7 +3802,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/createProject.js",
+                      "uri": "backend/src/routes/project/deleteProject.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 29
                     }
@@ -3831,7 +3831,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/deleteProject.js",
+                      "uri": "backend/src/routes/project/getProject.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 30
                     }
@@ -3860,7 +3860,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/getProject.js",
+                      "uri": "backend/src/routes/project/getProjects.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 31
                     }
@@ -3947,7 +3947,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/task/deleteTask.js",
+                      "uri": "backend/src/routes/project/createProject.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 34
                     }
@@ -3976,7 +3976,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/getProjects.js",
+                      "uri": "backend/src/routes/task/deleteTask.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 35
                     }
@@ -4266,7 +4266,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/App.test.tsx",
+                      "uri": "frontend/src/App.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 45
                     }
@@ -4295,7 +4295,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/App.tsx",
+                      "uri": "frontend/src/App.test.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 46
                     }
@@ -4324,7 +4324,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/components/AddItemForm.tsx",
+                      "uri": "frontend/src/components/AddItemForm.test.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 47
                     }
@@ -4353,7 +4353,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/components/AddItemForm.test.tsx",
+                      "uri": "frontend/src/components/AddItemForm.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 48
                     }
@@ -4962,7 +4962,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/setupTests.ts",
+                      "uri": "frontend/src/services/taskService.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 69
                     }
@@ -4991,7 +4991,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/services/taskService.ts",
+                      "uri": "frontend/src/setupTests.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 70
                     }
@@ -5165,7 +5165,7 @@
                 "text": ""
               },
               "level": "none",
-              "timeUtc": "2026-09-28T08:13:24.749Z",
+              "timeUtc": "2026-09-28T08:58:12.650Z",
               "descriptor": {
                 "id": "codeql-action/overlay-disabled",
                 "index": 0
@@ -5187,28 +5187,28 @@
       "artifacts": [
         {
           "location": {
-            "uri": "backend/src/controllers/projectController.js",
+            "uri": "backend/src/controllers/ColumnController.js",
             "uriBaseId": "%SRCROOT%",
             "index": 0
           }
         },
         {
           "location": {
-            "uri": "backend/src/app.js",
+            "uri": "backend/src/controllers/itemController.js",
             "uriBaseId": "%SRCROOT%",
             "index": 1
           }
         },
         {
           "location": {
-            "uri": "backend/src/controllers/ColumnController.js",
+            "uri": "backend/src/app.js",
             "uriBaseId": "%SRCROOT%",
             "index": 2
           }
         },
         {
           "location": {
-            "uri": "backend/src/controllers/itemController.js",
+            "uri": "backend/src/controllers/projectController.js",
             "uriBaseId": "%SRCROOT%",
             "index": 3
           }
@@ -5243,42 +5243,42 @@
         },
         {
           "location": {
-            "uri": "backend/src/events/schemas/project.js",
+            "uri": "backend/src/events/rabbitmq.js",
             "uriBaseId": "%SRCROOT%",
             "index": 8
           }
         },
         {
           "location": {
-            "uri": "backend/src/events/rabbitmq.js",
+            "uri": "backend/src/events/schemas/project.js",
             "uriBaseId": "%SRCROOT%",
             "index": 9
           }
         },
         {
           "location": {
-            "uri": "backend/src/events/schemas/projectCreated.js",
+            "uri": "backend/src/events/schemas/projectDeleted.js",
             "uriBaseId": "%SRCROOT%",
             "index": 10
           }
         },
         {
           "location": {
-            "uri": "backend/src/events/schemas/projectDeleted.js",
+            "uri": "backend/src/events/schemas/projectCreated.js",
             "uriBaseId": "%SRCROOT%",
             "index": 11
           }
         },
         {
           "location": {
-            "uri": "backend/src/events/schemas/projectUpdated.js",
+            "uri": "backend/src/events/schemas/task.js",
             "uriBaseId": "%SRCROOT%",
             "index": 12
           }
         },
         {
           "location": {
-            "uri": "backend/src/events/schemas/task.js",
+            "uri": "backend/src/events/schemas/projectUpdated.js",
             "uriBaseId": "%SRCROOT%",
             "index": 13
           }
@@ -5327,28 +5327,28 @@
         },
         {
           "location": {
-            "uri": "backend/src/repositories/itemRepository.js",
+            "uri": "backend/src/persistence/index.js",
             "uriBaseId": "%SRCROOT%",
             "index": 20
           }
         },
         {
           "location": {
-            "uri": "backend/src/repositories/projectRepository.js",
+            "uri": "backend/src/repositories/itemRepository.js",
             "uriBaseId": "%SRCROOT%",
             "index": 21
           }
         },
         {
           "location": {
-            "uri": "backend/src/persistence/index.js",
+            "uri": "backend/src/repositories/taskRepository.js",
             "uriBaseId": "%SRCROOT%",
             "index": 22
           }
         },
         {
           "location": {
-            "uri": "backend/src/repositories/taskRepository.js",
+            "uri": "backend/src/repositories/projectRepository.js",
             "uriBaseId": "%SRCROOT%",
             "index": 23
           }
@@ -5362,7 +5362,7 @@
         },
         {
           "location": {
-            "uri": "backend/src/routes/item/deleteItem.js",
+            "uri": "backend/src/routes/item/getItem.js",
             "uriBaseId": "%SRCROOT%",
             "index": 25
           }
@@ -5383,28 +5383,28 @@
         },
         {
           "location": {
-            "uri": "backend/src/routes/item/getItem.js",
+            "uri": "backend/src/routes/item/deleteItem.js",
             "uriBaseId": "%SRCROOT%",
             "index": 28
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/createProject.js",
+            "uri": "backend/src/routes/project/deleteProject.js",
             "uriBaseId": "%SRCROOT%",
             "index": 29
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/deleteProject.js",
+            "uri": "backend/src/routes/project/getProject.js",
             "uriBaseId": "%SRCROOT%",
             "index": 30
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/getProject.js",
+            "uri": "backend/src/routes/project/getProjects.js",
             "uriBaseId": "%SRCROOT%",
             "index": 31
           }
@@ -5425,14 +5425,14 @@
         },
         {
           "location": {
-            "uri": "backend/src/routes/task/deleteTask.js",
+            "uri": "backend/src/routes/project/createProject.js",
             "uriBaseId": "%SRCROOT%",
             "index": 34
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/getProjects.js",
+            "uri": "backend/src/routes/task/deleteTask.js",
             "uriBaseId": "%SRCROOT%",
             "index": 35
           }
@@ -5502,28 +5502,28 @@
         },
         {
           "location": {
-            "uri": "frontend/src/App.test.tsx",
+            "uri": "frontend/src/App.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 45
           }
         },
         {
           "location": {
-            "uri": "frontend/src/App.tsx",
+            "uri": "frontend/src/App.test.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 46
           }
         },
         {
           "location": {
-            "uri": "frontend/src/components/AddItemForm.tsx",
+            "uri": "frontend/src/components/AddItemForm.test.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 47
           }
         },
         {
           "location": {
-            "uri": "frontend/src/components/AddItemForm.test.tsx",
+            "uri": "frontend/src/components/AddItemForm.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 48
           }
@@ -5670,14 +5670,14 @@
         },
         {
           "location": {
-            "uri": "frontend/src/setupTests.ts",
+            "uri": "frontend/src/services/taskService.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 69
           }
         },
         {
           "location": {
-            "uri": "frontend/src/services/taskService.ts",
+            "uri": "frontend/src/setupTests.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 70
           }
@@ -5758,7 +5758,7 @@
         "codeqlConfigSummary": {
           "disableDefaultQueries": false
         },
-        "jobRunUuid": "18a7f4ae-e990-4d60-a23d-fee079471d9f"
+        "jobRunUuid": "3ed888ff-2f25-4b28-9f1d-f9b8d1ac334c"
       }
     }
   ]
