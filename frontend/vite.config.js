@@ -7,10 +7,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // Defaults to a locally-run backend. Set VITE_BACKEND_URL to the
-      // compose network hostname when running via docker compose
-      // (e.g. `http://backend:3000`).
       '/api': {
+        // Defaults to a locally-run backend. Set VITE_BACKEND_URL to the
+        // compose network hostname when running via docker compose
+        // (e.g. `http://backend:3000`).
         target: process.env.VITE_BACKEND_URL || 'http://localhost:3000',
         rewrite: (path) => path.replace(/^\/api/, ''),
         // FAKE_AUTH_USER_ID (see README.md#authentication): backend requires
