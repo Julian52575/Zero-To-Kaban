@@ -7,6 +7,11 @@ size that's already a lot of scrolling, so this script:
 
   - wraps each theme's criteria table in a <details>, sorted so failed
     criteria surface first, then needs-review, then passing ones
+  - labels each theme with two rates: "automated" (validated /
+    (validated + invalidated), ignoring needs-review -- same figure eqo's
+    own heading already reports) and "global" (validated / (validated +
+    invalidated + needs-review) -- how much of the theme is *confirmed*
+    compliant once the manual-review items are counted as not-yet-passing)
   - wraps each route's issue list in a <details>
 
 Used by the `frontend-a11y-rgaa` job in .github/workflows/ci.yml:
@@ -48,7 +53,7 @@ def status_key(row):
 
 
 # --- Themes: one <details> per theme, rows sorted failed > review > pass ---
-theme_heading_re = re.compile(r"^### (\d+)\. (.+)$")
+theme_heading_re = re.compile(r"^### (\d+)\. (.+) — \d+%$")
 out_themes = ["## Themes", ""]
 i, n = 0, len(themes_block)
 while i < n:
@@ -56,7 +61,7 @@ while i < n:
     if not m:
         i += 1
         continue
-    num, rest = m.group(1), m.group(2)
+    num, name = m.group(1), m.group(2)
     j = i + 1
     table_lines = []
     while j < n and not theme_heading_re.match(themes_block[j]):
@@ -65,7 +70,19 @@ while i < n:
         j += 1
     header_row, sep_row, *rows = table_lines
     rows.sort(key=status_key)
-    out_themes += [f"<details><summary>{num}. {rest}</summary>", ""]
+
+    validated = sum(1 for r in rows if status_key(r) == 2)
+    invalidated = sum(1 for r in rows if status_key(r) == 0)
+    needs_review = sum(1 for r in rows if status_key(r) == 1)
+
+    auto_denom = validated + invalidated
+    auto_pct = round(validated / auto_denom * 100) if auto_denom else 100
+    global_denom = validated + invalidated + needs_review
+    global_pct = round(validated / global_denom * 100) if global_denom else 100
+    emoji = "✅" if auto_pct == 100 else "❌"
+
+    summary = f"{num}. {name} -- {auto_pct}% (automated) {emoji} -- {global_pct}% (global)"
+    out_themes += [f"<details><summary>{summary}</summary>", ""]
     out_themes += [header_row, sep_row, *rows]
     out_themes += ["", "</details>", ""]
     i = j
