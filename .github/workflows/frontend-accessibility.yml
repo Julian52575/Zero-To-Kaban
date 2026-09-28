@@ -19,6 +19,41 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # On workflow_dispatch, look for an eqo report a pull_request run of this
+  # same workflow already produced for this exact commit -- reusing it lets
+  # a manual re-run skip the build + Playwright + eqo pass entirely when
+  # nothing has changed since the PR was last audited. `status=completed`
+  # (not `success`) on purpose: the eqo job still uploads its report even
+  # when the compliance gate fails, and a failed gate is not a reason to
+  # redo work that already produced a report. PR runs never look this up
+  # (the lookup step itself is skipped), so they always audit fresh.
+  find-cached-rgaa-report:
+    name: find cached RGAA report
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      run_id: ${{ steps.find.outputs.run_id }}
+    steps:
+      - name: Look up a prior pull_request run for this commit
+        id: find
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # `gh api` defaults to POST once any -f is given; GET must be explicit.
+          run_id=$(gh api --method GET \
+            "repos/${{ github.repository }}/actions/workflows/frontend-accessibility.yml/runs" \
+            -f event=pull_request -f status=completed -f head_sha="${{ github.sha }}" \
+            --jq '.workflow_runs[0].id // empty')
+          if [ -n "$run_id" ]; then
+            echo "Reusing the eqo report from run $run_id (commit ${{ github.sha }})"
+          else
+            echo "No prior pull_request run found for commit ${{ github.sha }}; will audit fresh"
+          fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
   # Lighthouse CI (https://github.com/GoogleChrome/lighthouse-ci) accessibility
   # audit of the built SPA -- config in frontend/lighthouserc.json. Runs
   # alongside `frontend-a11y-rgaa` (no `needs` between them = parallel
@@ -169,13 +204,18 @@ jobs:
   # for the same reason as @lhci/cli: pulled in via pinned npx (with its
   # peer deps @axe-core/playwright and playwright) so its dependency tree,
   # notably Playwright, never touches this workspace's lockfile/audit gate.
-  # --threshold 100 requires zero automatically-detected RGAA violations;
-  # the ~30% of criteria eqo can't verify ("needs review") are excluded from
-  # that rate and are not gated here.
+  # The compliance gate (zero automatically-detected RGAA violations; the
+  # ~30% of criteria eqo can't verify are excluded from that rate) is
+  # enforced by the dedicated step below rather than eqo's own --threshold
+  # flag, so it applies identically whether the report was just generated
+  # or reused from a cached run.
   frontend-a11y-rgaa:
     name: frontend rgaa accessibility
+    needs: find-cached-rgaa-report
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      actions: read # needed to download the artifact from another run below
     defaults:
       run:
         working-directory: frontend
@@ -184,19 +224,34 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Reuse the cached report from run ${{ needs.find-cached-rgaa-report.outputs.run_id }}
+        id: cached_report
+        if: needs.find-cached-rgaa-report.outputs.run_id != ''
+        continue-on-error: true # fall through to a fresh audit if the artifact is gone (e.g. expired)
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: frontend-rgaa-report
+          path: frontend/rgaa-reports
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ needs.find-cached-rgaa-report.outputs.run_id }}
+
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.cached_report.outcome != 'success'
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        if: steps.cached_report.outcome != 'success'
         run: npm ci
 
       - name: Build
+        if: steps.cached_report.outcome != 'success'
         run: npm run build
 
       - name: Run the eqo RGAA accessibility audit
+        if: steps.cached_report.outcome != 'success'
         run: |
           npm run preview -- --host 127.0.0.1 --port 4173 &
 
@@ -208,7 +263,20 @@ jobs:
           done
 
           npx --yes -p @kodalabs-io/eqo@1.0.0 -p playwright@1.58.2 -p @axe-core/playwright@4.13.0 \
-            -- eqo analyze --config rgaa.config.ts --threshold 100
+            -- eqo analyze --config rgaa.config.ts
+
+      - name: Enforce the RGAA compliance gate
+        run: |
+          if [ ! -f rgaa-reports/rgaa-report.json ]; then
+            echo "::error::no RGAA report available (neither cached nor freshly generated)"
+            exit 1
+          fi
+          pct=$(jq -n --argjson r "$(jq '.summary.complianceRate' rgaa-reports/rgaa-report.json)" '$r * 100 | round')
+          echo "RGAA automated compliance rate: ${pct}%"
+          if [ "$pct" -lt 100 ]; then
+            echo "::error::RGAA compliance rate ${pct}% is below the required 100%"
+            exit 1
+          fi
 
       - name: Publish the RGAA accessibility summary
         if: always()
