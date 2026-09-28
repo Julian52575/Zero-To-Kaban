@@ -8,8 +8,13 @@ export default ({
   projectName: "zero-to-kaban-frontend",
   locale: "en-US",
 
+  // Every route in src/App.tsx. /projects/:projectId needs a concrete id --
+  // eqo requires a static path, and the id itself is irrelevant to the
+  // rendered accessibility tree (the board renders the same whether the
+  // project/task fetch behind it succeeds or fails).
   pages: [
     { path: "/", name: "Home" },
+    { path: "/projects/1", name: "Kanban board" },
     { path: "/accessibility", name: "Accessibility declaration" },
   ],
 
