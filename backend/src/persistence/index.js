@@ -151,6 +151,31 @@ async function getProjects(userId) {
   });
 }
 
+async function getProjectsFromUser(userId) {
+  if (!userId) throw new Error("getProjectsFromUser: userId is required");
+  return prisma.project.findMany({
+    where: {
+      OR: [
+        { ownerId: userId },
+        { collaborators: { some: { userId: userId, state: 'ACCEPTED' } } },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  
+}
+
+async function getProjectCollaborators(projectId) {
+  if (!projectId) throw new Error("getProjectCollaborators: projectId is required");
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { collaborators: true } 
+  });
+
+  return project ? project.collaborators : [];
+}
+
 async function getProject(id) {
   return prisma.project.findUnique({
     where: { id },
@@ -195,6 +220,8 @@ module.exports = {
 
   createProject,
   getProjects,
+  getProjectsFromUser,
+  getProjectCollaborators,
   getProject,
   updateProject,
   deleteProject,

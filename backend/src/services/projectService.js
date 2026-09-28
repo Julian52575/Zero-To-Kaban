@@ -15,6 +15,14 @@ async function getProjects(userId) {
   return projectRepository.getAll(userId);
 }
 
+async function getUserProjects(userId) {
+  return projectRepository.getAllFromUser(userId);
+}
+
+async function getProjectCollaborators(projectId) {
+  return projectRepository.getCollaborators(projectId);
+}
+
 // Projects belong to their owner: for anyone else they don't exist (null).
 async function getProject(id, userId) {
   const project = await projectRepository.getById(id);
@@ -47,6 +55,8 @@ async function deleteProject(id, userId) {
 module.exports = {
   createProject,
   getProjects,
+  getUserProjects,
+  getProjectCollaborators,
   getProject,
   updateProject,
   deleteProject,

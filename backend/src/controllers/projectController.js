@@ -34,6 +34,31 @@ async function getProject(req, res) {
     res.json(project);
 }
 
+async function getUserProjects(req, res) {
+    const projects = await projectService.getUserProjects(req.params.id);
+
+    if (!project) {
+        return res.status(404).json({
+            error: 'Project not found',
+        });
+    }
+    res.json(projects);
+}
+
+async function getProjectCollaborators(req, res) {
+    const project = await projectService.getProject(req.params.id, req.userId);
+
+    if (!project) {
+        return res.status(404).json({
+            error: 'Project not found',
+        });
+    }
+
+    const collaborators = await projectService.getProjectCollaborators(req.params.id);
+
+    res.json(collaborators);
+}
+
 async function updateProject(req, res) {
     const result = await projectService.updateProject(
         req.params.id,
@@ -81,6 +106,8 @@ async function deleteProject(req, res) {
 module.exports = {
     getProjects,
     getProject,
+    getUserProjects,
+    getProjectCollaborators,
     createProject,
     updateProject,
     deleteProject,

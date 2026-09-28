@@ -65,7 +65,6 @@ model ProjectCollaborator {
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@id([projectId, userId])
   @@index([userId])
 }
 
