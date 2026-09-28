@@ -336,7 +336,7 @@ jobs:
             echo '### Frontend accessibility (eqo RGAA v4.1.2)'
             echo
             if [ -f rgaa-reports/rgaa.md ]; then
-              cat rgaa-reports/rgaa.md
+              python3 "$GITHUB_WORKSPACE/.github/scripts/rgaa-summary.py" rgaa-reports/rgaa.md
             else
               echo '_eqo produced no report -- see the job logs._'
             fi
