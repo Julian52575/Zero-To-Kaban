@@ -3,16 +3,9 @@ name: frontend-and-auth-accessibility
 # Split out of ci.yml so accessibility feedback doesn't have to wait behind
 # the whole backend/stack/SAST suite, and doesn't run at all on PRs that
 # never touch either service. Not part of ci-required -- these are fast
-# feedback for the team, not a merge gate.
-#
-# Job order below is deliberate, not just readable-top-to-bottom: GitHub
-# orders a run's combined Summary page by job COMPLETION time, not by
-# declaration order or the dependency graph. frontend-a11y-lighthouse
-# `needs: a11y-rgaa-summary` specifically so the merged eqo/RGAA summary --
-# the more complete one -- finishes first and is the first thing read,
-# trading away this job's own parallelism for that guarantee. The eqo
-# pipeline (frontend-a11y-rgaa / auth-a11y-rgaa / a11y-rgaa-summary) keeps
-# its own internal parallelism.
+# feedback for the team, not a merge gate. frontend-a11y-lighthouse and the
+# eqo pipeline (frontend-a11y-rgaa / auth-a11y-rgaa / a11y-rgaa-summary) all
+# run in parallel -- no `needs` between them.
 on:
   pull_request:
     paths:
@@ -231,16 +224,12 @@ jobs:
 
   # Lighthouse CI (https://github.com/GoogleChrome/lighthouse-ci) accessibility
   # audit of the built SPA -- config in frontend/lighthouserc.json. Frontend
-  # only: auth has no SPA build, and eqo above already covers it.
-  #
-  # `needs: a11y-rgaa-summary` is NOT a data dependency -- it's purely so
-  # this job can't finish (and so can't post its own step summary) before
-  # the merged RGAA summary does. See the ordering note at the top of this
-  # file. !cancelled() so a failed eqo gate doesn't skip Lighthouse too.
+  # only: auth has no SPA build, and eqo above already covers it. Runs
+  # alongside the eqo pipeline (no `needs` between them = parallel
+  # scheduling), on its own build of `dist/` rather than sharing one across
+  # jobs.
   frontend-a11y-lighthouse:
     name: frontend lighthouse accessibility
-    if: ${{ !cancelled() }}
-    needs: a11y-rgaa-summary
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
