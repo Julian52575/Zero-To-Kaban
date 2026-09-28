@@ -19,41 +19,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # On workflow_dispatch, look for an eqo report a pull_request run of this
-  # same workflow already produced for this exact commit -- reusing it lets
-  # a manual re-run skip the build + Playwright + eqo pass entirely when
-  # nothing has changed since the PR was last audited. `status=completed`
-  # (not `success`) on purpose: the eqo job still uploads its report even
-  # when the compliance gate fails, and a failed gate is not a reason to
-  # redo work that already produced a report. PR runs never look this up
-  # (the lookup step itself is skipped), so they always audit fresh.
-  find-cached-rgaa-report:
-    name: find cached RGAA report
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      actions: read
-    outputs:
-      run_id: ${{ steps.find.outputs.run_id }}
-    steps:
-      - name: Look up a prior pull_request run for this commit
-        id: find
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # `gh api` defaults to POST once any -f is given; GET must be explicit.
-          run_id=$(gh api --method GET \
-            "repos/${{ github.repository }}/actions/workflows/frontend-accessibility.yml/runs" \
-            -f event=pull_request -f status=completed -f head_sha="${{ github.sha }}" \
-            --jq '.workflow_runs[0].id // empty')
-          if [ -n "$run_id" ]; then
-            echo "Reusing the eqo report from run $run_id (commit ${{ github.sha }})"
-          else
-            echo "No prior pull_request run found for commit ${{ github.sha }}; will audit fresh"
-          fi
-          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
-
   # Lighthouse CI (https://github.com/GoogleChrome/lighthouse-ci) accessibility
   # audit of the built SPA -- config in frontend/lighthouserc.json. Runs
   # alongside `frontend-a11y-rgaa` (no `needs` between them = parallel
@@ -209,13 +174,23 @@ jobs:
   # enforced by the dedicated step below rather than eqo's own --threshold
   # flag, so it applies identically whether the report was just generated
   # or reused from a cached run.
+  #
+  # On workflow_dispatch, this job first looks for an eqo report a
+  # pull_request run of this same workflow already produced for this exact
+  # commit, and reuses it instead of repeating the build + Playwright + eqo
+  # pass. `status=completed` (not `success`) on purpose: the eqo job still
+  # uploads its report even when the compliance gate fails, and a failed
+  # gate is not a reason to redo work that already produced a report. The
+  # lookup lives in a step (not a separate job with a `needs` edge) so a
+  # no-op lookup on every ordinary PR doesn't cost this job an extra
+  # runner-provisioning wait on the common, fast-feedback path.
   frontend-a11y-rgaa:
     name: frontend rgaa accessibility
-    needs: find-cached-rgaa-report
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      actions: read # needed to download the artifact from another run below
+      contents: read # actions/checkout below -- job permissions replace, not add to, the workflow default
+      actions: read # gh api lookup + cross-run artifact download below
     defaults:
       run:
         working-directory: frontend
@@ -224,16 +199,34 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Reuse the cached report from run ${{ needs.find-cached-rgaa-report.outputs.run_id }}
+      - name: Look up a prior pull_request run for this commit
+        id: find_cached_run
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # `gh api` defaults to POST once any -f is given; GET must be explicit.
+          run_id=$(gh api --method GET \
+            "repos/${{ github.repository }}/actions/workflows/frontend-accessibility.yml/runs" \
+            -f event=pull_request -f status=completed -f head_sha="${{ github.sha }}" \
+            --jq '.workflow_runs[0].id // empty')
+          if [ -n "$run_id" ]; then
+            echo "Reusing the eqo report from run $run_id (commit ${{ github.sha }})"
+          else
+            echo "No prior pull_request run found for commit ${{ github.sha }}; will audit fresh"
+          fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Reuse the cached report from run ${{ steps.find_cached_run.outputs.run_id }}
         id: cached_report
-        if: needs.find-cached-rgaa-report.outputs.run_id != ''
+        if: steps.find_cached_run.outputs.run_id != ''
         continue-on-error: true # fall through to a fresh audit if the artifact is gone (e.g. expired)
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: frontend-rgaa-report
           path: frontend/rgaa-reports
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ needs.find-cached-rgaa-report.outputs.run_id }}
+          run-id: ${{ steps.find_cached_run.outputs.run_id }}
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         if: steps.cached_report.outcome != 'success'
@@ -257,10 +250,15 @@ jobs:
 
           npx --yes playwright@1.58.2 install --with-deps chromium
 
+          ready=""
           for _ in $(seq 1 30); do
-            curl -sf http://127.0.0.1:4173/ >/dev/null && break
+            curl -sf http://127.0.0.1:4173/ >/dev/null && ready=1 && break
             sleep 1
           done
+          if [ -z "$ready" ]; then
+            echo "frontend did not respond on :4173 in time" >&2
+            exit 1
+          fi
 
           npx --yes -p @kodalabs-io/eqo@1.0.0 -p playwright@1.58.2 -p @axe-core/playwright@4.13.0 \
             -- eqo analyze --config rgaa.config.ts

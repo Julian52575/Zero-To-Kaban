@@ -14,7 +14,7 @@ size that's already a lot of scrolling, so this script:
     compliant once the manual-review items are counted as not-yet-passing)
   - wraps each route's issue list in a <details>
 
-Used by the `frontend-a11y-rgaa` job in .github/workflows/ci.yml:
+Used by the `frontend-a11y-rgaa` job in .github/workflows/frontend-accessibility.yml:
     python3 .github/scripts/rgaa-summary.py frontend/rgaa-reports/rgaa.md
 """
 import re
