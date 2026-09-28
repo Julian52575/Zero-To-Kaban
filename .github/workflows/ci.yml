@@ -403,8 +403,10 @@ jobs:
           if-no-files-found: warn
 
   # ---------------------------------------------------------------------------
-  # Level 2 -- the whole docker-compose stack, then a call to every service.
-  # Runs only once every level-1 job except dependencies-audit has passed.
+  # Level 2 -- how the services work together, once every level-1 job except
+  # dependencies-audit has passed: `stack` runs the whole docker-compose stack
+  # and calls every service; `gitnexus` checks the calls between them in the
+  # code. Both jobs run in parallel.
   # ---------------------------------------------------------------------------
   stack:
     needs:
@@ -536,6 +538,85 @@ jobs:
         if: always()
         run: docker compose down --volumes
 
+  # GitNexus knowledge graph of the repo (https://github.com/abhigyanpatwari/GitNexus),
+  # rebuilt from scratch through .github/scripts/gitnexus.sh. Fails on circular
+  # imports and on a stale docs/gitnexus/api-links.md, and summarises what the
+  # PR touches. Never commits the regenerated snapshot back: a push made with
+  # the workflow token does not trigger a new run, so ci-required would never
+  # report on that commit. Run `just gitnexus-docs-generate` locally instead.
+  gitnexus:
+    needs:
+      - devshell
+      - backend
+      - frontend
+      - database
+      - rabbitmq
+      - auth
+      - dockerfile-lint
+      - compose-lint
+      - workflow-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Full history: `detect-changes` diffs against the PR's base branch.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Keep the GitNexus registry out of the home directory
+        run: echo "GITNEXUS_HOME_DIR=$RUNNER_TEMP/gitnexus" >> "$GITHUB_ENV"
+
+      - name: Index the repo
+        run: .github/scripts/gitnexus.sh analyze
+
+      - name: Check for circular imports
+        run: .github/scripts/gitnexus.sh check --cycles
+
+      - name: Check docs/gitnexus/api-links.md is up to date
+        run: |
+          .github/scripts/gitnexus.sh api-links
+          if [ -z "$(git status --porcelain -- docs/gitnexus/api-links.md)" ]; then
+            exit 0
+          fi
+
+          # Single quotes on purpose: the backticks are Markdown, not a command.
+          # shellcheck disable=SC2016
+          fix='Update the doc: run `just gitnexus-docs-generate` and commit docs/gitnexus/api-links.md with this PR.'
+          echo "::error file=docs/gitnexus/api-links.md,title=Update docs/gitnexus/api-links.md::The API links between frontend, backend and auth changed but docs/gitnexus/api-links.md was not updated. ${fix}"
+          git diff -- docs/gitnexus/api-links.md
+          {
+            echo '### :x: Update docs/gitnexus/api-links.md'
+            echo
+            echo 'The API links between frontend, backend and auth changed, but the committed doc was not updated.'
+            echo
+            echo "**${fix}**"
+            echo
+            echo 'Expected changes to the doc:'
+            echo
+            echo '```diff'
+            git diff -- docs/gitnexus/api-links.md
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      # Informational only: a large PR legitimately rates as "critical".
+      - name: Summarise the change impact
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          {
+            echo '### GitNexus change impact'
+            echo
+            echo "_Symbols and execution flows touched by this PR, compared with \`origin/${BASE_REF}\`._"
+            echo
+            echo '```'
+            .github/scripts/gitnexus.sh detect-changes --scope compare --base-ref "origin/${BASE_REF}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # ---------------------------------------------------------------------------
   # Single stable check for the branch ruleset to require.
   # Add a job to `needs` here to make it mandatory to the branch ruleset.
@@ -553,6 +634,7 @@ jobs:
       - compose-lint
       - workflow-lint
       - dependencies-audit
+      - gitnexus
       - stack
     runs-on: ubuntu-latest
     timeout-minutes: 5

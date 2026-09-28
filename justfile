@@ -1,5 +1,8 @@
 set dotenv-load := true
 set shell := ["bash", "-eu", "-c"]
+# Recipes also get their arguments as "$@", so `just gitnexus cypher "MATCH ..."`
+# keeps each argument intact. `{{args}}` interpolation is unaffected.
+set positional-arguments := true
 
 tool := `command -v podman >/dev/null && echo podman || echo docker`
 compose := tool + " compose"
@@ -88,6 +91,16 @@ attach service:
 # (internal) print the container id for a compose service in this project
 _cid service:
     @{{tool}} ps -q --filter "label=com.docker.compose.project.working_dir={{justfile_directory()}}" --filter "label=com.docker.compose.service={{service}}" | head -n1
+
+#### GitNexus
+
+# Re-index with GitNexus and regenerate docs/gitnexus/api-links.md (CI fails when it is stale)
+gitnexus-docs-generate:
+    CONTAINER_TOOL={{tool}} .github/scripts/gitnexus.sh api-links
+
+# Run any GitNexus CLI command in its container: `just gitnexus cypher "MATCH (r:Route) RETURN r.name"`
+gitnexus *args:
+    CONTAINER_TOOL={{tool}} .github/scripts/gitnexus.sh "$@"
 
 DATABASE_DUMP_FILE := "db_backup_$(date +%Y%m%d_%H%M%S).sql"
 # dump the whole database into a .sql file (starts the db container if it is down, stops it again after)
