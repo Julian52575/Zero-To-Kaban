@@ -139,6 +139,62 @@ jobs:
           echo "frontend did not respond on :4173 in time" >&2
           exit 1
 
+  # Lighthouse CI (https://github.com/GoogleChrome/lighthouse-ci) accessibility
+  # audit of the built SPA -- config in frontend/lighthouserc.json. Runs
+  # alongside `frontend` (no `needs` between them = parallel scheduling), on
+  # its own build of `dist/` rather than sharing one across jobs.
+  frontend-a11y:
+    name: Frontend Accessibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run the Lighthouse CI accessibility audit
+        run: npm run lhci
+
+      - name: Publish the accessibility score summary
+        if: always()
+        run: |
+          {
+            echo '### Frontend accessibility (Lighthouse CI)'
+            echo
+            if [ -f lhci-reports/manifest.json ]; then
+              echo '| URL | Accessibility score |'
+              echo '| --- | --- |'
+              jq -r '.[] | select(.isRepresentativeRun)
+                | "| \(.url) | \((.summary.accessibility * 100 | round))% |"' \
+                lhci-reports/manifest.json
+            else
+              echo '_Lighthouse CI produced no report -- see the job logs._'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the Lighthouse CI report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: frontend-lighthouse-report
+          path: frontend/lhci-reports
+          if-no-files-found: warn
+
   # Runs alongside `backend`/`frontend` (no `needs` between them = parallel
   # scheduling). Tests the `db` service from docker-compose.yml as-is --
   # no app code involved, just the container image + healthcheck + connectivity.
@@ -413,6 +469,7 @@ jobs:
       - devshell
       - backend
       - frontend
+      - frontend-a11y
       - database
       - rabbitmq
       - auth
@@ -549,6 +606,7 @@ jobs:
       - devshell
       - backend
       - frontend
+      - frontend-a11y
       - database
       - rabbitmq
       - auth
@@ -627,6 +685,7 @@ jobs:
       - devshell
       - backend
       - frontend
+      - frontend-a11y
       - database
       - rabbitmq
       - auth
