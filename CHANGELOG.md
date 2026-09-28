@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.0](https://github.com/Julian52575/Zero-To-Kanban/compare/2.0.0...2.1.0) (2026-09-25)
+
+
+### Features
+
+* authentification microservice, front component call, event-driven rabbitmq service ([#135](https://github.com/Julian52575/Zero-To-Kanban/issues/135)) ([dc1122a](https://github.com/Julian52575/Zero-To-Kanban/commit/dc1122a95a1d5ef4baced977e514b1b0c793a273))
+* user auth, project creation, kanban tasks, deployment, event-driven for sprint 2 completion ([#138](https://github.com/Julian52575/Zero-To-Kanban/issues/138)) ([1c091f9](https://github.com/Julian52575/Zero-To-Kanban/commit/1c091f9ee1fd08f4f89149fbd39a9092817c339b))
+
 ## [2.0.0](https://github.com/Julian52575/Zero-To-Kanban/compare/1.0.1...2.0.0) (2026-09-11)
 
 
