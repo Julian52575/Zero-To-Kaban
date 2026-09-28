@@ -10,7 +10,7 @@
 
 backend:
   image:
-    tag: manual-test
+    tag: 2.1.0
   replicaCount: 1
   resources:
     requests:
@@ -19,10 +19,9 @@ backend:
     limits:
       cpu: 500m
       memory: 256Mi
-
 auth:
   image:
-    tag: manual-test
+    tag: 2.1.0
   replicaCount: 1
   cookieSecure: "true"
   existingSecret: zero-to-kanban-prod-auth
@@ -33,10 +32,9 @@ auth:
     limits:
       cpu: 250m
       memory: 256Mi
-
 frontend:
   image:
-    tag: manual-test
+    tag: 2.1.0
   replicaCount: 1
   resources:
     requests:
@@ -45,12 +43,10 @@ frontend:
     limits:
       cpu: 250m
       memory: 128Mi
-
 rabbitmq:
   existingSecret: zero-to-kanban-prod-rabbitmq
   persistence:
     size: 2Gi
-
 ingress:
   entryPoints:
     - websecure
@@ -65,14 +61,12 @@ ingress:
   tls:
     enabled: true
     secretName: kanban-tls
-
 postgresql:
   auth:
     existingSecret: zero-to-kanban-prod-postgresql
   primary:
     persistence:
       size: 10Gi
-
 authdb:
   auth:
     existingSecret: zero-to-kanban-prod-authdb
