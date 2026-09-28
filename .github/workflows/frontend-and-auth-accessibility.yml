@@ -73,8 +73,17 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm run build
 
+      - if: steps.cache.outputs.cache-hit != 'true'
+        uses: ./.github/actions/backend-with-seed-data
+
       - name: Start the frontend preview server
         if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          VITE_BACKEND_URL: http://127.0.0.1:3000
+          # Opt-in header the Vite proxy injects for /api/* -- see
+          # vite.config.js. Must match backend/prisma/seed.js's
+          # A11Y_TEST_USER_ID, or the seeded project is invisible (401).
+          VITE_A11Y_FAKE_AUTH_USER_ID: a11y-test-user
         run: npm run preview -- --host 127.0.0.1 --port 4173 &
 
       - uses: ./.github/actions/rgaa-audit
@@ -252,7 +261,17 @@ jobs:
       - name: Build
         run: npm run build
 
+      - uses: ./.github/actions/backend-with-seed-data
+
       - name: Run the Lighthouse CI accessibility audit
+        env:
+          VITE_BACKEND_URL: http://127.0.0.1:3000
+          # Opt-in header the Vite proxy injects for /api/* -- see
+          # vite.config.js. Must match backend/prisma/seed.js's
+          # A11Y_TEST_USER_ID, or the seeded project is invisible (401).
+          # lhci's startServerCommand (lighthouserc.json) inherits these
+          # since it's spawned from this same step.
+          VITE_A11Y_FAKE_AUTH_USER_ID: a11y-test-user
         run: npm run lhci
 
       - name: Publish the accessibility score summary

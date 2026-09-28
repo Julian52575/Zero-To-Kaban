@@ -13,6 +13,20 @@ export default defineConfig({
       '/api': {
         target: process.env.VITE_BACKEND_URL || 'http://localhost:3000',
         rewrite: (path) => path.replace(/^\/api/, ''),
+        // Accessibility audits (see
+        // .github/workflows/frontend-and-auth-accessibility.yml) run the
+        // backend directly, without Traefik in front to inject a real
+        // X-Auth-User-Id from a logged-in session -- so a seeded board is
+        // otherwise invisible (every route needing it would 401). Opt-in
+        // only: unset in dev and prod, where Traefik's ForwardAuth is the
+        // real thing being tested and must not be short-circuited.
+        configure: (proxy) => {
+          const fakeUserId = process.env.VITE_A11Y_FAKE_AUTH_USER_ID;
+          if (!fakeUserId) return;
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('X-Auth-User-Id', fakeUserId);
+          });
+        },
       },
     },
   },

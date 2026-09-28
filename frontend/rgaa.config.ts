@@ -8,13 +8,14 @@ export default ({
   projectName: "zero-to-kaban-frontend",
   locale: "en-US",
 
-  // Every route in src/App.tsx. /projects/:projectId needs a concrete id --
-  // eqo requires a static path, and the id itself is irrelevant to the
-  // rendered accessibility tree (the board renders the same whether the
-  // project/task fetch behind it succeeds or fails).
+  // Every route in src/App.tsx. /projects/:projectId points at the fixed id
+  // backend/prisma/seed.js seeds a real board under (see
+  // .github/workflows/frontend-and-auth-accessibility.yml) -- auditing real
+  // columns/tasks instead of the empty/error state an unseeded backend, or
+  // no backend at all, would render.
   pages: [
     { path: "/", name: "Home" },
-    { path: "/projects/1", name: "Kanban board" },
+    { path: "/projects/a11y-test-project", name: "Kanban board" },
     { path: "/accessibility", name: "Accessibility declaration" },
   ],
 
