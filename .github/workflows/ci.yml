@@ -183,6 +183,7 @@ jobs:
               jq -r '.[] | select(.isRepresentativeRun)
                 | [.url, (.summary.accessibility * 100 | round), .jsonPath] | @tsv' \
                 lhci-reports/manifest.json > /tmp/lhci-runs.tsv
+              ref_json=$(head -1 /tmp/lhci-runs.tsv | cut -f3)
 
               echo "| Route | Score (${min_pct}% required) | Passing audits |"
               echo '| --- | --- | --- |'
@@ -243,8 +244,17 @@ jobs:
               done < /tmp/lhci-runs.tsv
 
               echo
+              echo '#### Manual review needed'
+              echo
+              echo '_Lighthouse cannot verify these automatically -- same checklist for every route, not part of the score/gate above._'
+              echo
+              jq -r '.categories.accessibility.auditRefs[].id as $id
+                | .audits[$id]
+                | select(.scoreDisplayMode == "manual")
+                | "- **\(.title)**: \(.description)"' "$ref_json"
+
+              echo
               echo '---'
-              ref_json=$(head -1 /tmp/lhci-runs.tsv | cut -f3)
               lh_version=$(jq -r '.lighthouseVersion' "$ref_json")
               axe_version=$(jq -r '.environment.credits["axe-core"] // "n/a"' "$ref_json")
               fetch_time=$(jq -r '.fetchTime' "$ref_json")
