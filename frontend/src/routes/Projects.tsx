@@ -6,6 +6,7 @@ import { getProjects, deleteProject, createProject } from "../services/ProjectAp
 import type { Project } from "../types/Project";
 
 import UserProfileButton from './../components/UserProfile/UserProfileButton';
+import NotificationCenter from "../components/NotificationCenter";
 
 function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -65,6 +66,7 @@ function Projects() {
 
   return (
     <Container className="py-4">
+      <NotificationCenter />
       <UserProfileButton />
       <Row>
         <Col md={{ offset: 3, span: 6 }}>
