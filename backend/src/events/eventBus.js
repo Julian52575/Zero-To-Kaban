@@ -16,8 +16,13 @@ async function publishEvent(eventName, data) {
 
   const validatedData = validateEventPayload(eventName, data);
 
+  let validatedEventId = uuidv4();
+  while (validatedEventId == "00000000-0000-0000-0000-000000000000") {
+    validatedEventId = uuidv4();
+  }
+
   const event = {
-    eventId: uuidv4(),
+    eventId: validatedEventId,
     data: validatedData,
   };
 

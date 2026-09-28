@@ -191,6 +191,14 @@ async function updateProject(id, data) {
   });
 }
 
+async function updateDeletedProjectCollaborator(id, data) {
+  return prisma.project.update({
+    where: { id },
+    data: {ownerId: data.ownerID, collaborators: data.collaborators},
+    include: { columns: { orderBy: { order: "asc" } } }
+  });
+}
+
 async function deleteProject(id) {
   return prisma.project.delete({ where: { id } });
 }
@@ -224,6 +232,7 @@ module.exports = {
   getProjectCollaborators,
   getProject,
   updateProject,
+  updateDeletedProjectCollaborator,
   deleteProject,
 
   prisma,
