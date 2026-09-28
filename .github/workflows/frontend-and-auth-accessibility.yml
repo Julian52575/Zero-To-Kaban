@@ -1,13 +1,14 @@
-name: frontend-accessibility
+name: frontend-and-auth-accessibility
 
 # Split out of ci.yml so accessibility feedback doesn't have to wait behind
 # the whole backend/stack/SAST suite, and doesn't run at all on PRs that
-# never touch the frontend. Not part of ci-required -- these are fast
-# feedback for the frontend team, not a merge gate.
+# never touch either service. Not part of ci-required -- these are fast
+# feedback for the team, not a merge gate.
 on:
   pull_request:
     paths:
       - "frontend/**"
+      - "auth/**"
   workflow_dispatch: # run on demand against any branch; see publish-rgaa-summary below
 
 # Least privilege by default; publish-rgaa-summary elevates for its own push.
@@ -20,7 +21,8 @@ concurrency:
 
 jobs:
   # Lighthouse CI (https://github.com/GoogleChrome/lighthouse-ci) accessibility
-  # audit of the built SPA -- config in frontend/lighthouserc.json. Runs
+  # audit of the built SPA -- config in frontend/lighthouserc.json. Frontend
+  # only: auth has no SPA build, and eqo below already covers it. Runs
   # alongside `frontend-a11y-rgaa` (no `needs` between them = parallel
   # scheduling), on its own build of `dist/` rather than sharing one across
   # jobs.
@@ -159,21 +161,24 @@ jobs:
           path: frontend/lhci-reports
           if-no-files-found: warn
 
-  # eqo (https://github.com/kodalabs-io/eqo) RGAA v4.1.2 accessibility audit,
-  # complementary to `frontend-a11y-lighthouse` -- config in
-  # frontend/rgaa.config.ts. Branded "for NextJS projects" upstream but
-  # verified locally against this Vite SPA: a static Babel-AST pass over
-  # `src/` plus a Playwright/axe-core runtime pass against the built preview
-  # server, with findings mapped to actual RGAA 4.1.2 criteria numbers
-  # (Lighthouse only speaks WCAG success-criterion ids). Not a devDependency
-  # for the same reason as @lhci/cli: pulled in via pinned npx (with its
-  # peer deps @axe-core/playwright and playwright) so its dependency tree,
-  # notably Playwright, never touches this workspace's lockfile/audit gate.
-  # The compliance gate (zero automatically-detected RGAA violations; the
-  # ~30% of criteria eqo can't verify are excluded from that rate) is
-  # enforced by the dedicated step below rather than eqo's own --threshold
-  # flag, so it applies identically whether the report was just generated
-  # or reused from a cached run.
+  # eqo (https://github.com/kodalabs-io/eqo) RGAA v4.1.2 accessibility audit
+  # of the frontend SPA -- config in frontend/rgaa.config.ts. Branded "for
+  # NextJS projects" upstream but verified locally against this Vite SPA: a
+  # static Babel-AST pass over `src/` plus a Playwright/axe-core runtime pass
+  # against the built preview server, with findings mapped to actual RGAA
+  # 4.1.2 criteria numbers (Lighthouse only speaks WCAG success-criterion
+  # ids). Not a devDependency for the same reason as @lhci/cli: pulled in via
+  # pinned npx (with its peer deps @axe-core/playwright and playwright) so
+  # its dependency tree, notably Playwright, never touches this workspace's
+  # lockfile/audit gate. The compliance gate (zero automatically-detected
+  # RGAA violations; the ~30% of criteria eqo can't verify are excluded from
+  # that rate) is enforced by the dedicated step below rather than eqo's own
+  # --threshold flag, so it applies identically whether the report was just
+  # generated or reused from a cached run.
+  #
+  # This job's own summary is intentionally NOT published here -- see
+  # `a11y-rgaa-summary`, which merges this with `auth-a11y-rgaa`'s report
+  # into a single combined summary instead of two separate ones.
   #
   # On workflow_dispatch, this job first looks for an eqo report a
   # pull_request run of this same workflow already produced for this exact
@@ -207,7 +212,7 @@ jobs:
         run: |
           # `gh api` defaults to POST once any -f is given; GET must be explicit.
           run_id=$(gh api --method GET \
-            "repos/${{ github.repository }}/actions/workflows/frontend-accessibility.yml/runs" \
+            "repos/${{ github.repository }}/actions/workflows/frontend-and-auth-accessibility.yml/runs" \
             -f event=pull_request -f status=completed -f head_sha="${{ github.sha }}" \
             --jq '.workflow_runs[0].id // empty')
           if [ -n "$run_id" ]; then
@@ -276,19 +281,6 @@ jobs:
             exit 1
           fi
 
-      - name: Publish the RGAA accessibility summary
-        if: always()
-        run: |
-          {
-            echo '### Frontend accessibility (eqo RGAA v4.1.2)'
-            echo
-            if [ -f rgaa-reports/rgaa.md ]; then
-              python3 "$GITHUB_WORKSPACE/.github/scripts/rgaa-summary.py" rgaa-reports/rgaa.md
-            else
-              echo '_eqo produced no report -- see the job logs._'
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Upload the eqo RGAA report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -297,18 +289,208 @@ jobs:
           path: frontend/rgaa-reports
           if-no-files-found: warn
 
-  # Manual-dispatch only: renders the eqo report into a tracked doc and
-  # pushes it straight to the dispatched branch (no PR). Kept as its own job
-  # so only this one needs contents: write -- the two audits above stay
+  # Mirrors frontend-a11y-rgaa against the auth service -- config in
+  # auth/rgaa.config.ts. /login and /register are served directly by auth's
+  # own Express app (bypassing the Traefik ForwardAuth guard in
+  # docker-compose.yml entirely -- those two routes are exactly the ones the
+  # guard excludes, so hitting auth directly needs no login flow scripted
+  # into the accessibility tooling at all). That means this job doesn't need
+  # the full docker-compose stack, just a database for Prisma's `$connect()`
+  # at boot -- neither route touches it per-request.
+  #
+  # Not reusing docker-compose.yml's own `authdb` service for that: it
+  # publishes no host port (by design, for local dev -- only other
+  # containers on the compose network can reach it), and this job runs
+  # `node src/index.js` directly on the runner, not inside that network. A
+  # throwaway container with an explicit port mapping is simpler here than
+  # changing docker-compose.yml's local-dev behavior just for CI.
+  auth-a11y-rgaa:
+    name: auth rgaa accessibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Look up a prior pull_request run for this commit
+        id: find_cached_run
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          run_id=$(gh api --method GET \
+            "repos/${{ github.repository }}/actions/workflows/frontend-and-auth-accessibility.yml/runs" \
+            -f event=pull_request -f status=completed -f head_sha="${{ github.sha }}" \
+            --jq '.workflow_runs[0].id // empty')
+          if [ -n "$run_id" ]; then
+            echo "Reusing the eqo report from run $run_id (commit ${{ github.sha }})"
+          else
+            echo "No prior pull_request run found for commit ${{ github.sha }}; will audit fresh"
+          fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Reuse the cached report from run ${{ steps.find_cached_run.outputs.run_id }}
+        id: cached_report
+        if: steps.find_cached_run.outputs.run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: auth-rgaa-report
+          path: auth/rgaa-reports
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.find_cached_run.outputs.run_id }}
+
+      - name: Start a throwaway Postgres for Prisma's $connect()
+        if: steps.cached_report.outcome != 'success'
+        run: |
+          docker run -d --name authdb -p 5432:5432 \
+            -e POSTGRES_USER=authuser -e POSTGRES_PASSWORD=authpass -e POSTGRES_DB=auth \
+            postgres:16-alpine
+
+          ready=""
+          for _ in $(seq 1 30); do
+            docker exec authdb pg_isready -U authuser -d auth >/dev/null 2>&1 && ready=1 && break
+            sleep 1
+          done
+          if [ -z "$ready" ]; then
+            echo "authdb did not become ready in time" >&2
+            docker logs authdb
+            exit 1
+          fi
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.cached_report.outcome != 'success'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: auth/package-lock.json
+
+      - name: Install dependencies
+        if: steps.cached_report.outcome != 'success'
+        working-directory: auth
+        run: npm ci
+
+      - name: Generate the Prisma client
+        if: steps.cached_report.outcome != 'success'
+        working-directory: auth
+        run: npx prisma generate
+
+      - name: Run the eqo RGAA accessibility audit
+        if: steps.cached_report.outcome != 'success'
+        working-directory: auth
+        env:
+          DATABASE_URL: postgresql://authuser:authpass@localhost:5432/auth?schema=public
+          SESSION_SECRET: ci-a11y-audit
+        run: |
+          node src/index.js &
+
+          npx --yes playwright@1.58.2 install --with-deps chromium
+
+          ready=""
+          for _ in $(seq 1 30); do
+            curl -sf http://127.0.0.1:4000/healthz >/dev/null && ready=1 && break
+            sleep 1
+          done
+          if [ -z "$ready" ]; then
+            echo "auth did not respond on :4000 in time" >&2
+            exit 1
+          fi
+
+          npx --yes -p @kodalabs-io/eqo@1.0.0 -p playwright@1.58.2 -p @axe-core/playwright@4.13.0 \
+            -- eqo analyze --config rgaa.config.ts
+
+      - name: Enforce the RGAA compliance gate
+        working-directory: auth
+        run: |
+          if [ ! -f rgaa-reports/rgaa-report.json ]; then
+            echo "::error::no RGAA report available (neither cached nor freshly generated)"
+            exit 1
+          fi
+          pct=$(jq -n --argjson r "$(jq '.summary.complianceRate' rgaa-reports/rgaa-report.json)" '$r * 100 | round')
+          echo "RGAA automated compliance rate: ${pct}%"
+          if [ "$pct" -lt 100 ]; then
+            echo "::error::RGAA compliance rate ${pct}% is below the required 100%"
+            exit 1
+          fi
+
+      - name: Upload the eqo RGAA report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: auth-rgaa-report
+          path: auth/rgaa-reports
+          if-no-files-found: warn
+
+  # Merges frontend-a11y-rgaa's and auth-a11y-rgaa's reports into one summary
+  # via rgaa-summary.py (worst-status-wins per shared RGAA criterion, routes
+  # from both services listed together). !cancelled() so this still runs --
+  # and still gives the team a combined view -- when either audit fails its
+  # own compliance gate; only a cancelled run skips it.
+  a11y-rgaa-summary:
+    name: frontend + auth rgaa accessibility summary
+    if: ${{ !cancelled() }}
+    needs: [frontend-a11y-rgaa, auth-a11y-rgaa]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Download the frontend eqo report
+        continue-on-error: true # still summarize whatever came in if one side never uploaded
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: frontend-rgaa-report
+          path: /tmp/rgaa-reports/frontend
+
+      - name: Download the auth eqo report
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: auth-rgaa-report
+          path: /tmp/rgaa-reports/auth
+
+      - name: Publish the combined RGAA accessibility summary
+        run: |
+          mkdir -p /tmp/rgaa-merged
+          inputs=()
+          [ -f /tmp/rgaa-reports/frontend/rgaa.md ] && inputs+=(/tmp/rgaa-reports/frontend/rgaa.md)
+          [ -f /tmp/rgaa-reports/auth/rgaa.md ] && inputs+=(/tmp/rgaa-reports/auth/rgaa.md)
+          {
+            echo '### Frontend + auth accessibility (eqo RGAA v4.1.2)'
+            echo
+            if [ "${#inputs[@]}" -eq 0 ]; then
+              echo '_eqo produced no reports -- see the job logs._'
+            else
+              python3 .github/scripts/rgaa-summary.py "${inputs[@]}" | tee /tmp/rgaa-merged/rgaa.md
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the merged RGAA report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: a11y-rgaa-report-merged
+          path: /tmp/rgaa-merged
+          if-no-files-found: warn
+
+  # Manual-dispatch only: pushes the merged report into a tracked doc,
+  # straight to the dispatched branch (no PR). Kept as its own job so only
+  # this one needs contents: write -- the audits and the summary above stay
   # read-only even when this workflow is dispatched manually.
   publish-rgaa-summary:
     name: publish RGAA summary to docs/
     # !cancelled() opts out of the implicit success() a plain `if:` would
-    # otherwise AND onto `needs` -- this must still publish the audit when
-    # frontend-a11y-rgaa *fails* its compliance gate (the whole point is to
-    # document the current state, good or bad), just not on a cancelled run.
+    # otherwise AND onto `needs` -- this must still publish when either
+    # audit *fails* its compliance gate (the whole point is to document the
+    # current state, good or bad), just not on a cancelled run.
     if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' }}
-    needs: frontend-a11y-rgaa
+    needs: a11y-rgaa-summary
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -319,19 +501,19 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Download the eqo RGAA report
+      - name: Download the merged RGAA report
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: frontend-rgaa-report
-          path: /tmp/rgaa-reports
+          name: a11y-rgaa-report-merged
+          path: /tmp/rgaa-merged
 
       - name: Render docs/accessibility/rgaa-audit.md
         run: |
           mkdir -p docs/accessibility
           {
-            echo '<!-- Auto-generated by the "frontend-accessibility" workflow (workflow_dispatch). Do not edit by hand -- it is overwritten on the next manual run. -->'
+            echo '<!-- Auto-generated by the "frontend-and-auth-accessibility" workflow (workflow_dispatch). Do not edit by hand -- it is overwritten on the next manual run. -->'
             echo
-            python3 .github/scripts/rgaa-summary.py /tmp/rgaa-reports/rgaa.md
+            cat /tmp/rgaa-merged/rgaa.md
           } > docs/accessibility/rgaa-audit.md
 
       - name: Commit and push

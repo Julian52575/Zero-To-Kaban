@@ -1,16 +1,16 @@
 // Not importing `defineConfig` from @kodalabs-io/eqo here: eqo is invoked via
-// pinned npx (see .github/workflows/frontend-and-auth-accessibility.yml),
-// never installed as a project dependency, so this
-// file can't resolve that import in CI. `defineConfig` is a type-only
-// identity helper upstream (`(config) => config`) -- safe to skip.
+// pinned npx (see .github/workflows/frontend-accessibility.yml), never
+// installed as a project dependency, so this file can't resolve that import
+// in CI. `defineConfig` is a type-only identity helper upstream
+// (`(config) => config`) -- safe to skip.
 export default ({
-  baseUrl: "http://127.0.0.1:4173",
-  projectName: "zero-to-kaban-frontend",
+  baseUrl: "http://127.0.0.1:4000",
+  projectName: "zero-to-kaban-auth",
   locale: "en-US",
 
   pages: [
-    { path: "/", name: "Home" },
-    { path: "/accessibility", name: "Accessibility declaration" },
+    { path: "/login", name: "Sign in" },
+    { path: "/register", name: "Register" },
   ],
 
   output: [
@@ -30,7 +30,7 @@ export default ({
   exemptions: [],
 
   static: {
-    include: ["src/**/*.{tsx,jsx,ts,js}"],
+    include: ["src/**/*.js"],
     exclude: ["**/*.test.*", "**/*.spec.*"],
   },
 });
