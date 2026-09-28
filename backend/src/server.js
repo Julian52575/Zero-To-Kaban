@@ -43,6 +43,11 @@ async function startConsumers() {
       `Handling event: ${EVENTS.PROJECT_DELETED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
   });
+  await startConsumeFor(EVENTS.USER_DELETED, async (data,eventId) => {
+    console.log(
+      `Handling event: ${EVENTS.USER_DELETED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
+    );
+  });
 }
 
 async function startServer() {

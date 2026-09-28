@@ -3,6 +3,7 @@
 const config = require('./config');
 const db = require('./db');
 const { createApp } = require('./app');
+const outbox = require('./outbox');
 
 db.init()
     .then(() => {
@@ -10,9 +11,13 @@ db.init()
             console.log(`auth: listening on port ${config.port}`),
         );
 
+        const stopOutbox = outbox.start();
+
         const gracefulShutdown = () => {
             server.close(() => {
-                db.teardown()
+                stopOutbox()
+                    .catch(() => {})
+                    .then(() => db.teardown())
                     .catch(() => {})
                     .then(() => process.exit());
             });
