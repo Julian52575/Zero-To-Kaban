@@ -305,7 +305,11 @@ jobs:
   # read-only even when this workflow is dispatched manually.
   publish-rgaa-summary:
     name: publish RGAA summary to docs/
-    if: github.event_name == 'workflow_dispatch'
+    # !cancelled() opts out of the implicit success() a plain `if:` would
+    # otherwise AND onto `needs` -- this must still publish the audit when
+    # frontend-a11y-rgaa *fails* its compliance gate (the whole point is to
+    # document the current state, good or bad), just not on a cancelled run.
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' }}
     needs: frontend-a11y-rgaa
     runs-on: ubuntu-latest
     timeout-minutes: 5
