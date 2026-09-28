@@ -43,4 +43,12 @@ const directoryLimiter = rateLimit({
     message: { error: 'too many requests, please slow down' },
 });
 
-module.exports = { loginLimiter, registerLimiter, deleteMeLimiter, directoryLimiter };
+const profileLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'too many attempts, please try again later' },
+});
+
+module.exports = { loginLimiter, registerLimiter, deleteMeLimiter, directoryLimiter, profileLimiter };

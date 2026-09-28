@@ -118,7 +118,7 @@ services:
       #
       # The `require-login` / `strip-identity` middlewares this stack uses are
       # defined on the `proxy` service, not here.
-      - traefik.http.routers.auth.rule=PathPrefix(`/auth`) || Path(`/login`) || Path(`/register`)
+      - traefik.http.routers.auth.rule=PathPrefix(`/auth`) || Path(`/login`) || Path(`/register`) || Path(`/privacy-policy`)
       - traefik.http.routers.auth.priority=100
       - traefik.http.services.auth.loadbalancer.server.port=4000
     restart: unless-stopped

@@ -83,6 +83,24 @@ function listUsers({ q, limit, offset }) {
   });
 }
 
+async function updateUsername(id, username) {
+  const name = username.toLowerCase();
+  try {
+    return await prisma.user.update({
+      where: { id },
+      data: { username: name },
+    });
+  } catch (err) {
+    if (err && err.code === "P2002") {
+      throw new UsernameTakenError(name);
+    }
+    if (err && err.code === "P2025") {
+      return null; // enregistrement introuvable
+    }
+    throw err;
+  }
+}
+
 module.exports = {
   prisma,
   init,
@@ -91,6 +109,7 @@ module.exports = {
   findUserByUsername,
   createUser,
   bumpTokenVersion,
+  updateUsername,
   deleteUser,
   findUsersByIds,
   listUsers,
