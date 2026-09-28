@@ -33,10 +33,15 @@ runs:
     - name: Start a throwaway RabbitMQ for the backend
       shell: bash
       # rabbitmq:4-alpine, not the rabbitmq:4-management docker-compose.yml
-      # uses: verified the management variant fails to boot standalone here
-      # with "Error when reading /var/lib/rabbitmq/.erlang.cookie: eacces"
-      # (an anonymous-volume permission issue, reproduced both directly and
-      # under act) -- alpine boots cleanly the same way every time.
+      # uses: the management variant fails to boot standalone here with
+      # "Error when reading /var/lib/rabbitmq/.erlang.cookie: eacces" (an
+      # anonymous-volume permission issue), reproduced directly on the host
+      # every time. alpine boots reliably direct-on-host, which is what a
+      # real (non-nested) GitHub-hosted runner's Docker actually is --
+      # though note `act`'s own nested docker-in-docker hits this same
+      # eacces error with *either* image, apparently unrelated to which one
+      # is used; that appears to be a limitation of act's environment itself
+      # rather than this workflow, since a real runner's Docker isn't nested.
       #
       # Default user is deliberately NOT "guest": RabbitMQ restricts that
       # specific built-in account to true loopback connections, and whether
