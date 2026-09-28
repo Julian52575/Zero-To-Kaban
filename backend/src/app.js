@@ -14,6 +14,7 @@ const deleteItem = require('./routes/item/deleteItem');
 
 const getProjects = require('./routes/project/getProjects');
 const getUserProjects = require('./routes/project/getUserProjects');
+const getProjectCollaborators = require('./routes/project/getProjectCollaborators');
 const getProject = require('./routes/project/getProject');
 const createProject = require('./routes/project/createProject');
 const updateProject = require('./routes/project/updateProject');

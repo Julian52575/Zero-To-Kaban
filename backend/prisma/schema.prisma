@@ -55,6 +55,7 @@ enum CollaboratorInvitationState {
 }
 
 model ProjectCollaborator {
+  id        String  @id @default(uuid())
   projectId String
   userId    String
 
