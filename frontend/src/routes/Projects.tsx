@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { getProjects, deleteProject, createProject } from "../services/ProjectApi";
 import type { Project } from "../types/Project";
 
+import UserProfileButton from './../components/UserProfile/UserProfileButton';
+
 function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState("");
@@ -63,6 +65,7 @@ function Projects() {
 
   return (
     <Container className="py-4">
+      <UserProfileButton />
       <Row>
         <Col md={{ offset: 3, span: 6 }}>
           <h2 className="mb-4">My projects</h2>
