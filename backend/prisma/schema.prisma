@@ -29,8 +29,8 @@ model Column {
 }
 
 enum TaskPriority {
-  HIGH,
-  MEDIUM,
+  HIGH
+  MEDIUM
   LOW
 }
 

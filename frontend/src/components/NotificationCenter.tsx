@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Offcanvas, ListGroup, Badge } from "react-bootstrap";
 import { useNotifications } from "../provider/useNotificationsProvider";
-import { AcceptInvitation } from "../services/ProjectApi";
+import { AcceptInvitation, declineInvitation } from "../services/ProjectApi";
 
 function NotificationCenter() {
   const [show, setShow] = React.useState(false);
@@ -33,15 +33,30 @@ function NotificationCenter() {
     try {
       await AcceptInvitation(projectId, collaboratorId);
       resolveNotification(notificationId);
-      alert("Accepted the invitation!"); // Pour Antoine
     } catch (error) {
       console.error("Error accepting invitation:", error);
     }
   };
 
-  const handleDecline = (notificationId: string) => {
-    resolveNotification(notificationId);
-    alert("Declined the invitation!"); // Pour Antoine
+   const handleDecline = async (
+    notificationId: string,
+    projectId: string | undefined,
+    collaboratorId: string | undefined,
+  ) => {
+    if (!projectId || !collaboratorId) {
+      console.error(
+        "Project ID or Collaborator ID is undefined.",
+        projectId,
+        collaboratorId,
+      );
+      return;
+    }
+    try {
+      await declineInvitation(projectId, collaboratorId);
+      resolveNotification(notificationId);
+    } catch (error) {
+      console.error("Error declining invitation:", error);
+    }
   };
 
   return (
@@ -129,7 +144,13 @@ function NotificationCenter() {
                         variant="danger"
                         size="sm"
                         className="mt-2 ms-2"
-                        onClick={() => handleDecline(notification.id)}
+                        onClick={() => 
+                            handleDecline(
+                              notification.id,
+                              notification.projectId,
+                              notification.collaboratorId,
+                            )
+                        }
                       >
                         Decline
                       </Button>

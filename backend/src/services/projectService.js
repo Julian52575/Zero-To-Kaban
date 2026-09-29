@@ -34,13 +34,9 @@ async function createProjectCollaborator(projectId, userId) {
   return projectRepository.createProjectCollaborator(collaborator);
 }
 
-// Projects belong to their owner: for anyone else they don't exist (null).
+
 async function getProject(id, userId) {
-  const project = await projectRepository.getById(id);
-  if (!project || project.ownerId !== userId) {
-    return null;
-  }
-  return project;
+  return projectRepository.getById(id, userId);
 }
 
 async function updateProject(id, userId, data) {
@@ -55,14 +51,12 @@ async function updateProject(id, userId, data) {
 }
 
 async function updateProjectCollaborator(id, userId, data) {
-  const collaborators = await projectRepository.getProjectCollaborators(id);
-  const before = collaborators.find(c => c.userId === userId);
+  const before = await projectRepository.getProjectCollaborator(id, userId);
   if (!before) {
     return null;
   }
 
   const after = await projectRepository.updateProjectCollaborator(id, userId, data);
-
   return { before, after };
 }
 

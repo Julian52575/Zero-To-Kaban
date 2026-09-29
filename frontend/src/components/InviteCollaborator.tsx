@@ -1,50 +1,67 @@
 import React, { useEffect } from "react";
 import { Button, Form, Offcanvas, Alert } from "react-bootstrap";
-import Dropdown from "react-bootstrap/Dropdown";
+import Select, { MultiValue } from "react-select";
 import { getAllUsers } from "../services/collaboratorService";
-import { inviteCollaborator } from "../services/ProjectApi";
+import {
+  getProjectCollaborators,
+  inviteCollaborator,
+} from "../services/ProjectApi";
 
 interface InviteCollaboratorProps {
   projectId: string;
+  ownerId: string;
 }
 
-function InviteCollaborator({ projectId }: InviteCollaboratorProps) {
+interface CollaboratorOption {
+  value: string;
+  label: string;
+}
+
+function InviteCollaborator({ projectId, ownerId }: InviteCollaboratorProps) {
   const [show, setShow] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState(false);
   const [selectedCollaborators, setSelectedCollaborators] = React.useState<
-    string[]
+    CollaboratorOption[]
   >([]);
-  const [collaborators, setCollaborators] = React.useState<
-    { id: string; name: string }[]
-  >([]);
+  const [options, setOptions] = React.useState<CollaboratorOption[]>([]);
+  const loadOptions = React.useCallback(async () => {
+    try {
+      const [users, collaborators] = await Promise.all([
+        getAllUsers(),
+        getProjectCollaborators(projectId),
+      ]);
+
+      // Propriétaire (toi) + tous ceux qui ont déjà une ligne dans le projet
+      const excluded = new Set<string>(collaborators.map((c) => c.id));
+      if (ownerId) excluded.add(ownerId);
+
+      setOptions(
+        users
+          .filter((user) => !excluded.has(user.id))
+          .map((user) => ({ value: user.id, label: user.pseudo })),
+      );
+    } catch (error) {
+      console.error("Error fetching collaborators:", error);
+    }
+  }, [projectId, ownerId]);
 
   useEffect(() => {
-    // Fetch collaborators from the backend
-    const fetchCollaborators = async () => {
-      try {
-        const users = await getAllUsers();
-        setCollaborators(
-          users.map((user) => ({ id: user.id, name: user.pseudo })),
-        );
-      } catch (error) {
-        console.error("Error fetching collaborators:", error);
-      }
-    };
-
-    fetchCollaborators();
-  }, []);
+    loadOptions();
+  }, [loadOptions]);
 
   const handleClose = () => {
-    if (submitting) {
-      return;
-    }
+    if (submitting) return;
 
     setShow(false);
     setSelectedCollaborators([]);
     setError("");
     setSuccess(false);
+  };
+
+  const handleChange = (selected: MultiValue<CollaboratorOption>) => {
+    setSelectedCollaborators([...selected]);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -54,11 +71,12 @@ function InviteCollaborator({ projectId }: InviteCollaboratorProps) {
     setSuccess(false);
 
     try {
-      for (const collaboratorId of selectedCollaborators) {
-        await inviteCollaborator(projectId, collaboratorId);
+      for (const collaborator of selectedCollaborators) {
+        await inviteCollaborator(projectId, collaborator.value);
       }
       setSuccess(true);
       setSelectedCollaborators([]);
+      await loadOptions()
     } catch {
       setError("Unable to send the invitation. Please try again.");
     } finally {
@@ -96,49 +114,27 @@ function InviteCollaborator({ projectId }: InviteCollaboratorProps) {
 
             {error && <Alert variant="danger">{error}</Alert>}
 
-            <Form.Group className="mb-3" controlId="collaboratorEmail">
+            <Form.Group className="mb-3" controlId="collaboratorSelect">
               <Form.Label>Collaborators list</Form.Label>
 
-              <Dropdown className="w-100">
-                <Dropdown.Toggle
-                  variant="outline-secondary"
-                  className="w-100 text-start"
-                >
-                  {selectedCollaborators.length === 0
-                    ? "Sélectionner des collaborateurs"
-                    : `${selectedCollaborators.length} collaborateur(s) sélectionné(s)`}
-                </Dropdown.Toggle>
-
-                <Dropdown.Menu className="w-100 p-2">
-                  {collaborators.map((user) => (
-                    <Dropdown.Item
-                      as="label"
-                      key={user.id}
-                      className="d-flex align-items-center gap-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        checked={selectedCollaborators.includes(user.id)}
-                        onChange={() => {
-                          setSelectedCollaborators((current) =>
-                            current.includes(user.id)
-                              ? current.filter((id) => id !== user.id)
-                              : [...current, user.id],
-                          );
-                        }}
-                      />
-
-                      {user.name}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
+              <Select<CollaboratorOption, true>
+                inputId="collaboratorSelect"
+                isMulti
+                options={options}
+                value={selectedCollaborators}
+                onChange={handleChange}
+                closeMenuOnSelect={false}
+                isDisabled={submitting}
+                placeholder="Sélectionner des collaborateurs"
+                noOptionsMessage={() => "Aucun collaborateur trouvé"}
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: (base) => ({ ...base, zIndex: 2000 }),
+                }}
+              />
 
               <Form.Text className="text-muted">
-                Enter the email address of the user you want to invite to this
-                project.
+                Select the users you want to invite to this project.
               </Form.Text>
             </Form.Group>
           </Offcanvas.Body>

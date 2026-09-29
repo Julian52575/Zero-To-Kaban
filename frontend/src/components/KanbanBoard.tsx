@@ -66,23 +66,6 @@ function KanbanCard({
           onRename={onItemRename}
           onDelete={onItemDelete}
         />
-
-        <div className="kanban-card-assignee">
-          <span className="kanban-assignee-label">Assign to </span>
-
-          <select
-            className="kanban-assignee-select"
-            aria-label="Assign a user"
-            defaultValue=""
-          >
-            <option value="" disabled>
-              Choose a user
-            </option>
-            <option value="alice">Antoine</option>
-            <option value="bob">Rulian</option> //Ajouter la liste des utilisateurs ici 
-            <option value="charlie">Sacha</option>
-          </select>
-        </div>
       </div>
     </div>
   );

@@ -35,7 +35,6 @@ async function getProject(req, res) {
 }
 
 async function getUserProjects(req, res) {
-  
   const projects = await projectService.getUserProjects(req.userId);
 
   res.json(projects);
@@ -61,6 +60,11 @@ async function createProjectCollaborator(req, res) {
   const invitedUserId = req.body.userId;
   if (!invitedUserId) {
     return res.status(400).json({ error: "userId is required" });
+  }
+  if (invitedUserId === req.userId) {
+    return res
+      .status(400)
+      .json({ error: "You cannot invite yourself to the project" });
   }
   const collaborator = await projectService.createProjectCollaborator(
     req.params.id,
@@ -105,21 +109,29 @@ async function updateProject(req, res) {
 }
 
 async function updateProjectCollaborator(req, res) {
-  console.log("Updating project collaborator with data:", req.body);
+  try {
+    const { state } = req.body;
 
-  const updatedCollaborator = await projectService.updateProjectCollaborator(
-    req.params.id,
-    req.body.userId,
-    req.body,
-  );
+    if (!["ACCEPTED", "REFUSED"].includes(state)) {
+      return res.status(400).json({ error: "Invalid state" });
+    }
 
-  if (!updatedCollaborator) {
-    return res.status(404).json({
-      error: "Collaborator not found",
-    });
+    // L'invité est l'utilisateur connecté : on ne fait pas confiance au body
+    const updated = await projectService.updateProjectCollaborator(
+      req.params.id,
+      req.userId,
+      { state },
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: "Collaborator not found" });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Failed to update project collaborator:", error);
+    res.status(500).json({ error: "Failed to update collaborator" });
   }
-
-  res.json(updatedCollaborator);
 }
 
 async function deleteProject(req, res) {

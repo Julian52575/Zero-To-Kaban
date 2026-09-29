@@ -186,14 +186,14 @@ async function getProjectsFromUser(userId) {
     throw new Error("getProjectsFromUser: userId is required");
   }
 
-  return prisma.project.findMany({
+  const projects = await prisma.project.findMany({
     where: {
       OR: [
         { ownerId: userId },
         {
           collaborators: {
             some: {
-              userId: userId,
+              userId,
               state: $Enums.CollaboratorInvitationState.ACCEPTED,
             },
           },
@@ -201,11 +201,22 @@ async function getProjectsFromUser(userId) {
       ],
     },
     include: {
-      collaborators: true,
+      collaborators: {
+        where: {
+          userId,
+          state: $Enums.CollaboratorInvitationState.ACCEPTED,
+        },
+      },
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return projects.map((p) => withPermissions(p, userId));
+}
+
+async function getProjectCollaborator(projectId, userId) {
+  return prisma.projectCollaborator.findFirst({
+    where: { projectId, userId },
   });
 }
 
@@ -238,7 +249,7 @@ async function getProjectCollaborators(projectId) {
   const userIds = project.collaborators.map((c) => c.userId);
 
   try {
-    const response = await fetch("/internal/users/lookup", {
+    const response = await fetch("http://auth:4000/internal/users/lookup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: userIds }),
@@ -262,11 +273,48 @@ async function getProjectCollaborators(projectId) {
   }
 }
 
-async function getProject(id) {
-  return prisma.project.findUnique({
-    where: { id },
-    include: { columns: { orderBy: { order: "asc" } } },
+function withPermissions(project, userId) {
+  const { collaborators, ...rest } = project;
+  const isOwner = rest.ownerId === userId;
+  const role = isOwner ? "OWNER" : collaborators?.[0]?.role; // "EDITOR" | "VIEWER"
+
+  return {
+    ...rest,
+    role,
+    isOwner,
+    canEdit: isOwner || role === "EDITOR",
+    canManage: isOwner,
+  };
+}
+
+async function getProject(id, userId) {
+  const project = await prisma.project.findFirst({
+    where: {
+      id,
+      OR: [
+        { ownerId: userId },
+        {
+          collaborators: {
+            some: {
+              userId,
+              state: $Enums.CollaboratorInvitationState.ACCEPTED,
+            },
+          },
+        },
+      ],
+    },
+    include: {
+      columns: { orderBy: { order: "asc" } },
+      collaborators: {
+        where: {
+          userId,
+          state: $Enums.CollaboratorInvitationState.ACCEPTED,
+        },
+      },
+    },
   });
+
+  return project ? withPermissions(project, userId) : null;
 }
 
 async function updateProject(id, data) {
@@ -278,18 +326,19 @@ async function updateProject(id, data) {
 }
 
 async function updateProjectCollaborator(projectId, userId, data) {
+  const existing = await prisma.projectCollaborator.findFirst({
+    where: { projectId, userId },
+  });
+  if (!existing) return null;
+
   return prisma.projectCollaborator.update({
-    where: {
-      projectId: { projectId },
-      userId: { userId },
-    },
+    where: { id: existing.id },
     data: {
-      role: data.role,
-      state: data.state,
+      ...(data.role && { role: data.role }),
+      ...(data.state && { state: data.state }),
     },
   });
 }
-
 async function updateDeletedProjectCollaborator(
   projectId,
   userId,
@@ -368,6 +417,8 @@ module.exports = {
   getProjectsFromUser,
   getProjectCollaborators,
   getProject,
+  getProjectCollaborator,
+
   updateProject,
   updateProjectCollaborator,
   updateDeletedProjectCollaborator,

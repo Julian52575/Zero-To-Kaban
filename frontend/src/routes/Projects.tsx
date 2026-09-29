@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { Container, Row, Col, Form, Button, ListGroup } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
-import { getProjects, deleteProject, createProject } from "../services/ProjectApi";
+import {
+  getProjects,
+  deleteProject,
+  createProject,
+} from "../services/ProjectApi";
 import type { Project } from "../types/Project";
 
-import UserProfileButton from './../components/UserProfile/UserProfileButton';
+import UserProfileButton from "./../components/UserProfile/UserProfileButton";
 import NotificationCenter from "../components/NotificationCenter";
 
 function Projects() {
@@ -17,10 +22,16 @@ function Projects() {
   useEffect(() => {
     setError(null);
     getProjects()
-      .then((data) => setProjects(data))
+      .then((data) => {
+        setProjects(data);
+      })
       .catch((error) => {
         console.error("Error retrieving projects:", error);
-        setError("Unable to retrieve the projects. Please try again later.");
+        if (Array.isArray(error) && error.length > 0 && error[0].message) {
+          setError(error[0].message);
+        } else {
+          setError("Unable to retrieve the projects. Please try again later.");
+        }
       });
   }, []);
 
@@ -28,6 +39,10 @@ function Projects() {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) return;
+    if (trimmed.length < 2) {
+      setError("Project name must be at least 2 characters long.");
+      return;
+    }
     createProject(trimmed)
       .then((createdProject) => {
         setProjects([...projects, createdProject]);
@@ -39,9 +54,23 @@ function Projects() {
       });
   };
 
-  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
-    e.stopPropagation(); 
-    if (!window.confirm("Delete this project and all its tasks ?")) return; // A modifier
+  const handleDelete = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+    id: string,
+  ) => {
+    e.stopPropagation();
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
+    if (!result.isConfirmed) {
+      return;
+    }
     deleteProject(id)
       .then(() => {
         setProjects(projects.filter((p) => p.id !== id));
@@ -51,18 +80,6 @@ function Projects() {
         setError("Unable to delete the project. Please try again later.");
       });
   };
-
-  if (error) {
-    return (
-      <Container className="py-4">
-        <Row>
-          <Col md={{ offset: 3, span: 6 }}>
-            <p className="text-danger">{error}</p>
-          </Col>
-        </Row>
-      </Container>
-    );
-  }
 
   return (
     <Container className="py-4">
@@ -79,12 +96,17 @@ function Projects() {
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
-            <Button type="submit" variant="primary">
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!name.trim() || name.trim().length < 2}
+            >
               Create
             </Button>
           </Form>
+          {error && <p className="text-danger">{error}</p>}
 
-          {projects.length === 0 ? (
+          {projects.length === 0  && !error ? (
             <p className="text-muted">No projects at the moment.</p>
           ) : (
             <ListGroup>
@@ -97,14 +119,19 @@ function Projects() {
                   className="d-flex justify-content-between align-items-center"
                   onClick={() => navigate(`/projects/${project.id}`)}
                 >
-                  <span>{project.name}</span>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={(e) => handleDelete(e, project.id)}
-                  >
-                    Delete
-                  </Button>
+                  <span>
+                    {project.name}
+                    {project.isOwner && " (Owner)"}
+                  </span>
+                  {project.isOwner && (
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={async (e) =>await handleDelete(e, project.id)}
+                    >
+                      Delete
+                    </Button>
+                  )}
                 </ListGroup.Item>
               ))}
             </ListGroup>

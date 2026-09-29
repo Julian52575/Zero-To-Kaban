@@ -24,8 +24,12 @@ async function updateProjectCollaborator(id, userId, data) {
     return db.updateProjectCollaborator(id, userId, data);
 }
 
-async function getById(id) {
-    return db.getProject(id);
+async function getProjectCollaborator(projectId, userId) {
+  return db.getProjectCollaborator(projectId, userId);
+}
+
+async function getById(id, userId) {
+  return db.getProject(id, userId);
 }
 
 async function update(id, data) {
@@ -51,6 +55,7 @@ module.exports = {
     getAllFromUser,
     getProjectCollaborators,
     getById,
+    getProjectCollaborator,
     update,
     updateProjectCollaborator,
     deleteProject,

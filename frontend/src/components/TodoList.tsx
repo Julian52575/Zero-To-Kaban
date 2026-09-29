@@ -9,8 +9,11 @@ import {
   updateTask,
   deleteTask,
 } from "../services/taskService";
-import { getColumns, type Column } from "../services/columnService";
+import { type Column } from "../services/columnService";
 import { getErrorMessage } from "../utils/errorMessage";
+import { getProject } from "../services/ProjectApi";
+import InviteCollaborator from "./InviteCollaborator";
+import { Button } from "react-bootstrap";
 
 const STATUSES: ItemStatus[] = ["todo", "doing", "done"];
 
@@ -30,13 +33,28 @@ function TodoList({ projectId }: { projectId: string }) {
   const [columns, setColumns] = React.useState<Column[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [ownerId, setOwnerid] = React.useState<string>("");
+  const [permissions, setPermissions] = React.useState<{
+    role: "OWNER" | "EDITOR" | "VIEWER";
+    isOwner: boolean;
+    canEdit: boolean;
+    canManage: boolean;
+  } | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
-    Promise.all([getColumns(projectId), getTasks(projectId)])
-      .then(([cols, tasks]) => {
+    Promise.all([getProject(projectId), getTasks(projectId)])
+      .then(([project, tasks]) => {
         if (cancelled) return;
+        const cols = project.columns ?? [];
         setColumns(cols);
+        setPermissions({
+          role: project.role,
+          isOwner: project.isOwner,
+          canEdit: project.canEdit,
+          canManage: project.canManage,
+        });
+        setOwnerid(project.ownerId);
         setItems(tasks.map((t) => taskToItem(t, cols)));
       })
       .catch((err) => {
@@ -124,11 +142,25 @@ function TodoList({ projectId }: { projectId: string }) {
 
   return (
     <React.Fragment>
-      <AddItemForm
-        projectId={projectId}
-        columnId={columns[0]?.id}
-        onNewItem={onNewItem}
-      />
+      <div className="d-flex flex-nowrap align-items-start gap-3 mb-3">
+        {permissions?.canEdit && (
+          <div style={{ flex: "1 1 260px", minWidth: 0 }}>
+            <AddItemForm
+              projectId={projectId}
+              columnId={columns[0]?.id}
+              onNewItem={onNewItem}
+            />
+          </div>
+        )}
+        <div className="d-flex gap-2 flex-shrink-0">
+          {permissions?.canManage && (
+            <InviteCollaborator projectId={projectId} ownerId={ownerId} />
+          )}
+          {permissions && !permissions.isOwner && (
+            <Button variant="danger">Quitter</Button>
+          )}
+        </div>
+      </div>
       {actionError && <p className="text-danger">{actionError}</p>}
       <KanbanBoard
         items={items}
