@@ -101,7 +101,7 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       # Local dev: no login/register rate limits, so load tests and scripted
       # runs aren't stopped after 10 sign-ins. Set to false in .env to test them.
-      RATE_LIMIT_DISABLED: ${RATE_LIMIT_DISABLED:-true}
+      RATE_LIMIT_DISABLED: ${RATE_LIMIT_DISABLED:-false}
     depends_on:
       authdb:
         condition: service_healthy
