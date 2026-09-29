@@ -1,0 +1,125 @@
+# Prometheus + Alertmanager for the shared/production cluster (see the
+# monitoring ADR, discussion #131). Same upstream chart, version and alert
+# rules as monitoring-k3s-app.yaml, which is the copy to try a change on
+# first -- keep the two in step.
+#
+# Differences from the local one, all because prod data must survive a pod
+# restart and prod must not change without a human:
+#   * server and Alertmanager keep their data on a PersistentVolume, and
+#     the TSDB is capped (retentionSize) below the volume so it can't fill it.
+#   * no automated sync and no deletion finalizer, like prod-app.yaml: it is
+#     promoted by hand (`argocd app sync ztk-monitoring-prod`), and deleting
+#     the Application never takes the stored metrics with it.
+#   * the server has resource requests and a memory limit.
+#
+# Nothing here is exposed publicly: both Services stay ClusterIP, so the UIs
+# are reached with `kubectl port-forward` (see deployment/README.md). The
+# Alertmanager receiver is still a deliberate no-op -- point
+# `alertmanager.config.receivers` at a real target (and keep its URL in a
+# Secret, not in this file) once one is chosen.
+#
+# This relies on the cluster's Traefik exposing its metrics port with the
+# usual `prometheus.io/*` pod annotations (k3s's bundled Traefik does), and on
+# the cluster having a default StorageClass (k3s: local-path).
+#
+# Discovered by root-app.yaml, which only creates the Application: it stays
+# OutOfSync until someone syncs it.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ztk-monitoring-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: prometheus
+    targetRevision: 29.33.0
+    helm:
+      values: |
+        kube-state-metrics:
+          enabled: false
+        prometheus-node-exporter:
+          enabled: false
+        prometheus-pushgateway:
+          enabled: false
+        server:
+          retention: 15d
+          # Keep below persistentVolume.size so Prometheus deletes old blocks
+          # before the volume fills up.
+          retentionSize: 6GB
+          persistentVolume:
+            enabled: true
+            size: 8Gi
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+        alertmanager:
+          enabled: true
+          persistence:
+            enabled: true
+            size: 1Gi
+          config:
+            route:
+              receiver: discard-all-alerts
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 3h
+            receivers:
+              - name: discard-all-alerts
+        serverFiles:
+          alerting_rules.yml:
+            groups:
+              - name: ztk-edge
+                rules:
+                  - alert: TraefikHigh5xxRatio
+                    expr: |
+                      sum by (service) (rate(traefik_service_requests_total{code=~"5.."}[5m]))
+                        / sum by (service) (rate(traefik_service_requests_total[5m])) > 0.05
+                    for: 10m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "{{ $labels.service }} answers more than 5% of requests with a 5xx"
+                      description: "Over the last 5m, {{ $value | humanizePercentage }} of the requests Traefik routed to {{ $labels.service }} failed with a 5xx."
+                  - alert: TraefikHighLatency
+                    expr: |
+                      histogram_quantile(0.95, sum by (le, service) (rate(traefik_service_request_duration_seconds_bucket[5m]))) > 1
+                    for: 10m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "{{ $labels.service }} p95 latency is above 1s"
+                      description: "The 95th percentile of the request duration Traefik measured for {{ $labels.service }} is {{ $value | humanizeDuration }}."
+              - name: ztk-workloads
+                rules:
+                  - alert: ContainerMemoryNearLimit
+                    expr: |
+                      container_memory_working_set_bytes{namespace=~"ztk-.+", container!="", container!="POD"}
+                        / on (namespace, pod, container)
+                      (container_spec_memory_limit_bytes{namespace=~"ztk-.+", container!="", container!="POD"} > 0) > 0.9
+                    for: 10m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "{{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) uses over 90% of its memory limit"
+                      description: "Working set is at {{ $value | humanizePercentage }} of the container's memory limit; it will be OOM-killed if it reaches it."
+              - name: ztk-monitoring
+                rules:
+                  - alert: ScrapeTargetDown
+                    expr: up{job=~"kubernetes-pods|kubernetes-nodes-cadvisor|prometheus"} == 0
+                    for: 5m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "Prometheus cannot scrape {{ $labels.job }} ({{ $labels.instance }})"
+                      description: "The target has been down for 5m, so the alerts that depend on it are blind."
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
