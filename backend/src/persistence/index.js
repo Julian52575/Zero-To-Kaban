@@ -109,6 +109,8 @@ async function storeTask(columnId, creatorId, taskData) {
       columnId,
       creatorId,
       assigneeId: taskData.assigneeId || null,
+      dueDate: taskData.dueDate || null,
+      priority: $Enums.TaskPriority.MEDIUM,
     },
   });
 }
@@ -122,6 +124,8 @@ async function updateTask(id, updateData) {
       order: updateData.order,
       columnId: updateData.columnId,
       assigneeId: updateData.assigneeId,
+      dueDate: updateData.dueDate,
+      priority: updateData.priority,
     },
   });
 }
