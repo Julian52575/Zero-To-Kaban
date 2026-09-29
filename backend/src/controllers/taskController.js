@@ -4,6 +4,7 @@ const { publishEvent } = require("../events/eventBus");
 const { taskPayload } = require("../events/payloads");
 const {
   userCanAccessProject,
+  userCanEditProject,
   columnBelongsToProject,
   storeTask,
 } = require("../persistence");
@@ -66,7 +67,7 @@ async function createTask(req, res, next) {
       return res.status(400).json({ error: "invalid column" });
     }
 
-    if (!(await userCanAccessProject(creatorId, projectId))) {
+    if (!(await userCanEditProject(creatorId, projectId))) {
       return res.status(403).json({ error: "invalid role" });
     }
 
@@ -109,7 +110,7 @@ async function updateTask(req, res, next) {
       return res.status(400).json({ error: "invalid column" });
     }
 
-    if (!(await userCanAccessProject(req.userId, projectId))) {
+    if (!(await userCanEditProject(req.userId, projectId))) {
       return res.status(400).json({ error: "invalid role" });
     }
 
