@@ -54,6 +54,19 @@ model Project {
   @@index([ownerId])
 }
 
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  eventId   String   @unique
+  data      Json
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
 model ProcessedEvent {
   eventId     String   @id
   processedAt DateTime @default(now())

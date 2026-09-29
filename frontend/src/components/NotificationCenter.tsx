@@ -1,44 +1,22 @@
-import React from 'react';
-import {
-    Button,
-    Offcanvas,
-    ListGroup,
-    Badge,
-} from 'react-bootstrap';
-
-interface Notification {
-    id: number;
-    title: string;
-    message: string;
-    read: boolean;
-}
+import React from "react";
+import { Button, Offcanvas, ListGroup, Badge } from "react-bootstrap";
+import { useNotifications } from "../provider/useNotificationsProvider";
 
 function NotificationCenter() {
-    const [show, setShow] = React.useState(false);
+  const [show, setShow] = React.useState(false);
+  const { unreadNotifications, markAllAsRead } = useNotifications();
+  const handleOpen = () => {
+    setShow(true);
+  };
 
-    // Temporary notifications. Put list of notifications here.
-    const [notifications] = React.useState<Notification[]>([
-        {
-            id: 1,
-            title: 'Welcome',
-            message: 'This is a temporary brut notification',
-            read: false,
-        },
-        {
-            id: 2,
-            title: 'New activity',
-            message: 'This is a temporary brut notification',
-            read: false,
-        },
-    ]);
+  const handleClose = () => {
+    setShow(false);
+    markAllAsRead();
+  };
 
-    const unreadCount = notifications.filter(
-        notification => !notification.read,
-    ).length;
-
-    return (
-        <>
-            <style>{`
+  return (
+    <>
+      <style>{`
                 .position-relative {
                         margin-left: auto;
                         border-radius: 8px;
@@ -55,73 +33,60 @@ function NotificationCenter() {
                     transition: transform 0.2s ease-in-out;
                 }
             `}</style>
-            <Button
-                variant="outline-secondary"
-                onClick={() => setShow(true)}
-                aria-label="Open notifications"
-                className="position-relative"
-            >
-                <i className="fa fa-bell" />
+      <Button
+        variant="outline-secondary"
+        onClick={handleOpen}
+        aria-label="Open notifications"
+        className="position-relative"
+      >
+        <i className="fa fa-bell" />
 
-                {unreadCount > 0 && (
-                    <Badge
-                        bg="danger"
-                        pill
-                        className="position-absolute top-0 start-100 translate-middle"
-                    >
-                        {unreadCount}
+        {unreadNotifications.length > 0 && (
+          <Badge
+            bg="danger"
+            pill
+            className="position-absolute top-0 start-100 translate-middle"
+          >
+            {unreadNotifications.length}
+          </Badge>
+        )}
+      </Button>
+
+      <Offcanvas
+        show={show}
+        onHide={handleClose}
+        placement="end"
+        scroll={false}
+        backdrop={true}
+      >
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title>Notifications</Offcanvas.Title>
+        </Offcanvas.Header>
+
+        <Offcanvas.Body className="p-0">
+          {unreadNotifications.length === 0 ? (
+            <p className="text-center text-muted p-4 mb-0">No notifications.</p>
+          ) : (
+            <ListGroup variant="flush">
+              {unreadNotifications.map((notification) => (
+                <ListGroup.Item key={notification.id} className="py-3 px-3">
+                  <div className="d-flex justify-content-between align-items-start gap-2">
+                    <strong>{notification.title}</strong>
+
+                    <Badge bg="primary">
+                        New
                     </Badge>
-                )}
-            </Button>
+                  </div>
 
-            <Offcanvas
-                show={show}
-                onHide={() => setShow(false)}
-                placement="end"
-                scroll={false}
-                backdrop={true}
-            >
-                <Offcanvas.Header closeButton>
-                    <Offcanvas.Title>
-                        Notifications
-                    </Offcanvas.Title>
-                </Offcanvas.Header>
-
-                <Offcanvas.Body className="p-0">
-                    {notifications.length === 0 ? (
-                        <p className="text-center text-muted p-4 mb-0">
-                            No notifications.
-                        </p>
-                    ) : (
-                        <ListGroup variant="flush">
-                            {notifications.map(notification => (
-                                <ListGroup.Item
-                                    key={notification.id}
-                                    className="py-3 px-3"
-                                >
-                                    <div className="d-flex justify-content-between align-items-start gap-2">
-                                        <strong>
-                                            {notification.title}
-                                        </strong>
-
-                                        {!notification.read && (
-                                            <Badge bg="primary">
-                                                New
-                                            </Badge>
-                                        )}
-                                    </div>
-
-                                    <p className="mb-0 mt-1 text-muted">
-                                        {notification.message}
-                                    </p>
-                                </ListGroup.Item>
-                            ))}
-                        </ListGroup>
-                    )}
-                </Offcanvas.Body>
-            </Offcanvas>
-        </>
-    );
+                  <p className="mb-0 mt-1 text-muted">{notification.message}</p>
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+          )}
+        </Offcanvas.Body>
+      </Offcanvas>
+    </>
+  );
 }
 
 export default NotificationCenter;
