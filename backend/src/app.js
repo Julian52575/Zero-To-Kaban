@@ -18,6 +18,7 @@ const getProjectCollaborators = require('./routes/project/getProjectCollaborator
 const getProject = require('./routes/project/getProject');
 const createProject = require('./routes/project/createProject');
 const updateProject = require('./routes/project/updateProject');
+const updateProjectCollaborator = require('./routes/project/updateProjectCollaborator');
 const deleteProject = require('./routes/project/deleteProject');
 const createProjectCollaborator = require('./routes/project/createProjectCollaborator');
 
