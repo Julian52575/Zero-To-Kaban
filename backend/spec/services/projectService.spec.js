@@ -195,4 +195,87 @@ describe('projectService', () => {
             expect(projectRepository.deleteProject).not.toHaveBeenCalled();
         });
     });
+    describe('getUserProjects', () => {
+        it('should return all projects belonging to the user', async () => {
+            const projects = [
+                {
+                    id: 'project-1',
+                    name: 'Projet 1',
+                    ownerId: 'owner-id',
+                },
+                {
+                    id: 'project-2',
+                    name: 'Projet 2',
+                    ownerId: 'owner-id',
+                },
+            ];
+
+            projectRepository.getAllFromUser.mockResolvedValue(projects);
+
+            const result = await projectService.getUserProjects('owner-id');
+
+            expect(projectRepository.getAllFromUser).toHaveBeenCalledTimes(1);
+            expect(projectRepository.getAllFromUser).toHaveBeenCalledWith(
+                'owner-id'
+            );
+
+            expect(result).toEqual(projects);
+        });
+
+        it('should return an empty array when the user has no projects', async () => {
+            projectRepository.getAllFromUser.mockResolvedValue([]);
+
+            const result = await projectService.getUserProjects('owner-id');
+
+            expect(projectRepository.getAllFromUser).toHaveBeenCalledWith(
+                'owner-id'
+            );
+
+            expect(result).toEqual([]);
+        });
+
+        it('should propagate repository errors', async () => {
+            const error = new Error('Database error');
+
+            projectRepository.getAllFromUser.mockRejectedValue(error);
+
+            await expect(
+                projectService.getUserProjects('owner-id')
+            ).rejects.toThrow('Database error');
+
+            expect(projectRepository.getAllFromUser).toHaveBeenCalledWith(
+                'owner-id'
+            );
+        });
+    });
+    
+    describe('getProjectCollaborators', () => {
+        it('should return the project collaborators', async () => {
+            const collaborators = [
+                {
+                    userId: 'u2',
+                    role: 'EDITOR',
+                    state: 'ACCEPTED',
+                },
+                {
+                    userId: 'u3',
+                    role: 'VIEWER',
+                    state: 'ACCEPTED',
+                },
+            ];
+
+            projectRepository.getProjectCollaborators.mockResolvedValue(
+                collaborators
+            );
+
+            const result =
+                await projectService.getProjectCollaborators('p1');
+
+            expect(
+                projectRepository.getProjectCollaborators
+            ).toHaveBeenCalledWith('p1');
+
+            expect(result).toEqual(collaborators);
+        });
+    });
 });

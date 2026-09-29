@@ -1,5 +1,4 @@
 const { PrismaClient } = require("@prisma/client");
-const { use } = require("../app");
 
 const prisma = new PrismaClient();
 
@@ -152,28 +151,44 @@ async function getProjects(userId) {
 }
 
 async function getProjectsFromUser(userId) {
-  if (!userId) throw new Error("getProjectsFromUser: userId is required");
+  if (!userId) {
+    throw new Error("getProjectsFromUser: userId is required");
+  }
+
   return prisma.project.findMany({
     where: {
       OR: [
         { ownerId: userId },
-        { collaborators: { some: { userId: userId, state: 'ACCEPTED' } } },
+        {
+          collaborators: {
+            some: {
+              userId: userId,
+              state: "ACCEPTED",
+            },
+          },
+        },
       ],
     },
-    orderBy: { createdAt: "desc" },
+    include: {
+      collaborators: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
-  
 }
 
 async function getProjectCollaborators(projectId) {
-  if (!projectId) throw new Error("getProjectCollaborators: projectId is required");
+  if (!projectId) {
+    throw new Error("getProjectCollaborators: projectId is required");
+  }
 
-  const project = await prisma.project.findMany({
+  const projects = await prisma.project.findMany({
     where: { id: projectId },
-    select: { collaborators: true } 
+    select: { collaborators: true }
   });
 
-  return project ? project.collaborators : [];
+  return projects.length > 0 ? projects[0].collaborators : [];
 }
 
 async function getProject(id) {
@@ -191,11 +206,51 @@ async function updateProject(id, data) {
   });
 }
 
-async function updateDeletedProjectCollaborator(id, data) {
+async function updateDeletedProjectCollaborator(
+  projectId,
+  userId,
+  anonymousUserId
+) {
+  const project = await prisma.project.findUnique({
+    where: {
+      id: projectId,
+    },
+    select: {
+      ownerId: true,
+    },
+  });
+
+  if (!project) {
+    return null;
+  }
+
   return prisma.project.update({
-    where: { id },
-    data: {ownerId: data.ownerID, collaborators: data.collaborators},
-    include: { columns: { orderBy: { order: "asc" } } }
+    where: {
+      id: projectId,
+    },
+    data: {
+      ...(project.ownerId === userId
+        ? { ownerId: anonymousUserId }
+        : {}),
+      collaborators: {
+        updateMany: {
+          where: {
+            userId: userId,
+          },
+          data: {
+            userId: anonymousUserId,
+          },
+        },
+      },
+    },
+    include: {
+      columns: {
+        orderBy: {
+          order: "asc",
+        },
+      },
+      collaborators: true,
+    },
   });
 }
 

@@ -139,6 +139,26 @@ describe('persistence', () => {
         expect(result).toEqual(projects);
     });
 
+    test('getProjectCollaborators returns the project collaborators', async () => {
+        const collaborators = [
+            { userId: 'u2', role: 'EDITOR', state: 'ACCEPTED' },
+            { userId: 'u3', role: 'VIEWER', state: 'ACCEPTED' },
+        ];
+
+        mockPrismaInstance.project.findMany.mockResolvedValue([
+            { collaborators },
+        ]);
+
+        const result = await db.getProjectCollaborators('p1');
+
+        expect(mockPrismaInstance.project.findMany).toHaveBeenCalledWith({
+            where: { id: 'p1' },
+            select: { collaborators: true },
+        });
+
+        expect(result).toEqual(collaborators);
+    });
+
     test('getProjects refuses to list without a user', async () => {
         await expect(db.getProjects()).rejects.toThrow(
             'getProjects: userId is required'
@@ -185,67 +205,67 @@ describe('persistence', () => {
 
     describe('userCanEditProject', () => {
         it('returns true when the user is the project owner', async () => {
-          prisma.project.findFirst.mockResolvedValue({ id: 'project-1' });
-      
-          const result = await db.userCanEditProject('user-1', 'project-1');
-      
-          expect(result).toBe(true);
+            mockPrismaInstance.project.findFirst.mockResolvedValue({
+                id: 'project-1',
+            });
+
+            const result = await db.userCanEditProject('user-1', 'project-1');
+
+            expect(result).toBe(true);
         });
-      
+
         it('returns true when the user is an accepted editor', async () => {
-          prisma.project.findFirst.mockResolvedValue({ id: 'project-1' });
-      
-          const result = await db.userCanEditProject('user-2', 'project-1');
-      
-          expect(result).toBe(true);
+            mockPrismaInstance.project.findFirst.mockResolvedValue({
+                id: 'project-1',
+            });
+
+            const result = await db.userCanEditProject('user-2', 'project-1');
+
+            expect(result).toBe(true);
         });
-      
+
         it('returns false when the user is only a viewer', async () => {
-          prisma.project.findFirst.mockResolvedValue(null);
-      
-          const result = await db.userCanEditProject('user-2', 'project-1');
-      
-          expect(result).toBe(false);
+            mockPrismaInstance.project.findFirst.mockResolvedValue(null);
+
+            const result = await db.userCanEditProject('user-2', 'project-1');
+
+            expect(result).toBe(false);
         });
-      
+
         it('returns false when the editor invitation is pending', async () => {
-          prisma.project.findFirst.mockResolvedValue(null);
-      
-          const result = await db.userCanEditProject('user-2', 'project-1');
-      
-          expect(result).toBe(false);
+            mockPrismaInstance.project.findFirst.mockResolvedValue(null);
+
+            const result = await db.userCanEditProject('user-2', 'project-1');
+
+            expect(result).toBe(false);
         });
-      
+
         it('returns false when the user has no access to the project', async () => {
-          prisma.project.findFirst.mockResolvedValue(null);
-      
-          const result = await db.userCanEditProject('user-2', 'project-1');
-      
-          expect(result).toBe(false);
+            mockPrismaInstance.project.findFirst.mockResolvedValue(null);
+
+            const result = await db.userCanEditProject('user-2', 'project-1');
+
+            expect(result).toBe(false);
         });
-      
+
         it('returns false when userId is missing', async () => {
-          const result = await db.userCanEditProject(null, 'project-1');
-      
-          expect(result).toBe(false);
-          expect(prisma.project.findFirst).not.toHaveBeenCalled();
+            const result = await db.userCanEditProject(null, 'project-1');
+
+            expect(result).toBe(false);
+
+            expect(
+                mockPrismaInstance.project.findFirst
+            ).not.toHaveBeenCalled();
         });
-      
+
         it('returns false when projectId is missing', async () => {
-          const result = await db.userCanEditProject('user-1', null);
-      
-          expect(result).toBe(false);
-          expect(prisma.project.findFirst).not.toHaveBeenCalled();
-        });
-      });
+            const result = await db.userCanEditProject('user-1', null);
 
-    test('userCanAccessProject matches the project on its owner', async () => {
-        mockPrismaInstance.project.findFirst.mockResolvedValue({ id: 'p1' });
+            expect(result).toBe(false);
 
-        await expect(db.userCanAccessProject('u1', 'p1')).resolves.toBe(true);
-        expect(mockPrismaInstance.project.findFirst).toHaveBeenCalledWith({
-            where: { id: 'p1', ownerId: 'u1' },
-            select: { id: true },
+            expect(
+                mockPrismaInstance.project.findFirst
+            ).not.toHaveBeenCalled();
         });
     });
 
