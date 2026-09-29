@@ -53,3 +53,9 @@ export async function updateTaskAssignee(
     );
   }
 }
+
+export async function getAllUsers(): Promise<{ id: string; pseudo: string}[]> {
+  const response = await fetch(`/auth/users`);
+
+  return handleResponse<{ id: string; pseudo: string}[]>(response);
+}

@@ -1,7 +1,7 @@
 import type { User } from '../types/user';
 
 export async function getCurrentUser(): Promise<User> {
-    const response = await fetch('/api/users/me');
+    const response = await fetch('/auth/me');
 
     if (!response.ok) {
         throw new Error('Failed to retrieve user profile');
@@ -10,17 +10,16 @@ export async function getCurrentUser(): Promise<User> {
     return response.json();
 }
 
-export async function updateUser(
-    user: User,
+export async function updateMe(
+    username : string,
 ): Promise<User> {
-    const response = await fetch(`/api/users/${user.id}`, {
-        method: 'PUT',
+    const response = await fetch(`/auth/me`, {
+        method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            username: user.username,
-            email: user.email,
+            username: username,
         }),
     });
 
@@ -31,8 +30,8 @@ export async function updateUser(
     return response.json();
 }
 
-export async function deleteUser(userId: string): Promise<void> {
-    const response = await fetch(`/api/users/${userId}`, {
+export async function deleteMe(): Promise<void> {
+    const response = await fetch(`/auth/me`, {
         method: 'DELETE',
     });
 
@@ -42,11 +41,23 @@ export async function deleteUser(userId: string): Promise<void> {
 }
 
 export async function logout(): Promise<void> {
-    const response = await fetch('/api/auth/logout', {
+    const response = await fetch('/auth/logout-all', {
         method: 'POST',
     });
 
     if (!response.ok) {
         throw new Error('Failed to logout');
     }
+}
+
+export async function downloadUserData(): Promise<Blob> {
+    const response = await fetch('/auth/me/export', {
+        method: 'GET',
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to download user data');
+    }
+
+    return response.blob();
 }

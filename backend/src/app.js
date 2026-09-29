@@ -12,15 +12,9 @@ const addItem = require('./routes/item/addItem');
 const updateItem = require('./routes/item/updateItem');
 const deleteItem = require('./routes/item/deleteItem');
 const validateGetProjectCollaborators = require('./middlewares/getProjectCollaboratorsValidation');
-const getProjects = require('./routes/project/getProjects');
-const getUserProjects = require('./routes/project/getUserProjects');
-const getProjectCollaborators = require('./routes/project/getProjectCollaborators');
-const getProject = require('./routes/project/getProject');
-const createProject = require('./routes/project/createProject');
-const updateProject = require('./routes/project/updateProject');
+
 const updateProjectCollaborator = require('./routes/project/updateProjectCollaborator');
-const deleteProject = require('./routes/project/deleteProject');
-const createProjectCollaborator = require('./routes/project/createProjectCollaborator');
+const createProjectCollaborator = require('./routes/project/createProjetCollaborator');
 
 const getProjects = require("./routes/project/getProjects");
 const getUserProjects = require("./routes/project/getUserProjects");
@@ -37,7 +31,6 @@ const markAsRead = require("./routes/notifications/markAsRead");
 const markAllAsRead = require("./routes/notifications/markAllAsRead");
 
 const validateGetUserProjects = require("./middlewares/getUserProjectsValidation");
-const validateGetProjectCollaborators = require("./middlewares/getProjectCollaboratorsValidation");
 
 const { getColumns } = require("./controllers/ColumnController");
 
@@ -47,9 +40,7 @@ const {
 } = require('./middlewares/projectValidation');
 
 const requireUser = require('./middlewares/requireUser');
-const { update } = require('./repositories/taskRepository');
 
-const requireUser = require("./middlewares/requireUser");
 
 const app = express();
 
