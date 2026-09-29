@@ -66,7 +66,7 @@ async function startConsumers() {
     sendToUser(data.assigneeId, {
       type: EVENTS.TASK_ASSIGNED,
       data,
-      eventId,
+      eventId : rep.id
     });
   });
 
@@ -90,7 +90,7 @@ async function startConsumers() {
     sendToUser(data.userId, {
       type: EVENTS.PROJECT_INVITATION,
       data,
-      eventId,
+      eventId: rep.id
     });
   });
 

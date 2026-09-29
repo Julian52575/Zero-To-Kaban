@@ -1,8 +1,8 @@
 import React from "react";
 import AddItemForm from "./AddItemForm";
 import KanbanBoard from "./KanbanBoard";
-import type { Item, ItemStatus } from "../types/item";
-import type { Task } from "../types/task";
+import type { ItemStatus } from "../types/item";
+import type { Task, UpdateTaskInput } from "../types/task";
 import {
   getTasks,
   moveTask,
@@ -17,19 +17,8 @@ import { Button } from "react-bootstrap";
 
 const STATUSES: ItemStatus[] = ["todo", "doing", "done"];
 
-function taskToItem(task: Task, columns: Column[]): Item {
-  const idx = columns.findIndex((c) => c.id === task.columnId);
-  const status = STATUSES[Math.min(Math.max(idx, 0), STATUSES.length - 1)];
-  return {
-    id: task.id,
-    name: task.title,
-    completed: status === "done",
-    status,
-  };
-}
-
 function TodoList({ projectId }: { projectId: string }) {
-  const [items, setItems] = React.useState<Item[] | null>(null);
+  const [items, setItems] = React.useState<Task[] | null>(null);
   const [columns, setColumns] = React.useState<Column[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
@@ -55,7 +44,13 @@ function TodoList({ projectId }: { projectId: string }) {
           canManage: project.canManage,
         });
         setOwnerid(project.ownerId);
-        setItems(tasks.map((t) => taskToItem(t, cols)));
+        setItems(
+          tasks.map((t) => {
+            const index = cols.findIndex((c: Column) => c.id === t.columnId);
+            const status: ItemStatus = STATUSES[index] ?? "todo";
+            return { ...t, status, completed: status === "done" };
+          }),
+        );
       })
       .catch((err) => {
         console.error(err);
@@ -66,13 +61,13 @@ function TodoList({ projectId }: { projectId: string }) {
     };
   }, [projectId]);
 
-  const onNewItem = React.useCallback((newItem: Item) => {
+  const onNewItem = React.useCallback((newItem: Task) => {
     setItems((current) =>
       current === null ? [newItem] : [...current, newItem],
     );
   }, []);
 
-  const replaceItem = React.useCallback((item: Item) => {
+  const replaceItem = React.useCallback((item: Task) => {
     setItems((current) =>
       current === null
         ? null
@@ -80,14 +75,29 @@ function TodoList({ projectId }: { projectId: string }) {
     );
   }, []);
 
-  const onItemRename = React.useCallback(
-    (item: Item, name: string) => {
-      const trimmed = name.trim();
-      if (!trimmed || trimmed === item.name) return;
-
+  const onItemUpdate = React.useCallback(
+    (item: Task, changes: Partial<Task>) => {
+      const {
+        title,
+        description,
+        order,
+        dueDate,
+        priority,
+        columnId,
+        assigneeId,
+      } = changes;
+      const payload: UpdateTaskInput = {
+        title,
+        description,
+        order,
+        dueDate,
+        priority,
+        columnId,
+        assigneeId,
+      };
       setActionError(null);
-      replaceItem({ ...item, name: trimmed }); // optimiste
-      updateTask(projectId, item.id, { title: trimmed }).catch((err) => {
+      replaceItem({ ...item, ...changes });
+      updateTask(projectId, item.id, payload).catch((err) => {
         console.error(err);
         replaceItem(item); // rollback
         setActionError(getErrorMessage(err));
@@ -97,7 +107,7 @@ function TodoList({ projectId }: { projectId: string }) {
   );
 
   const onItemDelete = React.useCallback(
-    (item: Item) => {
+    (item: Task) => {
       setActionError(null);
       deleteTask(projectId, item.id)
         .then(() =>
@@ -114,7 +124,7 @@ function TodoList({ projectId }: { projectId: string }) {
   );
 
   const onStatusChange = React.useCallback(
-    (item: Item, status: ItemStatus) => {
+    (item: Task, status: ItemStatus) => {
       const target = columns[STATUSES.indexOf(status)];
       if (!target) return;
 
@@ -164,7 +174,8 @@ function TodoList({ projectId }: { projectId: string }) {
       {actionError && <p className="text-danger">{actionError}</p>}
       <KanbanBoard
         items={items}
-        onItemRename={onItemRename}
+        projectId={projectId}
+        onItemUpdate={onItemUpdate}
         onItemDelete={onItemDelete}
         onStatusChange={onStatusChange}
       />

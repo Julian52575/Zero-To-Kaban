@@ -2,12 +2,14 @@ import "./TaskDetailsModal.css";
 import React from "react";
 import { Button, Form, Modal } from "react-bootstrap";
 import type { Item, ItemStatus } from "../types/item";
+import { Task } from "../types/task";
 
 interface Props {
-  item: Item;
+  item: Task;
+  users: { id: string; pseudo: string }[];
   show: boolean;
   onClose: () => void;
-  onSave: (item: Item, changes: Partial<Item>) => void;
+  onSave: (item: Task, changes: Partial<Task>) => void;
 }
 
 const STATUSES: { value: ItemStatus; label: string }[] = [
@@ -16,49 +18,32 @@ const STATUSES: { value: ItemStatus; label: string }[] = [
   { value: "done", label: "Done" },
 ];
 
-const USERS = [
-  "Antoine",
-  "Rulian",
-  "Sacha",
-];
-
 const PRIORITIES = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
+  { value: "LOW", label: "Low" },
+  { value: "MEDIUM", label: "Medium" },
+  { value: "HIGH", label: "High" },
 ];
 
-function TaskDetailsModal({
-  item,
-  show,
-  onClose,
-  onSave,
-}: Props) {
-  const [name, setName] = React.useState(item.name);
-  const [description, setDescription] = React.useState(
-    item.description ?? "",
+function TaskDetailsModal({ item,users, show, onClose, onSave }: Props) {
+  const [name, setName] = React.useState(item.title);
+  const [description, setDescription] = React.useState(item.description ?? "");
+  const [user, setUser] = React.useState(item.assigneeId ?? "");
+  const [deadline, setDeadline] = React.useState<Date | null>(
+    item.dueDate ?? null,
   );
-  const [user, setUser] = React.useState(item.user ?? "");
-  const [deadline, setDeadline] = React.useState(
-    item.deadline ?? "",
-  );
-  const [priority, setPriority] = React.useState(
-    item.priority ?? "medium",
-  );
+  const [priority, setPriority] = React.useState(item.priority ?? "medium");
   const [status, setStatus] = React.useState<ItemStatus>(
     item.status ?? (item.completed ? "done" : "todo"),
   );
 
   React.useEffect(() => {
     if (show) {
-      setName(item.name);
+      setName(item.title);
       setDescription(item.description ?? "");
-      setUser(item.user ?? "");
-      setDeadline(item.deadline ?? "");
+      setUser(item.assigneeId ?? "");
+      setDeadline(item.dueDate ?? null);
       setPriority(item.priority ?? "medium");
-      setStatus(
-        item.status ?? (item.completed ? "done" : "todo"),
-      );
+      setStatus(item.status ?? (item.completed ? "done" : "todo"));
     }
   }, [item, show]);
 
@@ -70,11 +55,11 @@ function TaskDetailsModal({
     }
 
     onSave(item, {
-      name: trimmedName,
+      title: trimmedName,
       description: description.trim(),
-      user,
-      deadline,
-      priority,
+      assigneeId: user,
+      dueDate: deadline,
+      priority: priority.toUpperCase() as "LOW" | "MEDIUM" | "HIGH",
       status,
       completed: status === "done",
     });
@@ -110,9 +95,7 @@ function TaskDetailsModal({
               as="textarea"
               rows={4}
               value={description}
-              onChange={(event) =>
-                setDescription(event.target.value)
-              }
+              onChange={(event) => setDescription(event.target.value)}
               placeholder="Enter a description..."
             />
           </Form.Group>
@@ -123,18 +106,14 @@ function TaskDetailsModal({
 
             <Form.Select
               value={user}
-              onChange={(event) =>
-                setUser(event.target.value)
-              }
+              onChange={(event) => setUser(event.target.value)}
               aria-label="Select a collaborator"
             >
-              <option value="">
-                Select a collaborator
-              </option>
+              <option value="">Non assignée</option>
 
-              {USERS.map((userName) => (
-                <option key={userName} value={userName}>
-                  {userName}
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.pseudo}
                 </option>
               ))}
             </Form.Select>
@@ -146,9 +125,11 @@ function TaskDetailsModal({
 
             <Form.Control
               type="date"
-              value={deadline}
+              value={deadline ? deadline.toISOString().split("T")[0] : ""}
               onChange={(event) =>
-                setDeadline(event.target.value)
+                setDeadline(
+                  event.target.value ? new Date(event.target.value) : null,
+                )
               }
             />
           </Form.Group>
@@ -159,15 +140,10 @@ function TaskDetailsModal({
 
             <Form.Select
               value={priority}
-              onChange={(event) =>
-                setPriority(event.target.value)
-              }
+              onChange={(event) => setPriority(event.target.value)}
             >
               {PRIORITIES.map((option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
-                >
+                <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
@@ -180,15 +156,10 @@ function TaskDetailsModal({
 
             <Form.Select
               value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as ItemStatus)
-              }
+              onChange={(event) => setStatus(event.target.value as ItemStatus)}
             >
               {STATUSES.map((option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
-                >
+                <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}

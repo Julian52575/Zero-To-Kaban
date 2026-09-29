@@ -1,12 +1,12 @@
 import React from "react";
 import { Form, InputGroup, Button } from "react-bootstrap";
-import type { Item } from "../types/item";
 import { getErrorMessage } from "../utils/errorMessage";
 import { createTask } from "../services/taskService";
+import { Task } from "../types/task";
 
 interface AddItemFormProps {
   projectId: string;
-  onNewItem: (item: Item) => void;
+  onNewItem: (item: Task) => void;
   columnId?: string;
 }
 
@@ -23,12 +23,7 @@ function AddItemForm({ projectId, onNewItem, columnId }: AddItemFormProps) {
     setError(null);
     createTask(projectId, { title: newItem.trim(), columnId })
       .then((task) => {
-        onNewItem({
-          id: task.id,
-          name: task.title,
-          completed: false,
-          status: "todo",
-        });
+        onNewItem(task);
         setNewItem("");
       })
       .catch((error) => {

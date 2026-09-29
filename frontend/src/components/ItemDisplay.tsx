@@ -3,6 +3,7 @@ import { Badge, Button, Form, InputGroup } from "react-bootstrap";
 import type { Item } from "../types/item";
 import TaskDetailsModal from "./TaskDetailsModal";
 import Select, { SingleValue } from "react-select";
+import { Task } from "../types/task";
 
 interface AssigneeOption {
   value: string;
@@ -14,21 +15,20 @@ type Priority = "HIGH" | "MEDIUM" | "LOW";
 type Member = { id: string; pseudo: string };
 
 interface Props {
-  item: Item;
-  onRename: (item: Item, name: string) => void;
-  onDelete: (item: Item) => void;
-  onUpdate?: (item: Item, changes: Partial<Item>) => void;
-  members?: Member[]; // utilisateurs assignables (propriétaire + collaborateurs)
-  canEdit?: boolean; // false pour un VIEWER
+  item: Task;
+  onDelete: (item: Task) => void;
+  onUpdate?: (item: Task, changes: Partial<Task>) => void;
+  members?: Member[];
+  canEdit?: boolean; 
 }
 
 const PRIORITY_META: Record<
   Priority,
   { label: string; bg: string; text?: string }
 > = {
-  HIGH: { label: "Haute", bg: "danger" },
-  MEDIUM: { label: "Moyenne", bg: "warning", text: "dark" },
-  LOW: { label: "Basse", bg: "secondary" },
+  HIGH: { label: "High", bg: "danger" },
+  MEDIUM: { label: "Medium", bg: "warning", text: "dark" },
+  LOW: { label: "Low", bg: "secondary" },
 };
 
 function parseDate(value: unknown): Date | null {
@@ -39,18 +39,17 @@ function parseDate(value: unknown): Date | null {
 
 function ItemDisplay({
   item,
-  onRename,
   onDelete,
   onUpdate,
   members = [],
   canEdit = true,
 }: Props) {
   const [editing, setEditing] = React.useState(false);
-  const [draft, setDraft] = React.useState(item.name);
+  const [draft, setDraft] = React.useState(item.title);
   const [showDetails, setShowDetails] = React.useState(false);
 
-  const priority = "HIGH" as Priority | undefined; // TODO: item.priority
-  const dueDate = parseDate("2024-06-15T12:00:00Z"); // TODO: item.dueDate
+  const priority = item.priority as Priority | undefined;
+  const dueDate = parseDate(item.dueDate);
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -59,12 +58,12 @@ function ItemDisplay({
 
   const startEditing = () => {
     if (!canEdit) return;
-    setDraft(item.name);
+    setDraft(item.title);
     setEditing(true);
   };
 
   const cancel = () => {
-    setDraft(item.name);
+    setDraft(item.title);
     setEditing(false);
   };
 
@@ -72,15 +71,15 @@ function ItemDisplay({
     const trimmed = draft.trim();
     if (!trimmed) return;
     setEditing(false);
-    onRename(item, trimmed);
+    onUpdate?.(item, { title: trimmed });
   };
 
-  const handleDetailsSave = (currentItem: Item, changes: Partial<Item>) => {
+  const handleDetailsSave = (currentItem: Task, changes: Partial<Task>) => {
     if (onUpdate) {
       onUpdate(currentItem, changes);
     }
-    if (changes.name && changes.name !== currentItem.name) {
-      onRename(currentItem, changes.name);
+    if (changes.title && changes.title !== currentItem.title) {
+      onUpdate?.(currentItem, { title: changes.title });
     }
   };
 
@@ -138,7 +137,7 @@ function ItemDisplay({
             checked={item.completed}
             readOnly
             onClick={(event) => event.stopPropagation()}
-            aria-label={`"${item.name}" terminée`}
+            aria-label={`"${item.title}" terminée`}
           />
 
           <span
@@ -149,16 +148,16 @@ function ItemDisplay({
               event.stopPropagation();
               startEditing();
             }}
-            title={canEdit ? "Double-clic pour renommer" : item.name}
+            title={canEdit ? "Double-clic pour renommer" : item.title}
           >
-            {item.name}
+            {item.title}
           </span>
 
           {canEdit && (
             <Button
               size="sm"
               variant="outline-danger"
-              aria-label={`Delete "${item.name}"`}
+              aria-label={`Delete "${item.title}"`}
               onClick={(event) => {
                 event.stopPropagation();
                 onDelete(item);
@@ -232,6 +231,7 @@ function ItemDisplay({
 
       <TaskDetailsModal
         item={item}
+        users={members}
         show={showDetails}
         onClose={() => setShowDetails(false)}
         onSave={handleDetailsSave}

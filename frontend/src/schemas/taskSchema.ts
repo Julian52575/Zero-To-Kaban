@@ -9,6 +9,11 @@ export const taskSchema = z.object({
   creatorId: z.string().optional(),
   assigneeId: z.string().nullable().optional(),
   // coerce transforme la string ISO envoyée par l'API en Date
+  dueDate: z.coerce.date().nullable().optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
+  status: z.enum(["todo", "doing", "done"]).optional(),
+  completed: z.boolean().optional(),
+
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
 });

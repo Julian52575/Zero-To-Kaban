@@ -123,7 +123,7 @@ async function updateTask(req, res, next) {
       console.error("Failed to publish TASK_UPDATED event:", error);
     }
 
-    if (lastTask.assigneeId !== task.assigneeId) {
+    if (lastTask.assigneeId !== task.assigneeId && task.assigneeId !== null && task.assigneeId !== req.userId) {
       try {
         await publishEvent(EVENTS.TASK_ASSIGNED, taskPayload(task, projectId));
       } catch (error) {

@@ -2,6 +2,7 @@ import React from "react";
 import { Alert, Button, Form, Offcanvas, Spinner } from "react-bootstrap";
 
 import type { User } from "../../types/user";
+import Swal from "sweetalert2";
 
 import {
   getCurrentUser,
@@ -24,9 +25,6 @@ function UserProfileModal({ show, onClose }: UserProfileModalProps) {
   const [loading, setLoading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-
-  const [showDeleteConfirmation, setShowDeleteConfirmation] =
-    React.useState(false);
 
   React.useEffect(() => {
     if (!show) {
@@ -73,11 +71,25 @@ function UserProfileModal({ show, onClose }: UserProfileModalProps) {
 
   const handleDelete = async () => {
     try {
+      const reply = await Swal.fire({
+        title: "Delete your account?",
+        text: "This action is permanent and cannot be undone.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc3545",
+        cancelButtonColor: "#6c757d",
+        confirmButtonText: "Yes, delete my account",
+        cancelButtonText: "Cancel",
+      });
+
+      if (!reply.isConfirmed) {
+        return;
+      }
       await deleteMe();
       window.location.href = "/";
     } catch {
       setError("Unable to delete your account.");
-      setShowDeleteConfirmation(false);
+      
     }
   };
 
@@ -174,32 +186,11 @@ function UserProfileModal({ show, onClose }: UserProfileModalProps) {
 
               <Button
                 variant="outline-danger"
-                onClick={() => setShowDeleteConfirmation(true)}
+                onClick={handleDelete}
               >
                 Delete account
               </Button>
             </div>
-
-            {showDeleteConfirmation && (
-              <Alert variant="danger" className="mt-3">
-                <Alert.Heading>Delete your account?</Alert.Heading>
-
-                <p>This action is permanent and cannot be undone.</p>
-
-                <div className="d-grid gap-2">
-                  <Button variant="danger" onClick={handleDelete}>
-                    Yes, delete my account
-                  </Button>
-
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowDeleteConfirmation(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </Alert>
-            )}
           </>
         )}
       </Offcanvas.Body>
