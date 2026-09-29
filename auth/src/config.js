@@ -31,5 +31,7 @@ module.exports = {
     sessionTtlSeconds: number('SESSION_TTL_SECONDS', 7 * 24 * 60 * 60),
     cookieName: process.env.SESSION_COOKIE_NAME || 'session',
     cookieSecure: process.env.COOKIE_SECURE === 'true',
+    // Local dev only. Anything but the exact string "true" keeps the limits on.
+    rateLimitDisabled: process.env.RATE_LIMIT_DISABLED === 'true',
     verifyCacheTtlMs: number('VERIFY_CACHE_TTL_MS', 5000),
 };
