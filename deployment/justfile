@@ -210,9 +210,13 @@ usage-summary idle load:
             if (mem($3) > peak_mem[$1]) peak_mem[$1] = mem($3)
         }
         END {
-            printf "  %-52s %-16s %s\n", "pod", "CPU (millicores)", "memory (MiB)"
-            for (p in pods)
-                printf "  %-52s %5d -> %-6d %6.0f -> %.0f\n", p, idle_cpu[p], peak_cpu[p], idle_mem[p], peak_mem[p]
+            # Size the pod column from the names, so long pod names cannot push the numbers out of line.
+            width = length("pod")
+            for (p in pods) if (length(p) > width) width = length(p)
+            fmt = "  %-" width "s  %-16s  %s\n"
+            row = "  %-" width "s  %6d -> %-6d  %7.0f -> %.0f\n"
+            printf fmt, "pod", "CPU (millicores)", "memory (MiB)"
+            for (p in pods) printf row, p, idle_cpu[p], peak_cpu[p], idle_mem[p], peak_mem[p]
         }
     ' "{{idle}}" "{{load}}" | { IFS= read -r header; echo "$header"; sort; }
 
