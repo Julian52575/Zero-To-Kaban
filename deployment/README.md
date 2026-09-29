@@ -119,9 +119,10 @@ and an estimate of the disk 7 days of metrics need (Prometheus's own rule of
 thumb: retention seconds x samples per second x 1 to 2 bytes). Compare that with
 the `retentionSize` and volume size in `monitoring-prod-app.yaml`.
 
-Two limits to keep in mind: dev runs the `latest` release images, so it
-measures the last release, not your working tree (build and push a tag if you
-need to measure a branch), and a local k3s node is not the VPS. Use the numbers
+Two limits to keep in mind: dev runs the `manual-test` images, so it
+measures whatever was last built by hand (run the `release-to-container-registry`
+workflow on your branch to measure your changes), and a local k3s node is not
+the VPS. Use the numbers
 as an order of magnitude, then check the real ones with `kubectl top` once prod
 runs.
 
@@ -270,7 +271,7 @@ first created. On an older dev volume, run `just nuke` to reset them.
 
 | Setting                | dev                                  | prod                                    |
 |------------------------|--------------------------------------|-----------------------------------------|
-| image tag / pull       | `latest` (last release), `Always`    | release tag bumped on each release (`manual-test` until the first one), `IfNotPresent` |
+| image tag / pull       | `manual-test`, `Always`              | release tag bumped on each release (`manual-test` until the first one), `IfNotPresent` |
 | replicas (be/auth/fe)  | 1 / 1 / 1                            | 4 / 2 / 2                               |
 | frontend memory limit  | 1Gi                                  | 128Mi                                   |
 | secrets                | plaintext defaults in `values.yaml`  | pre-created Secrets (`existingSecret`)  |

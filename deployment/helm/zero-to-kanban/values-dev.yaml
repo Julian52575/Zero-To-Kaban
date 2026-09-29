@@ -4,31 +4,33 @@
 
 backend:
   image:
-    tag: latest
+    tag: manual-test
     pullPolicy: Always
   replicaCount: 1
 
 auth:
   image:
-    tag: latest
+    tag: manual-test
     pullPolicy: Always
   replicaCount: 1
   # Dev has no login/register rate limits, so load tests and scripted runs
   # aren't stopped after 10 sign-ins. Takes effect with an auth image that
-  # knows RATE_LIMIT_DISABLED (releases after this change); older images ignore it.
+  # knows RATE_LIMIT_DISABLED (a manual-test build from that change or later);
+  # older images ignore it.
   rateLimitDisabled: "true"
 
 frontend:
   image:
-    tag: latest
+    tag: manual-test
     pullPolicy: Always
   replicaCount: 1
   # Kept from when dev ran a hand-built image with the Vite/Rolldown dev
   # server in-cluster, which routinely needed several hundred MB and was
   # getting OOM-killed (memory.oom.group), taking down the whole rootless k3s
-  # node with it. `latest` is the release image: the prebuilt static bundle
-  # the base values.yaml's 128Mi limit assumes, so this is now more headroom
-  # than it needs. Drop it if you never go back to the dev-server image.
+  # node with it. The images release-to-ghcr.yml builds, release or manual, are
+  # the prebuilt static bundle the base values.yaml's 128Mi limit assumes, so
+  # this is now more headroom than it needs. Drop it if you never go back to
+  # a dev-server image.
   resources:
     requests:
       cpu: 100m
