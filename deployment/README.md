@@ -394,7 +394,7 @@ discussion #131). Like `ztk-prod`, the root app only creates it: nothing is
 deployed until you sync it, from the Argo CD UI or with
 `argocd app sync ztk-monitoring-prod`.
 
-- Metrics are kept 15 days, capped at 6GB of an 8Gi volume. Alertmanager keeps
+- Metrics are kept 7 days, capped at 1500MB of a 2Gi volume. Alertmanager keeps
   its silences on a 1Gi volume. Both need a default StorageClass (k3s:
   `local-path`).
 - It scrapes Traefik's metrics port (k3s's Traefik carries the

@@ -44,13 +44,15 @@ spec:
         prometheus-pushgateway:
           enabled: false
         server:
-          retention: 15d
-          # Keep below persistentVolume.size so Prometheus deletes old blocks
-          # before the volume fills up.
-          retentionSize: 6GB
+          # Sized down for the VPS, which has little disk to spare. Prometheus
+          # deletes the oldest data as soon as either limit is reached.
+          retention: 7d
+          # Keep below persistentVolume.size (MB here is 1024*1024 bytes) so
+          # old blocks go before the volume fills up.
+          retentionSize: 1500MB
           persistentVolume:
             enabled: true
-            size: 8Gi
+            size: 2Gi
           resources:
             requests:
               cpu: 100m
