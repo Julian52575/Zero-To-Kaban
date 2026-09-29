@@ -96,10 +96,14 @@ spec:
               - name: ztk-workloads
                 rules:
                   - alert: ContainerMemoryNearLimit
+                    # max by (...) on both sides: after a container restart cAdvisor
+                    # briefly exposes two series (one per container id) for the
+                    # same pod/container, and a plain one-to-one match would then
+                    # fail to evaluate right when the alert matters.
                     expr: |
-                      container_memory_working_set_bytes{namespace=~"ztk-.+", container!="", container!="POD"}
+                      max by (namespace, pod, container) (container_memory_working_set_bytes{namespace=~"ztk-.+", container!="", container!="POD"})
                         / on (namespace, pod, container)
-                      (container_spec_memory_limit_bytes{namespace=~"ztk-.+", container!="", container!="POD"} > 0) > 0.9
+                      max by (namespace, pod, container) (container_spec_memory_limit_bytes{namespace=~"ztk-.+", container!="", container!="POD"} > 0) > 0.9
                     for: 10m
                     labels:
                       severity: warning
