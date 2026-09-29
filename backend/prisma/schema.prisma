@@ -28,13 +28,22 @@ model Column {
   @@index([projectId])
 }
 
+enum TaskPriority {
+  HIGH,
+  MEDIUM,
+  LOW
+}
+
 model Task {
   id          String   @id @default(uuid())
   title       String
   description String?
   order       Int
   createdAt   DateTime @default(now())
+  dueDate     DateTime?
   updatedAt   DateTime @updatedAt
+
+  priority    TaskPriority @default(MEDIUM)
 
   columnId    String
   column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
