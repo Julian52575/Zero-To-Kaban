@@ -211,9 +211,20 @@ def percentile(sorted_values, p):
     return sorted_values[rank - 1]
 
 
-def print_summary(records, elapsed):
+def print_summary(records, elapsed, target_rps=None, workers=None):
+    reached = len(records) / elapsed if elapsed else 0
     print()
-    print("sent %d requests in %.0fs (~%.1f req/s)" % (len(records), elapsed, len(records) / elapsed if elapsed else 0))
+    print("sent %d requests in %.0fs (~%.1f req/s)" % (len(records), elapsed, reached))
+    if target_rps and workers and records and reached < 0.9 * target_rps:
+        average = sum(seconds for _, _, _, seconds in records) / len(records)
+        print()
+        print(
+            "note: reached %.0f of the %d req/s target. Each worker waits for its answer before sending the next\n"
+            "request, so at most WORKERS / average latency requests get sent per second (%d workers, %.0f ms average:\n"
+            "~%.0f req/s). The app, or the tunnel in front of it, is the limit: more workers mostly add queueing\n"
+            "(compare p50/p95 below across runs). Try WORKERS=%d, or a lower rate."
+            % (reached, target_rps, workers, average * 1000, workers / average if average else 0, workers * 4)
+        )
     print()
     print("status:")
     counts = defaultdict(int)
@@ -314,7 +325,7 @@ def run(args):
         for thread in threads:
             while thread.is_alive():
                 thread.join(0.5)  # short joins so Ctrl-C is handled promptly
-        print_summary([r for records in all_records for r in records], time.monotonic() - start)
+        print_summary([r for records in all_records for r in records], time.monotonic() - start, rps, workers)
     finally:
         # Delete what we created, even when interrupted.
         stop.set()
