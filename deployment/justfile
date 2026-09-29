@@ -158,7 +158,7 @@ simulate-traffic rps="20" seconds="60": _k3s-ready
     fi
     ( while true; do kubectl -n "$ns" top pods --no-headers >>"$tmp/load.txt" 2>/dev/null || true; sleep 10; done ) &
     sampler=$!
-    BASE_URL="http://localhost:{{traefik_port}}" "{{deploy_dir}}/scripts/simulate-traffic.py" {{rps}} {{seconds}}
+    BASE_URL="http://localhost:{{traefik_port}}" "{{deploy_dir}}/scripts/simulate-traffic.py" "{{rps}}" "{{seconds}}"
     echo
     echo "waiting 30s for the last pod metrics..."
     sleep 30

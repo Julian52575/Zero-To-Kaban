@@ -3,9 +3,10 @@
 const rateLimit = require('express-rate-limit');
 const config = require('../config');
 
-// RATE_LIMIT_DISABLED=true (local dev only) skips both limiters, so a load
-// test or a scripted run isn't stopped after 10 sign-ins. Read per request, so
-// the limiters below stay identical to production when it is off.
+// RATE_LIMIT_DISABLED=true (local dev only) makes both limiters skip every
+// request, so a load test or a scripted run isn't stopped after 10 sign-ins.
+// It is read on each request. With it unset, the limiters below behave exactly
+// as they do in production.
 const skip = () => config.rateLimitDisabled;
 
 // Keyed by IP (req.ip). Requires `app.set('trust proxy', ...)` upstream --

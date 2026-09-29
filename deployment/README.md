@@ -85,14 +85,14 @@ just simulate-traffic 100 120  # 100 req/s for 2 minutes
 ```
 
 `scripts/simulate-traffic.py` signs in once (login is rate limited per IP, so
-it never signs in per request), creates its own project and sends a
-read-heavy mix through Traefik over keep-alive connections, so every request goes through the same login
-check as a browser: 40% task list, 15% project list, 10% columns, 10% the
-frontend page, 10% `/auth/me`, 10% task creation, 5% one project. It then
-deletes its project (tasks and columns go with it) and prints the status codes
-and p50/p95/max latency per route. The workers pace themselves to hold the
-target rate; the summary shows what was actually reached. A `5xx` in the summary means the
-app is struggling at that rate.
+it never signs in per request), creates its own project and sends a read-heavy
+mix through Traefik over keep-alive connections, so every request goes through
+the same login check as a browser: 40% task list, 15% project list, 10%
+columns, 10% the frontend page, 10% `/auth/me`, 10% task creation, 5% one
+project. It then deletes its project (tasks and columns go with it) and prints
+the status codes and p50/p95/max latency per route. The workers pace themselves
+to hold the target rate; the summary shows what was actually reached. A `5xx`
+or a timeout in the summary means the app is struggling at that rate.
 
 The rate you ask for is a target, not a promise: each worker waits for its
 answer before sending the next request, so the app can't be sent more than
@@ -116,15 +116,15 @@ before, during and 30s after the load, and prints each pod's idle vs peak CPU
 and memory. If the [monitoring](#optional-monitoring-prometheus--alertmanager)
 app is installed it adds Prometheus's own series count, sample rate and memory,
 and an estimate of the disk 7 days of metrics need (Prometheus's own rule of
-thumb: retention seconds x samples per second x 1 to 2 bytes). Compare that with
-the `retentionSize` and volume size in `monitoring-prod-app.yaml`.
+thumb: retention seconds x samples per second x 1 to 2 bytes). The estimate is
+printed against the 1500MB `retentionSize` in `monitoring-prod-app.yaml`; if you
+change that, compare it with your own numbers.
 
 Two limits to keep in mind: dev runs the `manual-test` images, so it
 measures whatever was last built by hand (run the `release-to-container-registry`
 workflow on your branch to measure your changes), and a local k3s node is not
-the VPS. Use the numbers
-as an order of magnitude, then check the real ones with `kubectl top` once prod
-runs.
+the VPS. Use the numbers as an order of magnitude, then check the real ones
+with `kubectl top` once prod runs.
 
 To run it against another target, e.g. the docker-compose stack, call the
 script directly:
@@ -133,9 +133,12 @@ script directly:
 BASE_URL=http://localhost:8000 deployment/scripts/simulate-traffic.py 50 30
 ```
 
-It needs Python 3.8 or newer and nothing else (standard library only; the dev shell provides it).
+It needs Python 3.8 or newer and nothing else (standard library only; the dev
+shell provides it).
 
-It registers an account with a public password (`loadtest`) and generates load, so it refuses any target that isn't `localhost` / `127.x` unless you set `ALLOW_REMOTE=1`. Never point it at prod.
+It registers an account with a public password (`loadtest`) and generates load,
+so it refuses any target that isn't `localhost` or a loopback address unless you
+set `ALLOW_REMOTE=1`. Never point it at prod.
 
 ### All recipes
 
@@ -463,9 +466,13 @@ deployed until you sync it, from the Argo CD UI or with
 - Metrics are kept 7 days, capped at 1500MB of a 2Gi volume. Alertmanager keeps
   its silences on a 1Gi volume. Both need a default StorageClass (k3s:
   `local-path`).
-- It scrapes Traefik's metrics port (k3s's Traefik carries the
+- The alerts use Traefik's metrics port (k3s's Traefik carries the
   `prometheus.io/*` pod annotations) and the kubelet's cAdvisor. The app's
-  own services don't expose metrics yet.
+  own services don't expose metrics yet. The chart's default jobs also scrape
+  the API server and the kubelet's own metrics: on a local k3s each returned
+  about 36,000 series (the same count, so probably the same control-plane
+  metrics), around 92% of the 78,600 series measured. No alert uses them, and
+  they set how much disk and memory Prometheus needs.
 - Nothing is public: both Services are ClusterIP. See the next section to
   open the UIs.
 - Alertmanager's receiver is a no-op, so alerts are only visible in the UIs.
