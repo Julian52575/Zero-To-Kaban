@@ -27,8 +27,9 @@
 # monitoring-prod-app.yaml so each Application stays self-contained and
 # editable from a local checkout -- keep the two in step when changing one.
 #
-# Applied directly, from inside `nix develop ./deployment` (which exports
-# KUBECONFIG) -- not discovered through root-app.yaml, which excludes it:
+# `just up-local` applies it. With `just up-gitops`, or on its own, apply it
+# directly from inside `nix develop ./deployment` (which exports KUBECONFIG) --
+# root-app.yaml excludes it, so it is never discovered there:
 #   kubectl apply -n argocd -f deployment/argocd/environments/monitoring-k3s-app.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application

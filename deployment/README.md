@@ -10,7 +10,7 @@ deployment/
 ├── justfile                  bootstrap / refresh / teardown / load-test recipes
 ├── scripts/                  simulate-traffic.py (see "Simulating traffic")
 ├── argocd/
-│   ├── root-app.yaml         app-of-apps for the prod cluster (creates prod-app.yaml + monitoring-prod-app.yaml)
+│   ├── root-app.yaml         app-of-apps for the prod cluster (creates prod-app.yaml + monitoring-prod-app.yaml + grafana-prod-app.yaml)
 │   └── environments/         one Argo CD Application per environment
 └── helm/zero-to-kanban/      the app chart (auth, backend, frontend, RabbitMQ, 2x Postgres, Traefik routes)
 ```
@@ -41,7 +41,8 @@ After a minute or two:
 |--------------|------------------------------|------------------------------------------------------------------------------------------------|
 | App          | http://localhost:18080       | register an account in the app                                                                 |
 | Argo CD      | https://localhost:18081      | `admin` / `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' \| base64 -d` |
-| Alertmanager | http://localhost:18082       | none (only if monitoring is installed, see below)                                                  |
+| Alertmanager | http://localhost:18082       | none (installed by `up-local`, see below)                                                  |
+| Grafana      | http://localhost:18083       | `admin` / `dev-only-change-me` (installed by `up-local`, see below)                            |
 | Traefik metrics | http://localhost:18080/metrics | `metrics` / `dev-only-change-me`                                                            |
 
 The k3s node stops when the shell that started it exits. Other shells
@@ -58,11 +59,23 @@ Argo CD always deploys a commit. Uncommitted changes are never deployed.
 Use one mode at a time: both deploy to the `ztk-dev-k3s` namespace and serve
 the same routes. Run `just rm` before switching modes.
 
-### Optional: monitoring (Prometheus + Alertmanager)
+### Monitoring (Prometheus + Alertmanager + Grafana)
+
+`just up-local` also applies `argocd/environments/monitoring-k3s-app.yaml`
+(Prometheus and Alertmanager) and `grafana-k3s-app.yaml` (Grafana), so they come
+up with the app. They pull their charts from the upstream Helm repos, so the
+first run needs internet access. Measured: Prometheus about 330MiB and
+Grafana about 270MiB of memory (Grafana's limit is 768Mi). After deploying the
+app, the recipe waits up to 3 minutes per UI for Argo CD to deploy them, then
+binds Alertmanager to localhost:18082 and Grafana to localhost:18083; if one is
+not ready in time it says so, and re-running `just up-local` binds it. The
+forwards reconnect by themselves when a pod is replaced (for example after a
+dashboard edit). `just up-gitops` does not install them; apply them yourself:
 
 ```bash
 kubectl apply -n argocd -f argocd/environments/monitoring-k3s-app.yaml
-just up-local              # re-run to bind Alertmanager to localhost:18082
+kubectl apply -n argocd -f argocd/environments/grafana-k3s-app.yaml
+just up-gitops             # re-run to bind the Alertmanager and Grafana ports
 ```
 
 It has the [alert rules](#monitoring), but no notification receiver yet, and
@@ -73,7 +86,24 @@ it keeps no data across restarts. Prometheus itself isn't bound to a port by
 kubectl -n monitoring port-forward svc/ztk-monitoring-k3s-prometheus-server 9090:80
 ```
 
-Then open http://localhost:9090/alerts.
+Then open http://localhost:9090/alerts. The query page is `/query`; type an
+expression, press Execute and pick the Graph tab.
+
+**Grafana** (http://localhost:18083, `admin` / `dev-only-change-me`) is set up
+from `grafana-k3s-app.yaml`, with nothing to click:
+
+- Two datasources, Prometheus (the default) and Alertmanager.
+- One dashboard, *Zero To Kanban overview*, in the *Zero To Kanban* folder:
+  alerts firing and pending, an **alert history** graph (which alerts were
+  pending or firing over time), scrape targets down, requests per second, 5xx
+  ratio and p95 latency per Traefik service, memory against the limit, and
+  memory and CPU per pod. The thresholds match the alert rules, and the panel
+  descriptions say which alert each one relates to.
+- The dashboard is read-only in the UI. To change it, edit the JSON in
+  `grafana-k3s-app.yaml` and, once it works, copy it to `grafana-prod-app.yaml`.
+- Like Prometheus, it keeps nothing across restarts. Alertmanager's own list of
+  active alerts is at http://localhost:18082; the history graph is the way to
+  look back.
 
 ### Simulating traffic
 
@@ -145,7 +175,7 @@ set `ALLOW_REMOTE=1`. Never point it at prod.
 | Recipe                         | Does                                                                   |
 |--------------------------------|------------------------------------------------------------------------|
 | `just`                         | list recipes                                                           |
-| `just up-local` / `up-gitops`  | install Argo CD (version pinned by `argocd_version` in the `justfile`) if missing, apply the Application, bind the local ports (safe to re-run) |
+| `just up-local` / `up-gitops`  | install Argo CD (version pinned by `argocd_version` in the `justfile`) if missing, apply the Application, bind the local ports (safe to re-run). `up-local` also installs the monitoring stack |
 | `just refresh-local` / `refresh-gitops` | make Argo CD re-read the repo now instead of on its next poll |
 | `just usage-summary <idle> <load>` | summarise two `kubectl top pods --no-headers` sample files: each pod's idle vs peak CPU/memory (used by `simulate-traffic`) |
 | `just simulate-traffic [rps] [seconds]` | send simulated user traffic (default 20 req/s for 60s) to the local dev app, then print each pod's idle vs peak CPU/memory. See [Simulating traffic](#simulating-traffic) |
@@ -302,8 +332,10 @@ helm template ztk helm/zero-to-kanban -f helm/zero-to-kanban/values.yaml -f helm
 | `prod-app.yaml`                  | `ztk-prod`           | `ztk-prod`    | GitHub `main`, prod values  | **no**    | `root-app.yaml`              |
 | `dev-k3s-app.yaml`               | `ztk-dev-k3s`        | `ztk-dev-k3s` | GitHub `main`, dev values   | yes       | `just up-gitops`             |
 | `dev-k3s-local-app.yaml`         | `ztk-dev-k3s-local`  | `ztk-dev-k3s` | local repo, current branch  | yes       | `just up-local` (template, don't apply directly) |
-| `monitoring-k3s-app.yaml`        | `ztk-monitoring-k3s` | `monitoring`  | `prometheus` chart 29.33.0  | yes       | manual `kubectl apply`       |
+| `monitoring-k3s-app.yaml`        | `ztk-monitoring-k3s` | `monitoring`  | `prometheus` chart 29.33.0  | yes       | `just up-local` (or manual `kubectl apply`) |
+| `grafana-k3s-app.yaml`           | `ztk-grafana-k3s`    | `monitoring`  | `grafana` chart 13.2.7 (grafana-community) | yes | `just up-local` (or manual `kubectl apply`) |
 | `monitoring-prod-app.yaml`       | `ztk-monitoring-prod`| `monitoring`  | `prometheus` chart 29.33.0  | **no**    | `root-app.yaml`              |
+| `grafana-prod-app.yaml`          | `ztk-grafana-prod`   | `monitoring`  | `grafana` chart 13.2.7 (grafana-community) | **no** | `root-app.yaml`              |
 
 ## Shared / production cluster
 
@@ -436,9 +468,9 @@ helm template ztk helm/zero-to-kanban -f helm/zero-to-kanban/values.yaml -f helm
      generic zero-to-kanban-prod-metrics-auth --from-file=users=/dev/stdin
    ```
 
-5. Apply the root app once. It then creates and manages `ztk-prod` and
-   `ztk-monitoring-prod` (see [Monitoring](#monitoring)). It
-   never creates `ztk-dev`: dev runs on default credentials published in
+5. Apply the root app once. It then creates and manages `ztk-prod`,
+   `ztk-monitoring-prod` and `ztk-grafana-prod` (see [Monitoring](#monitoring)).
+   It never creates `ztk-dev`: dev runs on default credentials published in
    this repo, so it must not share a public cluster with prod.
 
    ```bash
@@ -487,10 +519,31 @@ deployed until you sync it, from the Argo CD UI or with
 The rules are written inline in both `monitoring-*-app.yaml` files. Try a
 change on the local k3s one first, and keep the two in step.
 
+`ztk-grafana-prod` runs Grafana (`grafana` chart from the grafana-community
+repo) in the same namespace, with the same Prometheus and Alertmanager
+datasources and the same *Zero To Kanban overview* dashboard as the local one
+(inline in `grafana-*-app.yaml`; keep the two in step). Like the others, the
+root app only creates it. Unlike the local one, it needs a Secret with the admin
+login **before the first sync**, and it keeps its database (users, preferences)
+on a 1Gi volume, so it needs the default StorageClass too:
+
+```bash
+kubectl create namespace monitoring   # skip if it already exists
+kubectl -n monitoring create secret generic ztk-grafana-admin \
+  --from-literal=admin-user=admin \
+  --from-literal=admin-password="$(openssl rand -base64 24)"
+```
+
+Then sync it with `argocd app sync ztk-grafana-prod`. Grafana only reads that
+password when it first creates its database, so editing the Secret afterwards
+does not change the login (reset it with `grafana cli admin
+reset-admin-password` inside the pod). Nothing is public: the Service is
+ClusterIP.
+
 ### Reaching the internal UIs
 
 Only the app itself is public (Traefik on ports 80/443). Argo CD, the
-RabbitMQ management UI, the databases, Prometheus and Alertmanager are
+RabbitMQ management UI, the databases, Prometheus, Alertmanager and Grafana are
 reachable only from inside the cluster. Open them with `kubectl port-forward`, from any machine whose
 `kubectl` can reach the cluster:
 
@@ -501,6 +554,7 @@ kubectl -n ztk-prod port-forward svc/ztk-prod-postgresql 15432:5432 &
 kubectl -n ztk-prod port-forward svc/ztk-prod-authdb 15433:5432 &
 kubectl -n monitoring port-forward svc/ztk-monitoring-prod-prometheus-server 9090:80 &
 kubectl -n monitoring port-forward svc/ztk-monitoring-prod-alertmanager 9093:9093 &
+kubectl -n monitoring port-forward svc/ztk-grafana-prod 3000:80 &
 wait   # Ctrl+C stops them all
 ```
 
@@ -513,8 +567,9 @@ Start only the ones you need. The NetworkPolicies don't block
 | RabbitMQ management   | 15672      | http://localhost:15672              | `user` / `password` key of `zero-to-kanban-prod-rabbitmq` |
 | app DB (`postgresql`) | 15432      | `psql -h localhost -p 15432 -U todo todo` | `password` key of `zero-to-kanban-prod-postgresql` |
 | auth DB (`authdb`)    | 15433      | `psql -h localhost -p 15433 -U authuser auth` | `password` key of `zero-to-kanban-prod-authdb` |
-| Prometheus            | 9090       | http://localhost:9090 (`/alerts` for the rules) | none |
+| Prometheus            | 9090       | http://localhost:9090 (`/alerts` for the rules, `/query` to graph) | none |
 | Alertmanager          | 9093       | http://localhost:9093               | none |
+| Grafana               | 3000       | http://localhost:3000               | `admin-user` / `admin-password` keys of `ztk-grafana-admin` (namespace `monitoring`) |
 
 The Secret keys are read back as in step 2, e.g.
 `kubectl -n ztk-prod get secret zero-to-kanban-prod-rabbitmq -o jsonpath='{.data.password}' | base64 -d; echo`.
