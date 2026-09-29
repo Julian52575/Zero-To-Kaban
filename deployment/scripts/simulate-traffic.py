@@ -37,7 +37,7 @@ import sys
 import threading
 import time
 from collections import defaultdict
-from http.cookies import SimpleCookie
+from http.cookies import CookieError, SimpleCookie
 from urllib.parse import urlsplit
 
 TIMEOUT = 10  # seconds, per request
@@ -82,7 +82,10 @@ class Client:
             payload = json.dumps(body).encode()
             headers["Content-Type"] = "application/json"
         # A keep-alive connection the server closed while idle fails on its next
-        # use; that says nothing about the app, so retry once on a fresh one.
+        # use (reset, broken pipe, no status line); that says nothing about the
+        # app, so retry once on a fresh one. A timeout is never retried: the
+        # server may have processed the request, and a second POST would
+        # create a duplicate.
         for attempt in (0, 1):
             reused = self._conn is not None
             if self._conn is None:
@@ -92,16 +95,19 @@ class Client:
                 self._conn.request(method, self.prefix + path, body=payload, headers=headers)
                 resp = self._conn.getresponse()
                 data = resp.read()
-            except (OSError, http.client.HTTPException):
+            except (OSError, http.client.HTTPException) as err:
                 self._conn.close()
                 self._conn = None
-                if reused and attempt == 0:
+                if reused and attempt == 0 and isinstance(err, (ConnectionError, http.client.BadStatusLine)):
                     continue
                 return 0, b"", time.perf_counter() - started
             seconds = time.perf_counter() - started
             for header in resp.msg.get_all("Set-Cookie") or []:
                 jar = SimpleCookie()
-                jar.load(header)
+                try:
+                    jar.load(header)
+                except CookieError:
+                    continue
                 for name, morsel in jar.items():
                     self.cookies[name] = morsel.value
             if resp.will_close:
@@ -169,7 +175,7 @@ def pick_action(load, rng):
     return "GET", "/api/projects/" + pid, None
 
 
-def worker(index, load, records, stop):
+def worker(index, load, records, stop, errors):
     rng = random.Random()
     client = Client(load.base_url, load.cookies)
 
@@ -185,18 +191,21 @@ def worker(index, load, records, stop):
             wait = next_at - time.monotonic()
             if wait > 0 and stop.wait(wait):
                 break
-            method, path, body = pick_action(load, rng)
-            if method == "WRITE_PROJECT":  # create a project, then delete it again
-                status, data = send("POST", "/api/projects", load.project_body)
-                try:
-                    created = json.loads(data).get("id") if status == 201 else None
-                except ValueError:
-                    created = None
-                if created:
-                    send("DELETE", "/api/projects/" + created, route="/api/projects/:id")
-                    next_at += load.delay  # two requests: pace it as two
-            else:
-                send(method, path, body)
+            try:
+                method, path, body = pick_action(load, rng)
+                if method == "WRITE_PROJECT":  # create a project, then delete it again
+                    status, data = send("POST", "/api/projects", load.project_body)
+                    try:
+                        created = json.loads(data).get("id") if status == 201 else None
+                    except (ValueError, AttributeError):
+                        created = None
+                    if created:
+                        send("DELETE", "/api/projects/" + created, route="/api/projects/:id")
+                        next_at += load.delay  # two requests: pace it as two
+                else:
+                    send(method, path, body)
+            except Exception as err:  # keep the load going, but say so in the summary
+                errors.append(repr(err))
             next_at += load.delay
             now = time.monotonic()
             if next_at < now - load.delay:  # far behind: don't fire a burst to catch up
@@ -211,7 +220,7 @@ def percentile(sorted_values, p):
     return sorted_values[rank - 1]
 
 
-def print_summary(records, elapsed, target_rps=None, workers=None):
+def print_summary(records, elapsed, target_rps=None, workers=None, errors=()):
     reached = len(records) / elapsed if elapsed else 0
     print()
     print("sent %d requests in %.0fs (~%.1f req/s)" % (len(records), elapsed, reached))
@@ -244,6 +253,9 @@ def print_summary(records, elapsed, target_rps=None, workers=None):
     for key in sorted(by_route):
         values = sorted(by_route[key])
         print(row % (key, "%.3f" % percentile(values, 0.50), "%.3f" % percentile(values, 0.95), "%.3f" % values[-1], len(values)))
+    if errors:
+        print(file=sys.stderr)
+        print("warning: %d request(s) raised an error inside this script (a bug or an unexpected response); first: %s" % (len(errors), errors[0]), file=sys.stderr)
     failures = sum(n for status, n in counts.items() if status.startswith("5") or status == "000")
     if failures:
         print(file=sys.stderr)
@@ -273,6 +285,7 @@ def run(args):
     # This registers an account with a well-known password and hammers the
     # target, so it refuses anything but a local address unless told otherwise.
     # Never aim it at prod.
+    Client(base_url)  # rejects a BASE_URL without http(s):// before the address check below
     host = urlsplit(base_url).hostname or ""
     if not is_local(host) and os.environ.get("ALLOW_REMOTE") != "1":
         raise Fatal(
@@ -301,7 +314,10 @@ def run(args):
             raise Fatal("login answered %s" % (status or "nothing"))
 
         project_body = {"name": "loadtest-%d" % time.time()}
-        project_id = api(main, "POST", "/api/projects", project_body)["id"]
+        created = api(main, "POST", "/api/projects", project_body)
+        if not isinstance(created, dict) or "id" not in created:
+            raise Fatal("POST /api/projects did not return a project with an id: %.200s" % json.dumps(created))
+        project_id = created["id"]
 
         # An older backend image (e.g. a stale hand-built tag) has projects but no
         # columns/tasks. A 404 means "not there": fall back to a projects-only mix.
@@ -319,13 +335,14 @@ def run(args):
         start = time.monotonic()
         load = Load(base_url, main.cookies, project_id, project_body, task_body, workers, workers / rps, start, start + duration)
         all_records = [[] for _ in range(workers)]
-        threads = [threading.Thread(target=worker, args=(i, load, all_records[i], stop), daemon=True) for i in range(workers)]
+        errors = []
+        threads = [threading.Thread(target=worker, args=(i, load, all_records[i], stop, errors), daemon=True) for i in range(workers)]
         for thread in threads:
             thread.start()
         for thread in threads:
             while thread.is_alive():
                 thread.join(0.5)  # short joins so Ctrl-C is handled promptly
-        print_summary([r for records in all_records for r in records], time.monotonic() - start, rps, workers)
+        print_summary([r for records in all_records for r in records], time.monotonic() - start, rps, workers, errors)
     finally:
         # Delete what we created, even when interrupted.
         stop.set()
