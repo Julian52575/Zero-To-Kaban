@@ -195,4 +195,77 @@ describe('projectController', () => {
             expect(publishEvent).not.toHaveBeenCalled();
         });
     });
+    describe('getUserProjects', () => {
+        it('should return the user projects', async () => {
+            projectService.getUserProjects.mockResolvedValue([
+                project,
+            ]);
+
+            const req = {
+                params: {
+                    id: OWNER_ID,
+                },
+            };
+
+            const res = mockRes();
+
+            await projectController.getUserProjects(req, res);
+
+            expect(
+                projectService.getUserProjects
+            ).toHaveBeenCalledTimes(1);
+
+            expect(
+                projectService.getUserProjects
+            ).toHaveBeenCalledWith(OWNER_ID);
+
+            expect(res.json).toHaveBeenCalledWith([
+                project,
+            ]);
+
+            expect(res.status).not.toHaveBeenCalled();
+        });
+
+        it('should return an empty array when the user has no projects', async () => {
+            projectService.getUserProjects.mockResolvedValue([]);
+
+            const req = {
+                params: {
+                    id: OWNER_ID,
+                },
+            };
+
+            const res = mockRes();
+
+            await projectController.getUserProjects(req, res);
+
+            expect(
+                projectService.getUserProjects
+            ).toHaveBeenCalledWith(OWNER_ID);
+
+            expect(res.json).toHaveBeenCalledWith([]);
+
+            expect(res.status).not.toHaveBeenCalled();
+        });
+
+        it('should propagate service errors', async () => {
+            projectService.getUserProjects.mockRejectedValue(
+                new Error('Database error')
+            );
+
+            const req = {
+                params: {
+                    id: OWNER_ID,
+                },
+            };
+
+            const res = mockRes();
+
+            await expect(
+                projectController.getUserProjects(req, res)
+            ).rejects.toThrow('Database error');
+
+            expect(res.json).not.toHaveBeenCalled();
+        });
+    });
 });

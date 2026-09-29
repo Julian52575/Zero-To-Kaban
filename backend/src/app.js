@@ -20,6 +20,10 @@ const createProject = require('./routes/project/createProject');
 const updateProject = require('./routes/project/updateProject');
 const deleteProject = require('./routes/project/deleteProject');
 
+const validateGetUserProjects = require(
+    './middlewares/getUserProjectsValidation'
+);
+
 const { getColumns } = require('./controllers/ColumnController');
 
 const {
@@ -47,7 +51,7 @@ apiRouter.patch('/items/:id', updateItem);
 apiRouter.delete('/items/:id', deleteItem);
 
 
-apiRouter.get('/users/:id/projects', getUserProjects);
+apiRouter.get('/users/:id/projects', validateGetUserProjects, getUserProjects );
 apiRouter.get('/projects', getProjects);
 apiRouter.get('/projects/:id', getProject);
 apiRouter.get('/projects/:id/collaborators', getProjectCollaborators);

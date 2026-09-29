@@ -8,10 +8,11 @@ jest.mock('../../src/repositories/taskRepository', () => ({
 
 jest.mock('../../src/persistence', () => ({
     userCanAccessProject: jest.fn(),
+    userCanEditProject: jest.fn(),
 }));
 
 const taskRepository = require('../../src/repositories/taskRepository');
-const { userCanAccessProject } = require('../../src/persistence');
+const { userCanAccessProject, userCanEditProject } = require('../../src/persistence');
 const taskService = require('../../src/services/taskService');
 
 describe('taskService', () => {
@@ -67,6 +68,7 @@ describe('taskService', () => {
         test('deletes a task of a project the user owns', async () => {
             taskRepository.getById.mockResolvedValue(task);
             userCanAccessProject.mockResolvedValue(true);
+            userCanEditProject.mockResolvedValue(true);
             taskRepository.deleteById.mockResolvedValue(task);
 
             const result = await taskService.deleteTask('1', 'u1');

@@ -12,6 +12,8 @@ describe('server', () => {
         jest.doMock('../src/persistence', () => ({
             init: jest.fn(),
             teardown: jest.fn(),
+            getProjectsFromUser: jest.fn(),
+            updateDeletedProjectCollaborator: jest.fn(),
         }));
         jest.doMock('../src/events/rabbitmq', () => ({
             connectRabbitMQ: jest.fn(),
@@ -123,7 +125,11 @@ describe('server', () => {
 
     test('starts a logging consumer for every task and project event', async () => {
         db = require('../src/persistence');
+
         db.init.mockResolvedValue();
+        db.getProjectsFromUser.mockResolvedValue([]);
+        db.updateDeletedProjectCollaborator.mockResolvedValue();
+
         const { startConsumeFor } = require('../src/events/eventBus');
         const { EVENTS } = require('../src/events/events');
 
@@ -131,6 +137,7 @@ describe('server', () => {
         await startServer();
 
         const consumed = startConsumeFor.mock.calls.map(([name]) => name);
+
         expect(consumed).toEqual([
             EVENTS.TASK_CREATED,
             EVENTS.TASK_UPDATED,
@@ -139,6 +146,7 @@ describe('server', () => {
             EVENTS.PROJECT_CREATED,
             EVENTS.PROJECT_UPDATED,
             EVENTS.PROJECT_DELETED,
+            EVENTS.USER_DELETED,
         ]);
 
         for (const [eventName, handler] of startConsumeFor.mock.calls) {

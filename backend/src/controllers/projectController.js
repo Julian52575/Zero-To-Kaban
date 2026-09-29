@@ -37,11 +37,6 @@ async function getProject(req, res) {
 async function getUserProjects(req, res) {
     const projects = await projectService.getUserProjects(req.params.id);
 
-    if (!project) {
-        return res.status(404).json({
-            error: 'Project not found',
-        });
-    }
     res.json(projects);
 }
 

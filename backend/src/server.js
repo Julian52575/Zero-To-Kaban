@@ -43,16 +43,20 @@ async function startConsumers() {
       `Handling event: ${EVENTS.PROJECT_DELETED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
   });
-  await startConsumeFor(EVENTS.USER_DELETED, async (data,eventId) => {
-    list = db.getProjectsFromUser(data);
-    for (i in list) {
-      if (i.ownerID == data) {
-        i.ownerID = "00000000-0000-0000-0000-000000000000";
-      } else {
-        i.collaborators.indexOf(data) = "00000000-0000-0000-0000-000000000000";
-      }
-      db.project.updateDeletedProjectCollaborator(data, {ownerID: i.ownerID, collaborators: i.collaborators});
+  await startConsumeFor(EVENTS.USER_DELETED, async (data, eventId) => {
+    const ANONYMOUS_USER_ID =
+      "00000000-0000-0000-0000-000000000000";
+
+    const projects = await db.getProjectsFromUser(data);
+
+    for (const project of projects) {
+      await db.updateDeletedProjectCollaborator(
+        project.id,
+        data,
+        ANONYMOUS_USER_ID
+      );
     }
+
     console.log(
       `Handling event: ${EVENTS.USER_DELETED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
