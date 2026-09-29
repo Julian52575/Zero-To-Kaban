@@ -59,7 +59,7 @@ async function createProjectCollaborator(req, res) {
     try {
         await publishEvent(EVENTS.PROJECT_INVITATION, {
             projectId: req.params.id,
-            userId: req.userId,
+            userId: req.body.userId,
         });
 
     } catch (error) {
