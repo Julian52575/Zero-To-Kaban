@@ -183,12 +183,44 @@ async function getProjectCollaborators(projectId) {
     throw new Error("getProjectCollaborators: projectId is required");
   }
 
-  const projects = await prisma.project.findMany({
+  const project = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { collaborators: true }
+    select: {
+      collaborators: {
+        select: {
+          userId: true,
+          role: true,
+          state: true
+        }
+      }
+    }
   });
 
-  return projects.length > 0 ? projects[0].collaborators : [];
+  if (!project || !project.collaborators || project.collaborators.length === 0) {
+    return [];
+  }
+
+  const userIds = project.collaborators.map(c => c.userId);
+
+  try {
+    const response = await fetch('/internal/users/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: userIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Auth service lookup failed with status: ${response.status}`);
+    }
+
+    const users = await response.json();
+
+    return users;
+
+  } catch (error) {
+    console.error("Failed to lookup user profile items from auth container:", error);
+    return [];
+  }
 }
 
 async function getProject(id) {
