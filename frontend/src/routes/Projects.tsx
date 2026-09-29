@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { getProjects, deleteProject, createProject } from "../services/ProjectApi";
 import type { Project } from "../types/Project";
 
+import UserProfileButton from './../components/UserProfile/UserProfileButton';
+import NotificationCenter from "../components/NotificationCenter";
+
 function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState("");
@@ -16,8 +19,8 @@ function Projects() {
     getProjects()
       .then((data) => setProjects(data))
       .catch((error) => {
-        console.error("Erreur lors de la récupération des projets :", error);
-        setError("Impossible de récupérer les projets. Veuillez réessayer plus tard.");
+        console.error("Error retrieving projects:", error);
+        setError("Unable to retrieve the projects. Please try again later.");
       });
   }, []);
 
@@ -31,21 +34,21 @@ function Projects() {
         setName("");
       })
       .catch((error) => {
-        console.error("Erreur lors de la création du projet :", error);
-        setError("Impossible de créer le projet. Veuillez réessayer plus tard.");
+        console.error("Error while creating the project:", error);
+        setError("Unable to create the project. Please try again later.");
       });
   };
 
   const handleDelete = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
     e.stopPropagation(); 
-    if (!window.confirm("Supprimer ce projet et toutes ses tâches ?")) return;
+    if (!window.confirm("Delete this project and all its tasks ?")) return; // A modifier
     deleteProject(id)
       .then(() => {
         setProjects(projects.filter((p) => p.id !== id));
       })
       .catch((error) => {
-        console.error("Erreur lors de la suppression du projet :", error);
-        setError("Impossible de supprimer le projet. Veuillez réessayer plus tard.");
+        console.error("Error while deleting the project:", error);
+        setError("Unable to delete the project. Please try again later.");
       });
   };
 
@@ -63,24 +66,26 @@ function Projects() {
 
   return (
     <Container className="py-4">
+      <NotificationCenter />
+      <UserProfileButton />
       <Row>
         <Col md={{ offset: 3, span: 6 }}>
-          <h2 className="mb-4">Projets en cours</h2>
+          <h2 className="mb-4">My projects</h2>
 
           <Form onSubmit={handleCreate} className="d-flex gap-2 mb-4">
             <Form.Control
               type="text"
-              placeholder="Nom du nouveau projet"
+              placeholder="Name of the new project"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
             <Button type="submit" variant="primary">
-              Créer
+              Create
             </Button>
           </Form>
 
           {projects.length === 0 ? (
-            <p className="text-muted">Aucun projet pour le moment.</p>
+            <p className="text-muted">No projects at the moment.</p>
           ) : (
             <ListGroup>
               {projects.map((project) => (
@@ -98,7 +103,7 @@ function Projects() {
                     size="sm"
                     onClick={(e) => handleDelete(e, project.id)}
                   >
-                    Supprimer
+                    Delete
                   </Button>
                 </ListGroup.Item>
               ))}

@@ -49,7 +49,7 @@ describe('Projects', () => {
         vi.mocked(getProjects).mockResolvedValue([]);
         renderProjects();
 
-        expect(await screen.findByText('Aucun projet pour le moment.')).toBeInTheDocument();
+        expect(await screen.findByText('No projects at the moment.')).toBeInTheDocument();
     });
 
     test('shows an error when fetching fails', async () => {
@@ -66,9 +66,9 @@ describe('Projects', () => {
         vi.mocked(createProject).mockResolvedValue({ id: '3', name: 'Gamma' });
         renderProjects();
 
-        const input = screen.getByPlaceholderText('Nom du nouveau projet');
+        const input = screen.getByPlaceholderText('Name of the new project');
         await userEvent.type(input, '  Gamma  ');
-        await userEvent.click(screen.getByRole('button', { name: 'Créer' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
         expect(createProject).toHaveBeenCalledWith('Gamma');
         expect(await screen.findByText('Gamma')).toBeInTheDocument();
@@ -79,8 +79,8 @@ describe('Projects', () => {
         vi.mocked(getProjects).mockResolvedValue([]);
         renderProjects();
 
-        await userEvent.type(screen.getByPlaceholderText('Nom du nouveau projet'), '   ');
-        await userEvent.click(screen.getByRole('button', { name: 'Créer' }));
+        await userEvent.type(screen.getByPlaceholderText('Name of the new project'), '   ');
+        await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
         expect(createProject).not.toHaveBeenCalled();
     });
@@ -90,11 +90,11 @@ describe('Projects', () => {
         vi.mocked(createProject).mockRejectedValue(new Error('down'));
         renderProjects();
 
-        await userEvent.type(screen.getByPlaceholderText('Nom du nouveau projet'), 'Gamma');
-        await userEvent.click(screen.getByRole('button', { name: 'Créer' }));
+        await userEvent.type(screen.getByPlaceholderText('Name of the new project'), 'Gamma');
+        await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
         expect(
-            await screen.findByText('Impossible de créer le projet. Veuillez réessayer plus tard.'),
+            await screen.findByText('Impossible de Create le projet. Veuillez réessayer plus tard.'),
         ).toBeInTheDocument();
     });
 
@@ -105,7 +105,7 @@ describe('Projects', () => {
         renderProjects();
 
         await screen.findByText('Alpha');
-        await userEvent.click(screen.getAllByRole('button', { name: 'Supprimer' })[0]);
+        await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
         expect(deleteProject).toHaveBeenCalledWith('1');
         await waitFor(() => expect(screen.queryByText('Alpha')).not.toBeInTheDocument());
@@ -120,7 +120,7 @@ describe('Projects', () => {
         renderProjects();
 
         await screen.findByText('Alpha');
-        await userEvent.click(screen.getAllByRole('button', { name: 'Supprimer' })[0]);
+        await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
         expect(deleteProject).not.toHaveBeenCalled();
         expect(screen.getByText('Alpha')).toBeInTheDocument();
@@ -133,10 +133,10 @@ describe('Projects', () => {
         renderProjects();
 
         await screen.findByText('Alpha');
-        await userEvent.click(screen.getAllByRole('button', { name: 'Supprimer' })[0]);
+        await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
         expect(
-            await screen.findByText('Impossible de supprimer le projet. Veuillez réessayer plus tard.'),
+            await screen.findByText('Impossible de Delete le projet. Veuillez réessayer plus tard.'),
         ).toBeInTheDocument();
     });
 

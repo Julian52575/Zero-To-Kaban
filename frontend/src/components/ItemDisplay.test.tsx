@@ -19,14 +19,14 @@ describe('ItemDisplay', () => {
 
         expect(screen.getByText('Buy milk')).toBeInTheDocument();
         expect(
-            screen.getByRole('button', { name: 'Supprimer "Buy milk"' }),
+            screen.getByRole('button', { name: 'Delete "Buy milk"' }),
         ).toBeInTheDocument();
     });
 
     test('clicking delete reports the item', async () => {
         const { user, onDelete } = setup();
 
-        await user.click(screen.getByRole('button', { name: 'Supprimer "Buy milk"' }));
+        await user.click(screen.getByRole('button', { name: 'Delete "Buy milk"' }));
 
         expect(onDelete).toHaveBeenCalledWith(item);
     });

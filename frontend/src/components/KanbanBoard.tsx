@@ -12,6 +12,7 @@ import {
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import type { Item, ItemStatus } from "../types/item";
 import ItemDisplay from "./ItemDisplay";
+// @ts-expect-error CSS modules are handled by the bundler at runtime.
 import "./KanbanBoard.css";
 
 const COLUMNS: { id: ItemStatus; title: string }[] = [
@@ -20,7 +21,6 @@ const COLUMNS: { id: ItemStatus; title: string }[] = [
   { id: "done", title: "Done" },
 ];
 
-// Si l'item n'a pas encore de statut, on le déduit de "completed"
 export function getStatus(item: Item): ItemStatus {
   if (item.status) return item.status;
   return item.completed ? "done" : "todo";
@@ -110,7 +110,6 @@ function KanbanBoard({
 }: KanbanBoardProps) {
   const [activeId, setActiveId] = React.useState<Item["id"] | null>(null);
 
-  // distance: 6 évite de déclencher un drag lors d'un simple clic
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor),

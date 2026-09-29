@@ -54,7 +54,7 @@ function ItemDisplay({ item, onRename, onDelete }: Props) {
       <Button
         size="sm"
         variant="outline-danger"
-        aria-label={`Supprimer "${item.name}"`}
+        aria-label={`Delete "${item.name}"`}
         onClick={() => onDelete(item)}
       >
         ×

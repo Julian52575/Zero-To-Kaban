@@ -20,6 +20,12 @@ const createProject = require('./routes/project/createProject');
 const updateProject = require('./routes/project/updateProject');
 const deleteProject = require('./routes/project/deleteProject');
 
+const deleteNotification = require('./routes/notifications/deleteNotification');
+const getUnreadNotifications = require('./routes/notifications/getUnreadNotifications');
+const getNotifications = require('./routes/notifications/getNotifications');
+const markAsRead = require('./routes/notifications/markAsRead');
+const markAllAsRead = require('./routes/notifications/markAllAsRead');
+
 const validateGetUserProjects = require(
     './middlewares/getUserProjectsValidation'
 );
@@ -67,6 +73,11 @@ apiRouter.patch('/projects/:projectId/tasks/:id', updateTask);
 apiRouter.delete('/projects/:projectId/tasks/:id', deleteTask);
 apiRouter.get('/projects/:projectId/columns', getColumns);
 
+apiRouter.get('/notifications', getNotifications);
+apiRouter.get('/notifications/unread', getUnreadNotifications);
+apiRouter.patch('/notifications/:id/read', markAsRead);
+apiRouter.patch('/notifications/read', markAllAsRead);
+apiRouter.delete('/notifications/:id', deleteNotification);
 apiRouter.get(
     '/projects/:id/collaborators',
     validateGetProjectCollaborators,
