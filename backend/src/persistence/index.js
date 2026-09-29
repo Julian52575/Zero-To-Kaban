@@ -249,6 +249,19 @@ async function updateProject(id, data) {
   });
 }
 
+async function updateProjectCollaborator(projectId, userId, data) {
+  return prisma.projectCollaborator.update({
+    where: {
+      projectId: { projectId },
+      userId: { userId }
+    },
+    data: {
+      role: data.role,
+      state: data.state,
+    },
+  });
+}
+
 async function updateDeletedProjectCollaborator(
   projectId,
   userId,
@@ -331,6 +344,7 @@ module.exports = {
   getProjectCollaborators,
   getProject,
   updateProject,
+  updateProjectCollaborator,
   updateDeletedProjectCollaborator,
   deleteProject,
 

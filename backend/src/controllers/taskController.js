@@ -113,12 +113,21 @@ async function updateTask(req, res, next) {
       return res.status(400).json({ error: "invalid role" });
     }
 
+    const lastTask = await taskService.getTask(id);
     const task = await taskService.updateTask(id, req.body);
 
     try {
       await publishEvent(EVENTS.TASK_UPDATED, taskPayload(task, projectId));
     } catch (error) {
       console.error("Failed to publish TASK_UPDATED event:", error);
+    }
+
+    if (lastTask.assigneeId !== task.assigneeId) {
+      try {
+        await publishEvent(EVENTS.TASK_ASSIGNED, taskPayload(task, projectId));
+      } catch (error) {
+        console.error("Failed to publish TASK_ASSIGNED event:", error);
+      }
     }
 
     res.json(task);

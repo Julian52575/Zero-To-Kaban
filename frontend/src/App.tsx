@@ -11,14 +11,9 @@ function App() {
         <Route path="/" element={<Projects />} />
         <Route path="/projects/:projectId" element={<Kanban />} />
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/accessibility" element={<Accessibility />} />
       </Routes>
     </NotificationProvider>
-    <Routes>
-      <Route path="/" element={<Projects />} />
-      <Route path="/projects/:projectId" element={<Kanban />} />
-      <Route path="/accessibility" element={<Accessibility />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
   );
 }
 
