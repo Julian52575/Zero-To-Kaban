@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient, $Enums } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
@@ -59,7 +59,7 @@ async function userCanEditProject(userId, projectId) {
       id: projectId,
       OR: [
         { ownerId: userId },
-        { collaborators: { some: { userId: userId, role: 'EDITOR', state: 'ACCEPTED',},},},],},
+        { collaborators: { some: { userId: userId, role: $Enums.CollaboratorRole.EDITOR, state: $Enums.CollaboratorInvitationState.ACCEPTED,},},},],},
     select: {
       id: true,
     },
@@ -142,6 +142,17 @@ async function createProject(project) {
   });
 }
 
+async function createProjectCollaborator(collaborator) {
+  return prisma.projectCollaborator.create({
+    data: {
+      projectId: collaborator.projectId,
+      userId: collaborator.userId,
+      role: collaborator.role,
+      state: collaborator.state,
+    },
+  });
+}
+
 async function getProjects(userId) {
   if (!userId) throw new Error("getProjects: userId is required");
   return prisma.project.findMany({
@@ -163,7 +174,7 @@ async function getProjectsFromUser(userId) {
           collaborators: {
             some: {
               userId: userId,
-              state: "ACCEPTED",
+              state: $Enums.CollaboratorInvitationState.ACCEPTED,
             },
           },
         },
@@ -314,6 +325,7 @@ module.exports = {
   deleteTask,
 
   createProject,
+  createProjectCollaborator,
   getProjects,
   getProjectsFromUser,
   getProjectCollaborators,

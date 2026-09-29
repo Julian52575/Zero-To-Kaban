@@ -54,6 +54,12 @@ async function getProjectCollaborators(req, res) {
     res.json(collaborators);
 }
 
+async function createProjectCollaborator(req, res) {
+    const collaborator = await projectService.createProjectCollaborator(req.params.id, req.userId);
+
+    res.json(collaborator);
+}
+
 async function updateProject(req, res) {
     const result = await projectService.updateProject(
         req.params.id,
@@ -80,6 +86,22 @@ async function updateProject(req, res) {
     res.json(result.after);
 }
 
+async function updateProjectCollaborator(req, res) {
+    const updatedCollaborator = await projectService.updateProjectCollaborator(
+        req.params.id,
+        req.userId,
+        req.body
+    );
+
+    if (!updatedCollaborator) {
+        return res.status(404).json({
+            error: 'Collaborator not found',
+        });
+    }
+
+    res.json(updatedCollaborator);
+}
+
 async function deleteProject(req, res) {
     const deleted = await projectService.deleteProject(req.params.id, req.userId);
 
@@ -103,7 +125,9 @@ module.exports = {
     getProject,
     getUserProjects,
     getProjectCollaborators,
+    createProjectCollaborator,
     createProject,
     updateProject,
+    updateProjectCollaborator,
     deleteProject,
 };

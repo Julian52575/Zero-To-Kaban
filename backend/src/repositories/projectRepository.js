@@ -4,6 +4,10 @@ async function create(project) {
     return db.createProject(project);
 }
 
+async function createProjectCollaborator(collaborator) {
+    return db.createProjectCollaborator(collaborator);
+}
+
 async function getAll(userId) {
     return db.getProjects(userId);
 }
@@ -14,6 +18,10 @@ async function getAllFromUser(userId) {
 
 async function getProjectCollaborators(projectId) {
     return db.getProjectCollaborators(projectId);
+}
+
+async function updateProjectCollaborator(id, userId, data) {
+    return db.updateProjectCollaborator(id, userId, data);
 }
 
 async function getById(id) {
@@ -38,11 +46,13 @@ async function userCanAccessProject(userId, projectId) {
 
 module.exports = {
     create,
+    createProjectCollaborator,
     getAll,
     getAllFromUser,
     getProjectCollaborators,
     getById,
     update,
+    updateProjectCollaborator,
     deleteProject,
     getColumnsByProject,
     userCanAccessProject,

@@ -1,5 +1,6 @@
 const { randomUUID: uuid } = require("crypto");
 const projectRepository = require("../repositories/projectRepository");
+const { $Enums } = require("@prisma/client");
 
 async function createProject(data) {
   const project = {
@@ -23,6 +24,16 @@ async function getProjectCollaborators(projectId) {
   return projectRepository.getProjectCollaborators(projectId);
 }
 
+async function createProjectCollaborator(projectId, userId) {
+  const collaborator = {
+    projectId,
+    userId,
+    role: $Enums.CollaboratorRole.VIEWER,
+    state: $Enums.CollaboratorInvitationState.PENDING,
+  };
+  return projectRepository.createProjectCollaborator(collaborator);
+}
+
 // Projects belong to their owner: for anyone else they don't exist (null).
 async function getProject(id, userId) {
   const project = await projectRepository.getById(id);
@@ -43,6 +54,18 @@ async function updateProject(id, userId, data) {
   return { before, after };
 }
 
+async function updateProjectCollaborator(id, userId, data) {
+  const collaborators = await projectRepository.getProjectCollaborators(id);
+  const before = collaborators.find(c => c.userId === userId);
+  if (!before) {
+    return null;
+  }
+
+  const after = await projectRepository.updateProjectCollaborator(id, userId, data);
+
+  return { before, after };
+}
+
 async function deleteProject(id, userId) {
   const project = await getProject(id, userId);
   if (!project) {
@@ -54,10 +77,12 @@ async function deleteProject(id, userId) {
 
 module.exports = {
   createProject,
+  createProjectCollaborator,
   getProjects,
   getUserProjects,
   getProjectCollaborators,
   getProject,
   updateProject,
+  updateProjectCollaborator,
   deleteProject,
 };

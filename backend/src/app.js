@@ -19,6 +19,7 @@ const getProject = require('./routes/project/getProject');
 const createProject = require('./routes/project/createProject');
 const updateProject = require('./routes/project/updateProject');
 const deleteProject = require('./routes/project/deleteProject');
+const createProjectCollaborator = require('./routes/project/createProjectCollaborator');
 
 const deleteNotification = require('./routes/notifications/deleteNotification');
 const getUnreadNotifications = require('./routes/notifications/getUnreadNotifications');
@@ -38,6 +39,7 @@ const {
 } = require('./middlewares/projectValidation');
 
 const requireUser = require('./middlewares/requireUser');
+const { update } = require('./repositories/taskRepository');
 
 
 const app = express();
@@ -83,6 +85,9 @@ apiRouter.get(
     validateGetProjectCollaborators,
     getProjectCollaborators
 );
+
+apiRouter.post('/projects/:id/invitation', createProjectCollaborator);
+apiRouter.put('/projects/:id/invitation/', updateProjectCollaborator);
 
 app.use(apiRouter);
 
