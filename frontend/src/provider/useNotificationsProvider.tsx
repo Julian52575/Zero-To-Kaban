@@ -15,13 +15,14 @@ import {
 
 type Notification = {
   id: string;
+  type : string;
   title: string;
   message: string;
 };
 
 type NotificationContextType = {
   unreadNotifications: Notification[];
-  markAllAsRead: () => void;
+  markAllTaskAsRead: () => void;
 };
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
@@ -55,6 +56,7 @@ export function NotificationProvider({
         };
         addNotification({
           id: notificationIndex.id,
+          type : "task",
           title: "Task assigned",
           message: `You were assigned to task "${(data as { title: string }).title}".`,
         });
@@ -64,6 +66,7 @@ export function NotificationProvider({
         const notificationIndex2 = data as { id: string };
         addNotification({
           id: notificationIndex2.id,
+          type : "invitation",
           title: "Project invitation",
           message: `You have been invited to a project.`,
         });
@@ -80,6 +83,7 @@ export function NotificationProvider({
       setUnreadNotifications(
         rep.map((n) => ({
           id: n.id,
+          type : n.type === "task.assigned.v1" ? "task" : "invitation",
           title:
             n.type === "task.assigned.v1"
               ? "Task assigned"
@@ -104,10 +108,14 @@ export function NotificationProvider({
     );
   }
 
-  function markAllAsRead() {
-    const ids = unreadNotifications.map((n) => n.id);
-    setUnreadNotifications([]);
-    ids.forEach((id) =>
+  function markAllTaskAsRead() {
+    const taskIds = unreadNotifications
+      .filter((n) => n.type === "task")
+      .map((n) => n.id);
+    setUnreadNotifications((current) =>
+      current.filter((n) => n.type !== "task"),
+    );
+    taskIds.forEach((id) =>
       markNotificationAsRead(id).catch((err) =>
         console.error("Failed to mark notification as read:", err),
       ),
@@ -129,7 +137,7 @@ export function NotificationProvider({
 
   return (
     <NotificationContext.Provider
-      value={{ unreadNotifications, markAllAsRead }}
+      value={{ unreadNotifications, markAllTaskAsRead }}
     >
       {children}
 

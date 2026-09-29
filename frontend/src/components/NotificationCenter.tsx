@@ -4,14 +4,14 @@ import { useNotifications } from "../provider/useNotificationsProvider";
 
 function NotificationCenter() {
   const [show, setShow] = React.useState(false);
-  const { unreadNotifications, markAllAsRead } = useNotifications();
+  const { unreadNotifications, markAllTaskAsRead } = useNotifications();
   const handleOpen = () => {
     setShow(true);
   };
 
   const handleClose = () => {
     setShow(false);
-    markAllAsRead();
+    markAllTaskAsRead();
   };
 
   return (
@@ -47,7 +47,9 @@ function NotificationCenter() {
             pill
             className="position-absolute top-0 start-100 translate-middle"
           >
-            {unreadNotifications.length}
+            {unreadNotifications.length < 10
+              ? unreadNotifications.length
+              : "9+"}
           </Badge>
         )}
       </Button>
@@ -79,6 +81,16 @@ function NotificationCenter() {
                   </div>
 
                   <p className="mb-0 mt-1 text-muted">{notification.message}</p>
+                  {notification.type === "invitation" && (
+                    <Button
+                      variant="success"
+                      size="sm"
+                      className="mt-2"
+                      onClick={handleClose}
+                    >
+                      Mark as read
+                    </Button>
+                  )}
                 </ListGroup.Item>
               ))}
             </ListGroup>
