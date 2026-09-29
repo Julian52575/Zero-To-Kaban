@@ -94,6 +94,9 @@ and p50/p95/max latency per route. The rate is a target: slow answers lower
 it, and the summary shows what was reached. A `5xx` in the summary means the
 app is struggling at that rate.
 
+If the backend has no tasks endpoints (an older image), the script says so, leaves
+tasks out of the mix and writes by creating and deleting a project instead.
+
 The recipe also samples `kubectl top pods` (metrics-server, bundled with k3s)
 before, during and 30s after the load, and prints each pod's idle vs peak CPU
 and memory. If the [monitoring](#optional-monitoring-prometheus--alertmanager)

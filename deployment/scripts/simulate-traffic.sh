@@ -113,10 +113,44 @@ case "$login_code" in
     *) echo "error: login answered $login_code" >&2; exit 1 ;;
 esac
 
-project_id="$(api POST /api/projects "$(jq -n --arg n "loadtest-$(date +%s)" '{name:$n}')" | jq -er .id)"
-column_id="$(api GET "/api/projects/$project_id/columns" | jq -er '.[0].id')"
-task_body="$(jq -n --arg c "$column_id" '{title:"simulated task",description:"created by simulate-traffic.sh",columnId:$c}')"
-api POST "/api/projects/$project_id/tasks" "$task_body" >/dev/null
+project_body="$(jq -n --arg n "loadtest-$(date +%s)" '{name:$n}')"
+project_id="$(api POST /api/projects "$project_body" | jq -er .id)"
+
+# An older backend image (e.g. a stale hand-built tag) has projects but no
+# columns/tasks. A 404 means "not there": fall back to a projects-only mix.
+# Any other failure is a real error.
+columns_code="$(curl -s --max-time 10 -o "$tmp/columns.json" -w '%{http_code}' -b "$jar" "$BASE_URL/api/projects/$project_id/columns")"
+task_body=""
+case "$columns_code" in
+    2*)
+        tasks_supported=1
+        column_id="$(jq -er '.[0].id' "$tmp/columns.json")"
+        task_body="$(jq -n --arg c "$column_id" '{title:"simulated task",description:"created by simulate-traffic.sh",columnId:$c}')"
+        api POST "/api/projects/$project_id/tasks" "$task_body" >/dev/null
+        ;;
+    404)
+        tasks_supported=0
+        echo "note: this backend has no tasks/columns endpoints (older image?), so tasks are left out of the mix; writes are project create+delete instead"
+        ;;
+    *)
+        echo "error: GET /api/projects/$project_id/columns answered $columns_code" >&2
+        exit 1
+        ;;
+esac
+
+# Write for the projects-only mix: create a project, then delete it again.
+write_project() {
+    local log="$1" out code seconds id
+    out="$(curl -s --max-time 10 -w '\n%{http_code} %{time_total}' -b "$jar" -H 'Content-Type: application/json' \
+        -d "$project_body" "$BASE_URL/api/projects" || true)"
+    read -r code seconds <<<"${out##*$'\n'}"
+    echo "POST /api/projects ${code:-000} ${seconds:-0}" >>"$log"
+    id="$(jq -r '.id // empty' <<<"${out%$'\n'*}" 2>/dev/null || true)"
+    if [[ -n "$id" ]]; then
+        curl -s --max-time 10 -o /dev/null -w "DELETE /api/projects/:id %{http_code} %{time_total}\n" \
+            -b "$jar" -X DELETE "$BASE_URL/api/projects/$id" >>"$log" || true
+    fi
+}
 
 # One client: a random action every $delay seconds until the deadline.
 # Each request appends "METHOD PATH-KIND STATUS SECONDS" to its own log.
@@ -125,7 +159,14 @@ worker() {
     while (($(date +%s) < deadline)); do
         roll=$((RANDOM % 100))
         data=""
-        if   ((roll < 40)); then method=GET;  path="/api/projects/$project_id/tasks"
+        if ((!tasks_supported)); then
+            if   ((roll < 30)); then method=GET; path="/api/projects"
+            elif ((roll < 55)); then method=GET; path="/api/projects/$project_id"
+            elif ((roll < 75)); then method=GET; path="/"
+            elif ((roll < 90)); then method=GET; path="/auth/me"
+            else write_project "$log"; sleep "$delay"; continue
+            fi
+        elif ((roll < 40)); then method=GET;  path="/api/projects/$project_id/tasks"
         elif ((roll < 55)); then method=GET;  path="/api/projects"
         elif ((roll < 65)); then method=GET;  path="/api/projects/$project_id/columns"
         elif ((roll < 75)); then method=GET;  path="/"
