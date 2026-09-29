@@ -5,7 +5,7 @@ import { NotificationProvider } from "./provider/useNotificationsProvider";
 
 function App() {
   return (
-    <NotificationProvider position="bottom-end" delay={2000}>
+    <NotificationProvider position="bottom-end" delay={6000}>
       <Routes>
         <Route path="/" element={<Projects />} />
         <Route path="/projects/:projectId" element={<Kanban />} />

@@ -41,7 +41,7 @@ function Projects() {
 
   const handleDelete = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
     e.stopPropagation(); 
-    if (!window.confirm("Delete ce projet et toutes ses tâches ?")) return;
+    if (!window.confirm("Delete this project and all its tasks ?")) return; // A modifier
     deleteProject(id)
       .then(() => {
         setProjects(projects.filter((p) => p.id !== id));

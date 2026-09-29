@@ -14,6 +14,13 @@ function NotificationCenter() {
     markAllTaskAsRead();
   };
 
+  const handleAccept = () => {
+    alert("Accepted the invitation!"); // Pour Antoine
+  }
+  const handleDecline = () => {
+    alert("Declined the invitation!"); // Pour Antoine
+  }
+
   return (
     <>
       <style>{`
@@ -82,14 +89,24 @@ function NotificationCenter() {
 
                   <p className="mb-0 mt-1 text-muted">{notification.message}</p>
                   {notification.type === "invitation" && (
-                    <Button
-                      variant="success"
-                      size="sm"
-                      className="mt-2"
-                      onClick={handleClose}
-                    >
-                      Mark as read
-                    </Button>
+                    <>
+                      <Button
+                        variant="success"
+                        size="sm"
+                        className="mt-2"
+                        onClick={handleAccept}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        className="mt-2 ms-2"
+                        onClick={handleDecline}
+                      >
+                        Decline
+                      </Button>
+                    </>
                   )}
                 </ListGroup.Item>
               ))}
