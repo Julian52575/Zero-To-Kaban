@@ -112,4 +112,27 @@ describe('projectRepository', () => {
             );
         });
     });
+    describe('getProjectCollaborators', () => {
+        it('should return the project collaborators', async () => {
+            const collaborators = [
+                {
+                    userId: 'u2',
+                    role: 'EDITOR',
+                    state: 'ACCEPTED',
+                },
+                {
+                    userId: 'u3',
+                    role: 'VIEWER',
+                    state: 'ACCEPTED',
+                },
+            ];
+
+            db.getProjectCollaborators.mockResolvedValue(collaborators);
+
+            const result = await projectRepository.getProjectCollaborators('p1');
+
+            expect(db.getProjectCollaborators).toHaveBeenCalledWith('p1');
+            expect(result).toEqual(collaborators);
+        });
+    });
 });

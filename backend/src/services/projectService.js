@@ -20,7 +20,7 @@ async function getUserProjects(userId) {
 }
 
 async function getProjectCollaborators(projectId) {
-  return projectRepository.getCollaborators(projectId);
+  return projectRepository.getProjectCollaborators(projectId);
 }
 
 // Projects belong to their owner: for anyone else they don't exist (null).

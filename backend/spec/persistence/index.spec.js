@@ -139,6 +139,26 @@ describe('persistence', () => {
         expect(result).toEqual(projects);
     });
 
+    test('getProjectCollaborators returns the project collaborators', async () => {
+        const collaborators = [
+            { userId: 'u2', role: 'EDITOR', state: 'ACCEPTED' },
+            { userId: 'u3', role: 'VIEWER', state: 'ACCEPTED' },
+        ];
+
+        mockPrismaInstance.project.findMany.mockResolvedValue([
+            { collaborators },
+        ]);
+
+        const result = await db.getProjectCollaborators('p1');
+
+        expect(mockPrismaInstance.project.findMany).toHaveBeenCalledWith({
+            where: { id: 'p1' },
+            select: { collaborators: true },
+        });
+
+        expect(result).toEqual(collaborators);
+    });
+
     test('getProjects refuses to list without a user', async () => {
         await expect(db.getProjects()).rejects.toThrow(
             'getProjects: userId is required'

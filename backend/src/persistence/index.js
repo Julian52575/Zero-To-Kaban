@@ -179,14 +179,16 @@ async function getProjectsFromUser(userId) {
 }
 
 async function getProjectCollaborators(projectId) {
-  if (!projectId) throw new Error("getProjectCollaborators: projectId is required");
+  if (!projectId) {
+    throw new Error("getProjectCollaborators: projectId is required");
+  }
 
-  const project = await prisma.project.findMany({
+  const projects = await prisma.project.findMany({
     where: { id: projectId },
-    select: { collaborators: true } 
+    select: { collaborators: true }
   });
 
-  return project ? project.collaborators : [];
+  return projects.length > 0 ? projects[0].collaborators : [];
 }
 
 async function getProject(id) {

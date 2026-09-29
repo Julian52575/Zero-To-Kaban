@@ -11,7 +11,7 @@ const getItem = require("./routes/item/getItem");
 const addItem = require('./routes/item/addItem');
 const updateItem = require('./routes/item/updateItem');
 const deleteItem = require('./routes/item/deleteItem');
-
+const validateGetProjectCollaborators = require('./middlewares/getProjectCollaboratorsValidation');
 const getProjects = require('./routes/project/getProjects');
 const getUserProjects = require('./routes/project/getUserProjects');
 const getProjectCollaborators = require('./routes/project/getProjectCollaborators');
@@ -54,7 +54,6 @@ apiRouter.delete('/items/:id', deleteItem);
 apiRouter.get('/users/:id/projects', validateGetUserProjects, getUserProjects );
 apiRouter.get('/projects', getProjects);
 apiRouter.get('/projects/:id', getProject);
-apiRouter.get('/projects/:id/collaborators', getProjectCollaborators);
 apiRouter.post('/projects', validateCreateProject, createProject);
 apiRouter.delete('/projects/:id', deleteProject);
 apiRouter.put('/projects/:id', validateUpdateProject, updateProject);
@@ -68,6 +67,11 @@ apiRouter.patch('/projects/:projectId/tasks/:id', updateTask);
 apiRouter.delete('/projects/:projectId/tasks/:id', deleteTask);
 apiRouter.get('/projects/:projectId/columns', getColumns);
 
+apiRouter.get(
+    '/projects/:id/collaborators',
+    validateGetProjectCollaborators,
+    getProjectCollaborators
+);
 
 app.use(apiRouter);
 
