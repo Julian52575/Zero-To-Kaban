@@ -94,6 +94,18 @@ and p50/p95/max latency per route. The workers pace themselves to hold the
 target rate; the summary shows what was actually reached. A `5xx` in the summary means the
 app is struggling at that rate.
 
+The rate you ask for is a target, not a promise: each worker waits for its
+answer before sending the next request, so the app can't be sent more than
+`WORKERS / average latency` requests per second. Asking for more than the app
+can answer (say 12000 req/s) just measures where it saturates, and the summary
+then says so. Past that point extra workers only add queueing: the p50 and p95
+climb while the rate stays flat. On the dev app, through `kubectl
+port-forward`, that was roughly 150 to 250 req/s; the docker-compose stack,
+reached directly, saturated around 600 to 700 req/s. Raise the number of
+parallel clients with `WORKERS=32 just simulate-traffic 300 30`. Login is
+limited to 10 per 15 minutes per IP and each run signs in once, so more than 10
+runs in 15 minutes get "login is rate limited".
+
 If the backend has no tasks endpoints (an older image), the script says so, leaves
 tasks out of the mix and writes by creating and deleting a project instead.
 
