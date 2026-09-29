@@ -116,6 +116,8 @@ BASE_URL=http://localhost:8000 deployment/scripts/simulate-traffic.sh 50 30
 
 It needs `curl`, `jq` and `awk` on your `PATH` (the dev shell adds `jq`).
 
+It registers an account with a public password (`loadtest`) and generates load, so it refuses any target that isn't `localhost` / `127.x` unless you set `ALLOW_REMOTE=1`. Never point it at prod.
+
 ### All recipes
 
 | Recipe                         | Does                                                                   |

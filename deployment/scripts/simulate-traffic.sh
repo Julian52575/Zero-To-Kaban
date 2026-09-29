@@ -17,6 +17,7 @@
 #   DURATION       seconds of load             (default 60, or the 2nd argument)
 #   WORKERS        parallel clients            (default 8)
 #   LOAD_USER / LOAD_PASSWORD   account to use, created on first run (default loadtest / loadtest-password)
+#   ALLOW_REMOTE=1 allow a BASE_URL that isn't localhost / 127.x / ::1 (never use it on prod)
 #
 # The rate is a target: each worker waits between requests, so slow answers
 # lower the real rate. The summary prints what was actually reached.
@@ -29,6 +30,24 @@ DURATION="${2:-${DURATION:-60}}"
 WORKERS="${WORKERS:-8}"
 LOAD_USER="${LOAD_USER:-loadtest}"
 LOAD_PASSWORD="${LOAD_PASSWORD:-loadtest-password}"
+
+# This registers an account with a well-known password and hammers the target,
+# so it refuses anything but a local address unless told otherwise. Never aim
+# it at prod.
+host="${BASE_URL#*://}"; host="${host%%/*}"
+case "$host" in
+    \[*) host="${host%%]*}]" ;;
+    *) host="${host%%:*}" ;;
+esac
+case "$host" in
+    localhost | *.localhost | 127.* | "[::1]") ;;
+    *)
+        if [[ "${ALLOW_REMOTE:-}" != "1" ]]; then
+            echo "error: $BASE_URL is not a local address. This script creates an account with a public password and generates load; only run it against a dev app you own. Set ALLOW_REMOTE=1 to override." >&2
+            exit 1
+        fi
+        ;;
+esac
 
 for tool in curl jq awk; do
     command -v "$tool" >/dev/null || { echo "error: '$tool' is required" >&2; exit 1; }
@@ -47,7 +66,10 @@ cleanup() {
     trap - EXIT INT TERM
     if ((${#worker_pids[@]})); then kill "${worker_pids[@]}" 2>/dev/null || true; fi
     if [[ -n "$project_id" ]]; then
-        curl -s -o /dev/null -b "$jar" -X DELETE "$BASE_URL/api/projects/$project_id" || true
+        code="$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -b "$jar" -X DELETE "$BASE_URL/api/projects/$project_id" || true)"
+        if [[ "$code" != 2* ]]; then
+            echo "warning: could not delete the simulated project $project_id (answered ${code:-nothing}); delete it by hand" >&2
+        fi
     fi
     rm -rf "$tmp"
 }
@@ -59,10 +81,10 @@ api() {
     local method="$1" path="$2" body="${3:-}" out code
     out="$tmp/response.json"
     if [[ -n "$body" ]]; then
-        code="$(curl -s -o "$out" -w '%{http_code}' -b "$jar" -c "$jar" -X "$method" \
+        code="$(curl -s --max-time 10 -o "$out" -w '%{http_code}' -b "$jar" -c "$jar" -X "$method" \
             -H 'Content-Type: application/json' -d "$body" "$BASE_URL$path")"
     else
-        code="$(curl -s -o "$out" -w '%{http_code}' -b "$jar" -c "$jar" -X "$method" "$BASE_URL$path")"
+        code="$(curl -s --max-time 10 -o "$out" -w '%{http_code}' -b "$jar" -c "$jar" -X "$method" "$BASE_URL$path")"
     fi
     if [[ "$code" != 2* ]]; then
         echo "error: $method $path answered $code: $(head -c 300 "$out")" >&2
@@ -76,13 +98,13 @@ credentials="$(jq -n --arg u "$LOAD_USER" --arg p "$LOAD_PASSWORD" '{username:$u
 echo "target: $BASE_URL  (~$RPS req/s for ${DURATION}s, $WORKERS workers)"
 
 # /login is public and served by the auth service; /healthz isn't routed at the edge.
-if ! curl -s -o /dev/null -f "$BASE_URL/login"; then
+if ! curl -s --max-time 10 -o /dev/null -f "$BASE_URL/login"; then
     echo "error: $BASE_URL/login is not answering -- is the app up? (just up-local, or docker compose up)" >&2
     exit 1
 fi
 
 # Sign in, or create the account on the first run.
-login_code="$(curl -s -o /dev/null -w '%{http_code}' -c "$jar" -H 'Content-Type: application/json' \
+login_code="$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -c "$jar" -H 'Content-Type: application/json' \
     -d "$credentials" "$BASE_URL/auth/login")"
 case "$login_code" in
     200) ;;
