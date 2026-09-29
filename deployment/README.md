@@ -9,7 +9,7 @@ deployment/
 ├── flake.nix                 dev shell (k3s, kubectl, helm, argocd, just); auto-starts k3s
 ├── justfile                  bootstrap / refresh / teardown recipes
 ├── argocd/
-│   ├── root-app.yaml         app-of-apps for the prod cluster (syncs prod-app.yaml)
+│   ├── root-app.yaml         app-of-apps for the prod cluster (creates prod-app.yaml + monitoring-prod-app.yaml)
 │   └── environments/         one Argo CD Application per environment
 └── helm/zero-to-kanban/      the app chart (auth, backend, frontend, RabbitMQ, 2x Postgres, Traefik routes)
 ```
@@ -64,8 +64,15 @@ kubectl apply -n argocd -f argocd/environments/monitoring-k3s-app.yaml
 just up-local              # re-run to bind Alertmanager to localhost:18082
 ```
 
-It has no alert rules and no notification receiver yet, and it keeps no data
-across restarts.
+It has the [alert rules](#monitoring), but no notification receiver yet, and
+it keeps no data across restarts. Prometheus itself isn't bound to a port by
+`just`; open it when you want to see which rules are firing or pending:
+
+```bash
+kubectl -n monitoring port-forward svc/ztk-monitoring-k3s-prometheus-server 9090:80
+```
+
+Then open http://localhost:9090/alerts.
 
 ### All recipes
 
@@ -227,6 +234,7 @@ helm template ztk helm/zero-to-kanban -f helm/zero-to-kanban/values.yaml -f helm
 | `dev-k3s-app.yaml`               | `ztk-dev-k3s`        | `ztk-dev-k3s` | GitHub `main`, dev values   | yes       | `just up-gitops`             |
 | `dev-k3s-local-app.yaml`         | `ztk-dev-k3s-local`  | `ztk-dev-k3s` | local repo, current branch  | yes       | `just up-local` (template, don't apply directly) |
 | `monitoring-k3s-app.yaml`        | `ztk-monitoring-k3s` | `monitoring`  | `prometheus` chart 29.33.0  | yes       | manual `kubectl apply`       |
+| `monitoring-prod-app.yaml`       | `ztk-monitoring-prod`| `monitoring`  | `prometheus` chart 29.33.0  | **no**    | `root-app.yaml`              |
 
 ## Shared / production cluster
 
@@ -359,7 +367,8 @@ helm template ztk helm/zero-to-kanban -f helm/zero-to-kanban/values.yaml -f helm
      generic zero-to-kanban-prod-metrics-auth --from-file=users=/dev/stdin
    ```
 
-5. Apply the root app once. It then creates and manages `ztk-prod`. It
+5. Apply the root app once. It then creates and manages `ztk-prod` and
+   `ztk-monitoring-prod` (see [Monitoring](#monitoring)). It
    never creates `ztk-dev`: dev runs on default credentials published in
    this repo, so it must not share a public cluster with prod.
 
@@ -377,11 +386,39 @@ helm template ztk helm/zero-to-kanban -f helm/zero-to-kanban/values.yaml -f helm
    sync `ztk-prod` by hand from the Argo CD UI or with
    `argocd app sync ztk-prod`.
 
+### Monitoring
+
+`ztk-monitoring-prod` runs Prometheus and Alertmanager from the upstream
+`prometheus` chart in the `monitoring` namespace (see the monitoring ADR,
+discussion #131). Like `ztk-prod`, the root app only creates it: nothing is
+deployed until you sync it, from the Argo CD UI or with
+`argocd app sync ztk-monitoring-prod`.
+
+- Metrics are kept 15 days, capped at 6GB of an 8Gi volume. Alertmanager keeps
+  its silences on a 1Gi volume. Both need a default StorageClass (k3s:
+  `local-path`).
+- It scrapes Traefik's metrics port (k3s's Traefik carries the
+  `prometheus.io/*` pod annotations) and the kubelet's cAdvisor. The app's
+  own services don't expose metrics yet.
+- Nothing is public: both Services are ClusterIP. See the next section to
+  open the UIs.
+- Alertmanager's receiver is a no-op, so alerts are only visible in the UIs.
+
+| Alert                     | Fires when (for 5-10 min)                                   |
+|---------------------------|-------------------------------------------------------------|
+| `TraefikHigh5xxRatio`     | over 5% of a service's requests are 5xx (5m window)         |
+| `TraefikHighLatency`      | a service's p95 request duration is above 1s                |
+| `ContainerMemoryNearLimit`| a `ztk-*` container uses over 90% of its memory limit       |
+| `ScrapeTargetDown`        | Traefik, cAdvisor or Prometheus itself can't be scraped     |
+
+The rules are written inline in both `monitoring-*-app.yaml` files. Try a
+change on the local k3s one first, and keep the two in step.
+
 ### Reaching the internal UIs
 
 Only the app itself is public (Traefik on ports 80/443). Argo CD, the
-RabbitMQ management UI and the databases are reachable only from inside the
-cluster. Open them with `kubectl port-forward`, from any machine whose
+RabbitMQ management UI, the databases, Prometheus and Alertmanager are
+reachable only from inside the cluster. Open them with `kubectl port-forward`, from any machine whose
 `kubectl` can reach the cluster:
 
 ```bash
@@ -389,6 +426,8 @@ kubectl -n argocd port-forward svc/argocd-server 8081:443 &
 kubectl -n ztk-prod port-forward svc/ztk-prod-zero-to-kanban-rabbitmq 15672:15672 &
 kubectl -n ztk-prod port-forward svc/ztk-prod-postgresql 15432:5432 &
 kubectl -n ztk-prod port-forward svc/ztk-prod-authdb 15433:5432 &
+kubectl -n monitoring port-forward svc/ztk-monitoring-prod-prometheus-server 9090:80 &
+kubectl -n monitoring port-forward svc/ztk-monitoring-prod-alertmanager 9093:9093 &
 wait   # Ctrl+C stops them all
 ```
 
@@ -401,6 +440,8 @@ Start only the ones you need. The NetworkPolicies don't block
 | RabbitMQ management   | 15672      | http://localhost:15672              | `user` / `password` key of `zero-to-kanban-prod-rabbitmq` |
 | app DB (`postgresql`) | 15432      | `psql -h localhost -p 15432 -U todo todo` | `password` key of `zero-to-kanban-prod-postgresql` |
 | auth DB (`authdb`)    | 15433      | `psql -h localhost -p 15433 -U authuser auth` | `password` key of `zero-to-kanban-prod-authdb` |
+| Prometheus            | 9090       | http://localhost:9090 (`/alerts` for the rules) | none |
+| Alertmanager          | 9093       | http://localhost:9093               | none |
 
 The Secret keys are read back as in step 2, e.g.
 `kubectl -n ztk-prod get secret zero-to-kanban-prod-rabbitmq -o jsonpath='{.data.password}' | base64 -d; echo`.
