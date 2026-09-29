@@ -1,27 +1,16 @@
-# Grafana for the local rootless k3s cluster, reading the Prometheus and
-# Alertmanager that monitoring-k3s-app.yaml deploys into the same namespace.
-# Helm chart from the grafana-community repo (the old grafana/grafana chart
-# is deprecated and moved there), no chart of our own. Provisioned entirely from this
-# file (a Prometheus and an Alertmanager datasource, plus the "Zero To Kanban
-# overview" dashboard), so it needs no clicking and a fresh cluster gets the
-# same thing.
+# Grafana for the local k3s cluster, reading the Prometheus and Alertmanager of
+# monitoring-k3s-app.yaml. Provisioned entirely from this file: two datasources
+# and the "Zero To Kanban overview" dashboard, which is read-only in the UI (edit
+# the JSON below, and keep grafana-prod-app.yaml in step).
 #
-# Local only, like monitoring-k3s-app.yaml: the login is the published dev
-# default (admin / dev-only-change-me), nothing is persisted (emptyDir), and
-# the UI is reached only through `just up-local`'s port-forward on
-# localhost:18083. Dashboards are read-only in the UI; to change one, edit
-# the JSON below (the same JSON is in grafana-prod-app.yaml -- keep the two in
-# step), commit, and Argo CD reloads Grafana.
-#
-# `just up-local` applies it. Otherwise, from inside `nix develop ./deployment`:
-#   kubectl apply -n argocd -f deployment/argocd/environments/grafana-k3s-app.yaml
+# Local only: published dev login (admin / dev-only-change-me), nothing persisted.
+# `just up-local` applies it and binds it to localhost:18083.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: ztk-grafana-k3s
   namespace: argocd
-  # Dev only: deleting this Application also deletes everything it deployed
-  # (`just rm` relies on this). Prod leaves it off.
+  # Dev only: `just rm` relies on deleting the Application to delete its resources.
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -44,12 +33,12 @@ spec:
             memory: 768Mi
         service:
           type: ClusterIP
-        # Nothing here needs cluster-wide access (no sidecar): keep the chart's RBAC to a Role.
+        # No sidecar, so a namespaced Role is enough.
         rbac:
           namespaced: true
         testFramework:
           enabled: false
-        # Grafana phones home for update checks and analytics; a private cluster needs neither.
+        # No update checks or analytics.
         grafana.ini:
           analytics:
             check_for_updates: false

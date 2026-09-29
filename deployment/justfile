@@ -63,8 +63,7 @@ up-local: _k3s-ready _argocd-base _install-monitoring _bind-traefik _bind-argocd
       | kubectl apply -n argocd -f -
     echo "argocd: ztk-dev-k3s-local applied -- syncing from your local working tree (file://{{repo_root}}, branch $branch)"
     echo "  -> 'git commit' locally on $branch (no push needed); 'just refresh-local' to sync immediately"
-    # Last, because they wait for Argo CD to deploy the monitoring stack (up to
-    # 3 min each) and the app above should not sit behind that.
+    # After the app: each waits up to 3 min for Argo CD to deploy its UI.
     just _bind-alertmanager-ui
     just _bind-grafana-ui
     just _argocd-info
@@ -112,9 +111,7 @@ _argocd-base:
           || echo "argocd: server not ready yet -- 'kubectl -n argocd get pods' to check" >&2
     fi
 
-# (internal) apply the local monitoring Applications (Prometheus + Alertmanager,
-# and Grafana). Idempotent. They deploy from upstream Helm repos, so they need
-# internet access but not your local checkout.
+# (internal) apply the local monitoring Applications (needs internet: upstream Helm repos)
 _install-monitoring:
     kubectl apply -n argocd -f "{{deploy_dir}}/argocd/environments/monitoring-k3s-app.yaml"
     kubectl apply -n argocd -f "{{deploy_dir}}/argocd/environments/grafana-k3s-app.yaml"
@@ -124,11 +121,8 @@ _install-monitoring:
 # flake.nix's shellHook -- detaches from the calling recipe's process so
 # the forward outlives it returning, and --collect + an is-active check
 # make repeat calls a no-op instead of stacking forwards.
-# `kubectl port-forward svc/...` attaches to one pod and exits when that pod is
-# replaced (a Grafana dashboard edit, an image update), so it runs in a loop
-# that reconnects. Once a forward fails and the Service or the cluster is gone
-# (k3s stopped, `just rm`) the loop ends by itself instead of retrying forever,
-# and stopping the scope ends it too.
+# The forward exits when its pod is replaced, so it runs in a loop that
+# reconnects. The loop ends once the Service or the cluster is gone.
 _bind label unit namespace service local_port remote_port:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -150,10 +144,8 @@ _bind-traefik:
 _bind-argocd-ui:
     @just _bind argocd-ui {{argocd_pf_unit}} argocd argocd-server {{argocd_ui_port}} 443
 
-# (internal) background port-forward to a UI of the optional monitoring stack.
-# up-local applies its Applications, but Argo CD only creates a Service once it
-# has synced the chart, so wait for it. up-gitops doesn't install them: skip
-# quietly when the Application isn't there.
+# (internal) port-forward to a monitoring UI: wait for Argo CD to deploy it, or
+# skip quietly when the Application isn't installed (up-gitops).
 _bind-monitoring-ui label unit app service local_port remote_port:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -183,9 +175,7 @@ _bind-alertmanager-ui:
 _bind-grafana-ui:
     @just _bind-monitoring-ui grafana {{grafana_pf_unit}} ztk-grafana-k3s {{grafana_svc}} {{grafana_port}} 80
 
-# Reports each pod's idle vs peak CPU/memory and, if monitoring is installed,
-# Prometheus's own size. `kubectl top` (metrics-server) lags by a scrape
-# interval, so sampling keeps going 30s after the load stops.
+# `kubectl top` lags by a scrape interval, so sampling continues 30s after the load.
 
 # Send simulated user traffic to the local k3s dev app and report resource usage
 simulate-traffic rps="20" seconds="60": _k3s-ready
@@ -236,8 +226,7 @@ simulate-traffic rps="20" seconds="60": _k3s-ready
 usage-summary idle load:
     #!/usr/bin/env bash
     set -euo pipefail
-    # Input lines look like: <pod> <cpu: 12m | 1> <memory: 45Mi | 1Gi | 900Ki>.
-    # The first file is the idle sample, the second the samples taken under load.
+    # Input: `kubectl top pods --no-headers` lines; file 1 is idle, file 2 under load.
     awk '
         function cpu(v) { return v ~ /m$/ ? v + 0 : v * 1000 }
         function mem(v) {
@@ -253,7 +242,7 @@ usage-summary idle load:
             if (mem($3) > peak_mem[$1]) peak_mem[$1] = mem($3)
         }
         END {
-            # Size the pod column from the names, so long pod names cannot push the numbers out of line.
+            # Size the pod column from the longest name.
             width = length("pod")
             for (p in pods) if (length(p) > width) width = length(p)
             fmt = "  %-" width "s  %-16s  %s\n"

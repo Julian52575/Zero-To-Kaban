@@ -18,18 +18,11 @@
 # keep the URL itself in a Secret (extraSecretMounts / mounted config)
 # rather than inline in this file, since Application manifests live in git.
 #
-# Alerting rules (see the monitoring ADR, discussion #131) cover the signals
-# scraped with no extra config: Prometheus's default kubernetes_sd_configs
-# picks up the traefik pod in kube-system on its :9100 metrics port (the same
-# endpoint deployment/helm/zero-to-kanban/templates/ingressroute.yaml exposes
-# externally at /metrics for out-of-cluster access), and the kubelet's
-# cadvisor gives per-container memory. The same rules are inlined in
-# monitoring-prod-app.yaml so each Application stays self-contained and
-# editable from a local checkout -- keep the two in step when changing one.
+# Alert rules (ADR, discussion #131) use what Prometheus scrapes with no extra
+# config: Traefik's :9100 metrics port and the kubelet's cAdvisor. The same rules
+# are inlined in monitoring-prod-app.yaml -- keep the two in step.
 #
-# `just up-local` applies it. With `just up-gitops`, or on its own, apply it
-# directly from inside `nix develop ./deployment` (which exports KUBECONFIG) --
-# root-app.yaml excludes it, so it is never discovered there:
+# `just up-local` applies it; otherwise apply it by hand from `nix develop ./deployment`:
 #   kubectl apply -n argocd -f deployment/argocd/environments/monitoring-k3s-app.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -97,10 +90,8 @@ spec:
               - name: ztk-workloads
                 rules:
                   - alert: ContainerMemoryNearLimit
-                    # max by (...) on both sides: after a container restart cAdvisor
-                    # briefly exposes two series (one per container id) for the
-                    # same pod/container, and a plain one-to-one match would then
-                    # fail to evaluate right when the alert matters.
+                    # max by (...): after a restart cAdvisor briefly exposes two series
+                    # per container, which breaks a plain one-to-one match.
                     expr: |
                       max by (namespace, pod, container) (container_memory_working_set_bytes{namespace=~"ztk-.+", container!="", container!="POD"})
                         / on (namespace, pod, container)

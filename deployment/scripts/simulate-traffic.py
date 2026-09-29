@@ -82,10 +82,8 @@ class Client:
             payload = json.dumps(body).encode()
             headers["Content-Type"] = "application/json"
         # A keep-alive connection the server closed while idle fails on its next
-        # use (reset, broken pipe, no status line); that says nothing about the
-        # app, so retry once on a fresh one. A timeout is never retried: the
-        # server may have processed the request, and a second POST would
-        # create a duplicate.
+        # use: retry once on a fresh one. Never retry a timeout, or a POST that
+        # went through would be created twice.
         for attempt in (0, 1):
             reused = self._conn is not None
             if self._conn is None:
@@ -282,9 +280,8 @@ def run(args):
         "password": os.environ.get("LOAD_PASSWORD", "loadtest-password"),
     }
 
-    # This registers an account with a well-known password and hammers the
-    # target, so it refuses anything but a local address unless told otherwise.
-    # Never aim it at prod.
+    # Registers an account with a well-known password and hammers the target, so
+    # refuse anything but a local address. Never aim it at prod.
     Client(base_url)  # rejects a BASE_URL without http(s):// before the address check below
     host = urlsplit(base_url).hostname or ""
     if not is_local(host) and os.environ.get("ALLOW_REMOTE") != "1":
@@ -319,9 +316,8 @@ def run(args):
             raise Fatal("POST /api/projects did not return a project with an id: %.200s" % json.dumps(created))
         project_id = created["id"]
 
-        # An older backend image (e.g. a stale hand-built tag) has projects but no
-        # columns/tasks. A 404 means "not there": fall back to a projects-only mix.
-        # Any other failure is a real error.
+        # An older backend image has no columns/tasks: a 404 falls back to a
+        # projects-only mix, any other failure is an error.
         status, data, _ = main.request("GET", "/api/projects/%s/columns" % project_id)
         task_body = None
         if 200 <= status < 300:

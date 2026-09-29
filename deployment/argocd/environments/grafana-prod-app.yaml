@@ -1,22 +1,11 @@
 # Grafana for the shared/production cluster, reading the Prometheus and
-# Alertmanager that monitoring-prod-app.yaml deploys into the same namespace.
-# Same chart, version, datasources and dashboard as grafana-k3s-app.yaml, which
-# is the copy to try a change on first -- keep the two in step.
+# Alertmanager of monitoring-prod-app.yaml. Same chart, datasources and dashboard
+# as grafana-k3s-app.yaml: try a change there first and keep the two in step.
 #
-# Differences from the local one, all because prod must survive a restart and
-# must not change without a human:
-#   * the admin login comes from a pre-created Secret (`ztk-grafana-admin`,
-#     keys `admin-user` and `admin-password`) in the `monitoring` namespace,
-#     never from this file. Create it before the first sync (deployment/README.md).
-#   * Grafana's database (users, preferences, API keys) sits on a 1Gi volume.
-#   * no automated sync and no deletion finalizer, like prod-app.yaml:
-#     promoted by hand (`argocd app sync ztk-grafana-prod`).
-#
-# Nothing is public: the Service is ClusterIP, so the UI is reached with
-# `kubectl port-forward` (see deployment/README.md).
-#
-# Discovered by root-app.yaml, which only creates the Application: it stays
-# OutOfSync until someone syncs it.
+# Differences: the admin login is a pre-created Secret, `ztk-grafana-admin` in
+# `monitoring` (keys admin-user, admin-password; see deployment/README.md), the
+# database sits on a 1Gi volume, and there is no auto-sync and no finalizer.
+# ClusterIP only: reach it with `kubectl port-forward`.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -35,8 +24,7 @@ spec:
         persistence:
           enabled: true
           size: 1Gi
-        # A ReadWriteOnce volume cannot be mounted by the old and the new pod
-        # at once, so replace the pod instead of rolling.
+        # A ReadWriteOnce volume can't be mounted twice: replace the pod, don't roll.
         deploymentStrategy:
           type: Recreate
         resources:
@@ -47,12 +35,12 @@ spec:
             memory: 768Mi
         service:
           type: ClusterIP
-        # Nothing here needs cluster-wide access (no sidecar): keep the chart's RBAC to a Role.
+        # No sidecar, so a namespaced Role is enough.
         rbac:
           namespaced: true
         testFramework:
           enabled: false
-        # Grafana phones home for update checks and analytics; a private cluster needs neither.
+        # No update checks or analytics.
         grafana.ini:
           analytics:
             check_for_updates: false

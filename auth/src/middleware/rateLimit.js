@@ -3,10 +3,8 @@
 const rateLimit = require('express-rate-limit');
 const config = require('../config');
 
-// RATE_LIMIT_DISABLED=true (local dev only) makes both limiters skip every
-// request, so a load test or a scripted run isn't stopped after 10 sign-ins.
-// The env var is read once, when config.js loads. With it unset, the limiters
-// below behave exactly as they do in production.
+// RATE_LIMIT_DISABLED=true (local dev only) skips both limiters, so a load test
+// isn't stopped after 10 sign-ins. Read once, when config.js loads.
 const skip = () => config.rateLimitDisabled;
 
 // Keyed by IP (req.ip). Requires `app.set('trust proxy', ...)` upstream --

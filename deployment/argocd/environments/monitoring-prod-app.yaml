@@ -1,29 +1,16 @@
-# Prometheus + Alertmanager for the shared/production cluster (see the
-# monitoring ADR, discussion #131). Same upstream chart, version and alert
-# rules as monitoring-k3s-app.yaml, which is the copy to try a change on
-# first -- keep the two in step.
+# Prometheus + Alertmanager for the shared/production cluster (ADR: discussion
+# #131). Same chart, version and rules as monitoring-k3s-app.yaml: try a change
+# there first and keep the two in step.
 #
-# Differences from the local one, all because prod data must survive a pod
-# restart and prod must not change without a human:
-#   * server and Alertmanager keep their data on a PersistentVolume, and
-#     the TSDB is capped (retentionSize) below the volume so it can't fill it.
-#   * no automated sync and no deletion finalizer, like prod-app.yaml: it is
-#     promoted by hand (`argocd app sync ztk-monitoring-prod`), and deleting
-#     the Application never takes the stored metrics with it.
-#   * the server has resource requests and a memory limit.
+# Differences, so prod data survives a restart and nothing changes without a
+# human: data on PersistentVolumes with the TSDB capped below the volume size, no
+# auto-sync and no finalizer (`argocd app sync ztk-monitoring-prod`), and
+# resource requests plus a memory limit on the server.
 #
-# Nothing here is exposed publicly: both Services stay ClusterIP, so the UIs
-# are reached with `kubectl port-forward` (see deployment/README.md). The
-# Alertmanager receiver is still a deliberate no-op -- point
-# `alertmanager.config.receivers` at a real target (and keep its URL in a
-# Secret, not in this file) once one is chosen.
-#
-# This relies on the cluster's Traefik exposing its metrics port with the
-# usual `prometheus.io/*` pod annotations (k3s's bundled Traefik does), and on
-# the cluster having a default StorageClass (k3s: local-path).
-#
-# Discovered by root-app.yaml, which only creates the Application: it stays
-# OutOfSync until someone syncs it.
+# ClusterIP only: reach the UIs with `kubectl port-forward` (deployment/README.md).
+# The Alertmanager receiver is a no-op until a real target is chosen; keep its URL
+# in a Secret. Needs Traefik's `prometheus.io/*` pod annotations (k3s has them)
+# and a default StorageClass. Created by root-app.yaml, OutOfSync until synced.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -44,11 +31,9 @@ spec:
         prometheus-pushgateway:
           enabled: false
         server:
-          # Sized down for the VPS, which has little disk to spare. Prometheus
-          # deletes the oldest data as soon as either limit is reached.
+          # Sized down for the VPS; the oldest data goes when either limit is hit.
           retention: 7d
-          # Keep below persistentVolume.size (MB here is 1024*1024 bytes) so
-          # old blocks go before the volume fills up.
+          # Keep below persistentVolume.size (MB is 1024*1024 bytes).
           retentionSize: 1500MB
           persistentVolume:
             enabled: true
@@ -99,10 +84,8 @@ spec:
               - name: ztk-workloads
                 rules:
                   - alert: ContainerMemoryNearLimit
-                    # max by (...) on both sides: after a container restart cAdvisor
-                    # briefly exposes two series (one per container id) for the
-                    # same pod/container, and a plain one-to-one match would then
-                    # fail to evaluate right when the alert matters.
+                    # max by (...): after a restart cAdvisor briefly exposes two series
+                    # per container, which breaks a plain one-to-one match.
                     expr: |
                       max by (namespace, pod, container) (container_memory_working_set_bytes{namespace=~"ztk-.+", container!="", container!="POD"})
                         / on (namespace, pod, container)
