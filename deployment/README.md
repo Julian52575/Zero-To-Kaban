@@ -143,7 +143,7 @@ tasks out of the mix and writes by creating and deleting a project instead.
 
 The recipe also samples `kubectl top pods` (metrics-server, bundled with k3s)
 before, during and 30s after the load, and prints each pod's idle vs peak CPU
-and memory. If the [monitoring](#optional-monitoring-prometheus--alertmanager)
+and memory. If the [monitoring](#monitoring-prometheus--alertmanager--grafana)
 app is installed it adds Prometheus's own series count, sample rate and memory,
 and an estimate of the disk 7 days of metrics need (Prometheus's own rule of
 thumb: retention seconds x samples per second x 1 to 2 bytes). The estimate is
