@@ -27,6 +27,8 @@ function ItemDisplay({ item, onRename, onDelete }: Props) {
     onRename(item, draft);
   };
 
+  
+
   if (editing) {
     return (
       <InputGroup size="sm">
@@ -48,16 +50,24 @@ function ItemDisplay({ item, onRename, onDelete }: Props) {
 
   return (
     <div className="d-flex justify-content-between align-items-center gap-2">
-      <span onDoubleClick={startEditing} title="Double-clic pour renommer">
-        {item.name}
-      </span>
+      <div className="d-flex gap-2 justify-content-center align-items-center">
+        <input
+          type="checkbox"
+          checked={item.completed}
+          
+        />
+
+        <span onDoubleClick={startEditing} title="Double-clic pour renommer">
+          {item.name}
+        </span>
+      </div>
       <Button
         size="sm"
         variant="outline-danger"
         aria-label={`Delete "${item.name}"`}
         onClick={() => onDelete(item)}
       >
-        ×
+        <i className="fa fa-trash" />
       </Button>
     </div>
   );

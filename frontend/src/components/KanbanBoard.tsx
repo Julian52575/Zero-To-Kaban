@@ -12,7 +12,6 @@ import {
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import type { Item, ItemStatus } from "../types/item";
 import ItemDisplay from "./ItemDisplay";
-// @ts-expect-error CSS modules are handled by the bundler at runtime.
 import "./KanbanBoard.css";
 
 const COLUMNS: { id: ItemStatus; title: string }[] = [
