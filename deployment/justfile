@@ -17,6 +17,7 @@ alertmanager_pf_unit := "zero-to-kanban-alertmanager-pf"
 # Argo CD's Helm release name defaults to the Application's own name --
 # see argocd/environments/monitoring-k3s-app.yaml's metadata.name.
 alertmanager_svc := "ztk-monitoring-k3s-alertmanager"
+prometheus_svc := "ztk-monitoring-k3s-prometheus-server"
 
 # Argo CD release installed by up-local/up-gitops and removed by rm. Pinned
 # so every machine gets the same version and rm deletes exactly what was
@@ -138,6 +139,55 @@ _bind-alertmanager-ui:
         exit 0
     fi
     just _bind alertmanager {{alertmanager_pf_unit}} monitoring {{alertmanager_svc}} {{alertmanager_port}} 9093
+
+# Reports each pod's idle vs peak CPU/memory and, if monitoring is installed,
+# Prometheus's own size. `kubectl top` (metrics-server) lags by a scrape
+# interval, so sampling keeps going 30s after the load stops.
+
+# Send simulated user traffic to the local k3s dev app and report resource usage
+simulate-traffic rps="20" seconds="60": _k3s-ready
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ns="ztk-dev-k3s"
+    tmp="$(mktemp -d)"
+    sampler=""
+    trap '[ -n "$sampler" ] && kill "$sampler" 2>/dev/null || true; rm -rf "$tmp"' EXIT
+    if ! kubectl -n "$ns" top pods --no-headers >"$tmp/idle.txt" 2>/dev/null || [ ! -s "$tmp/idle.txt" ]; then
+        echo "no pod metrics for namespace $ns -- is the dev app up ('just up-local') and metrics-server ready?" >&2
+        exit 1
+    fi
+    ( while true; do kubectl -n "$ns" top pods --no-headers >>"$tmp/load.txt" 2>/dev/null || true; sleep 10; done ) &
+    sampler=$!
+    BASE_URL="http://localhost:{{traefik_port}}" "{{deploy_dir}}/scripts/simulate-traffic.sh" {{rps}} {{seconds}}
+    echo
+    echo "waiting 30s for the last pod metrics..."
+    sleep 30
+    kill "$sampler" 2>/dev/null || true
+    sampler=""
+    echo
+    echo "pods ($ns): idle -> peak while under load"
+    "{{deploy_dir}}/scripts/usage-summary.sh" "$tmp/idle.txt" "$tmp/load.txt"
+    # Prometheus's own numbers, through the API server's service proxy (no port-forward needed).
+    prom_query() {
+        local q; q="$(jq -rn --arg q "$1" '$q|@uri')"
+        kubectl get --raw "/api/v1/namespaces/monitoring/services/http:{{prometheus_svc}}:80/proxy/api/v1/query?query=$q" 2>/dev/null \
+          | jq -r '.data.result[0].value[1] // empty'
+    }
+    series="$(prom_query 'prometheus_tsdb_head_series' || true)"
+    if [ -n "$series" ]; then
+        rate="$(prom_query 'rate(prometheus_tsdb_head_samples_appended_total[5m])')"
+        rss="$(prom_query 'process_resident_memory_bytes{job="prometheus"}')"
+        echo
+        echo "prometheus (local k3s):"
+        awk -v s="$series" -v r="$rate" -v m="$rss" 'BEGIN {
+            printf "  series in memory      %d\n  samples per second    %.1f\n  server memory (RSS)   %.0f MiB\n", s, r, m / 1048576
+            # Prometheus docs: disk = retention seconds * samples/s * bytes/sample (1 to 2 bytes)
+            printf "  disk for 7d           ~%.0f-%.0f MiB (vs. the 1500MB cap in monitoring-prod-app.yaml)\n", r * 604800 * 1 / 1048576, r * 604800 * 2 / 1048576
+        }'
+    else
+        echo
+        echo "prometheus: not installed here, so no metrics-store sizing (kubectl apply -n argocd -f argocd/environments/monitoring-k3s-app.yaml)"
+    fi
 
 # (internal) print UI/password hints
 _argocd-info:

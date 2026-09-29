@@ -7,7 +7,8 @@ rootless k3s node.
 ```
 deployment/
 ├── flake.nix                 dev shell (k3s, kubectl, helm, argocd, just); auto-starts k3s
-├── justfile                  bootstrap / refresh / teardown recipes
+├── justfile                  bootstrap / refresh / teardown / load-test recipes
+├── scripts/                  simulate-traffic.sh, usage-summary.sh (see "Simulating traffic")
 ├── argocd/
 │   ├── root-app.yaml         app-of-apps for the prod cluster (creates prod-app.yaml + monitoring-prod-app.yaml)
 │   └── environments/         one Argo CD Application per environment
@@ -74,6 +75,47 @@ kubectl -n monitoring port-forward svc/ztk-monitoring-k3s-prometheus-server 9090
 
 Then open http://localhost:9090/alerts.
 
+### Simulating traffic
+
+To see how much CPU and memory the dev app needs under load, run:
+
+```bash
+just simulate-traffic          # 20 req/s for 60s
+just simulate-traffic 100 120  # 100 req/s for 2 minutes
+```
+
+`scripts/simulate-traffic.sh` signs in once (login is rate limited per IP, so
+it never signs in per request), creates its own project and sends a
+read-heavy mix through Traefik, so every request goes through the same login
+check as a browser: 40% task list, 15% project list, 10% columns, 10% the
+frontend page, 10% `/auth/me`, 10% task creation, 5% one project. It then
+deletes its project (tasks and columns go with it) and prints the status codes
+and p50/p95/max latency per route. The rate is a target: slow answers lower
+it, and the summary shows what was reached. A `5xx` in the summary means the
+app is struggling at that rate.
+
+The recipe also samples `kubectl top pods` (metrics-server, bundled with k3s)
+before, during and 30s after the load, and prints each pod's idle vs peak CPU
+and memory. If the [monitoring](#optional-monitoring-prometheus--alertmanager)
+app is installed it adds Prometheus's own series count, sample rate and memory,
+and an estimate of the disk 7 days of metrics need (Prometheus's own rule of
+thumb: retention seconds x samples per second x 1 to 2 bytes). Compare that with
+the `retentionSize` and volume size in `monitoring-prod-app.yaml`.
+
+Two limits to keep in mind: the dev values run the frontend as a dev server,
+which needs much more memory than a production build (see the table in the
+prod section), and a local k3s node is not the VPS. Use the numbers as an order
+of magnitude, then check the real ones with `kubectl top` once prod runs.
+
+To run it against another target, e.g. the docker-compose stack, call the
+script directly:
+
+```bash
+BASE_URL=http://localhost:8000 deployment/scripts/simulate-traffic.sh 50 30
+```
+
+It needs `curl`, `jq` and `awk` on your `PATH` (the dev shell adds `jq`).
+
 ### All recipes
 
 | Recipe                         | Does                                                                   |
@@ -81,6 +123,7 @@ Then open http://localhost:9090/alerts.
 | `just`                         | list recipes                                                           |
 | `just up-local` / `up-gitops`  | install Argo CD (version pinned by `argocd_version` in the `justfile`) if missing, apply the Application, bind the local ports (safe to re-run) |
 | `just refresh-local` / `refresh-gitops` | make Argo CD re-read the repo now instead of on its next poll |
+| `just simulate-traffic [rps] [seconds]` | send simulated user traffic (default 20 req/s for 60s) to the local dev app, then print each pod's idle vs peak CPU/memory. See [Simulating traffic](#simulating-traffic) |
 | `just rm`                      | delete the Argo CD Applications, everything they deployed, and Argo CD itself. Database volumes and the k3s node are kept. |
 | `just down`                    | stop k3s and the port-forwards. Data on disk is kept.                  |
 | `just nuke`                    | stop k3s and delete all its data (Argo CD, databases, everything)      |
