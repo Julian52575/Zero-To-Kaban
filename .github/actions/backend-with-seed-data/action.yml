@@ -1,0 +1,98 @@
+name: Backend with seed data
+description: >
+  Starts a throwaway Postgres + RabbitMQ, migrates and seeds the backend's
+  database (backend/prisma/seed.js), and starts the backend API on
+  127.0.0.1:3000. For accessibility audits: without this, the frontend has
+  nothing to fetch and only ever renders its connection-error state, never
+  the real Kanban board (task cards, forms, etc.) -- a real accessibility
+  gap, not just an empty-state one. Node must already be set up by the
+  caller (actions/setup-node); this reuses it rather than installing its
+  own.
+
+runs:
+  using: composite
+  steps:
+    - name: Start a throwaway Postgres for the backend
+      shell: bash
+      run: |
+        docker run -d --name a11y-db -p 5432:5432 \
+          -e POSTGRES_USER=todo -e POSTGRES_PASSWORD=todo -e POSTGRES_DB=todo \
+          postgres:16-alpine
+
+        ready=""
+        for _ in $(seq 1 30); do
+          docker exec a11y-db pg_isready -U todo -d todo >/dev/null 2>&1 && ready=1 && break
+          sleep 1
+        done
+        if [ -z "$ready" ]; then
+          echo "a11y-db did not become ready in time" >&2
+          docker logs a11y-db
+          exit 1
+        fi
+
+    - name: Start a throwaway RabbitMQ for the backend
+      shell: bash
+      # Runs as the rabbitmq user directly (--user rabbitmq). Started as root,
+      # the image entrypoint chowns then drops privileges with su-exec, and
+      # on some Docker hosts the boot then fails with "Error when reading
+      # /var/lib/rabbitmq/.erlang.cookie: eacces" (reproduced locally with
+      # rabbitmq:4-alpine). Starting as rabbitmq from the outset skips that
+      # step; docker-compose.yml does the same.
+      #
+      # Default user is deliberately NOT "guest": RabbitMQ restricts that
+      # specific built-in account to true loopback connections, and whether
+      # a docker -p-published port's NAT still looks like loopback from the
+      # container's side is inconsistent (worked, then failed, with no
+      # config change, while testing this). A custom username isn't subject
+      # to that restriction at all, which removes the flakiness outright.
+      run: |
+        docker run -d --name a11y-rabbitmq -p 5672:5672 --user rabbitmq \
+          -e RABBITMQ_DEFAULT_USER=ci -e RABBITMQ_DEFAULT_PASS=ci-password \
+          rabbitmq:4-alpine
+
+        ready=""
+        for _ in $(seq 1 30); do
+          docker exec a11y-rabbitmq rabbitmq-diagnostics -q check_running >/dev/null 2>&1 && ready=1 && break
+          sleep 1
+        done
+        if [ -z "$ready" ]; then
+          echo "a11y-rabbitmq did not become ready in time" >&2
+          docker logs a11y-rabbitmq
+          exit 1
+        fi
+
+    - name: Install backend dependencies
+      shell: bash
+      working-directory: backend
+      run: npm ci
+
+    - name: Migrate and seed the backend database
+      shell: bash
+      working-directory: backend
+      env:
+        DATABASE_URL: postgresql://todo:todo@localhost:5432/todo?schema=public
+      run: |
+        npx prisma generate
+        npx prisma migrate deploy
+        node prisma/seed.js
+
+    - name: Start the backend API
+      shell: bash
+      working-directory: backend
+      env:
+        DATABASE_URL: postgresql://todo:todo@localhost:5432/todo?schema=public
+        RABBITMQ_USER: ci
+        RABBITMQ_PASSWORD: ci-password
+        RABBITMQ_HOST: 127.0.0.1
+      run: |
+        node src/server.js &
+
+        ready=""
+        for _ in $(seq 1 30); do
+          curl -sf http://127.0.0.1:3000/health >/dev/null && ready=1 && break
+          sleep 1
+        done
+        if [ -z "$ready" ]; then
+          echo "backend did not respond on :3000 in time" >&2
+          exit 1
+        fi

@@ -1,0 +1,91 @@
+name: eqo RGAA audit
+description: >
+  Runs eqo's RGAA v4.1.2 audit (https://github.com/kodalabs-io/eqo) against
+  an already-running service, enforces the zero-automated-violations
+  compliance gate, and uploads the report as a build artifact. Skips
+  straight to the gate if `cache-hit` says rgaa-cache-lookup already put a
+  report in place. Not a devDependency for the same reason as @lhci/cli:
+  eqo and its peer deps (playwright, @axe-core/playwright) are pulled in via
+  pinned npx so their dependency tree never touches the caller's
+  lockfile/audit gate.
+
+inputs:
+  working-directory:
+    description: Directory containing rgaa.config.ts (and rgaa-reports/ afterwards).
+    required: true
+  base-url:
+    description: Origin the service under test is listening on, e.g. http://127.0.0.1:4173.
+    required: true
+  ready-path:
+    description: Path polled against base-url until it responds, before running eqo.
+    required: false
+    default: "/"
+  config-path:
+    description: eqo config path, relative to working-directory.
+    required: false
+    default: rgaa.config.ts
+  artifact-name:
+    description: Name to upload the report artifact as.
+    required: true
+  cache-hit:
+    description: "'true' if rgaa-cache-lookup already downloaded a report -- skips the live audit."
+    required: false
+    default: "false"
+  eqo-version:
+    required: false
+    default: "1.0.0"
+  playwright-version:
+    required: false
+    default: "1.58.2"
+  axe-playwright-version:
+    required: false
+    default: "4.13.0"
+
+runs:
+  using: composite
+  steps:
+    - name: Run the eqo RGAA accessibility audit
+      if: inputs.cache-hit != 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        npx --yes playwright@${{ inputs.playwright-version }} install --with-deps chromium
+
+        ready=""
+        for _ in $(seq 1 30); do
+          curl -sf "${{ inputs.base-url }}${{ inputs.ready-path }}" >/dev/null && ready=1 && break
+          sleep 1
+        done
+        if [ -z "$ready" ]; then
+          echo "no response from ${{ inputs.base-url }}${{ inputs.ready-path }} in time" >&2
+          exit 1
+        fi
+
+        npx --yes \
+          -p @kodalabs-io/eqo@${{ inputs.eqo-version }} \
+          -p playwright@${{ inputs.playwright-version }} \
+          -p @axe-core/playwright@${{ inputs.axe-playwright-version }} \
+          -- eqo analyze --config ${{ inputs.config-path }}
+
+    - name: Enforce the RGAA compliance gate
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ ! -f rgaa-reports/rgaa-report.json ]; then
+          echo "::error::no RGAA report available (neither cached nor freshly generated)"
+          exit 1
+        fi
+        pct=$(jq -n --argjson r "$(jq '.summary.complianceRate' rgaa-reports/rgaa-report.json)" '$r * 100 | round')
+        echo "RGAA automated compliance rate: ${pct}%"
+        if [ "$pct" -lt 100 ]; then
+          echo "::error::RGAA compliance rate ${pct}% is below the required 100%"
+          exit 1
+        fi
+
+    - name: Upload the eqo RGAA report
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.working-directory }}/rgaa-reports
+        if-no-files-found: warn
