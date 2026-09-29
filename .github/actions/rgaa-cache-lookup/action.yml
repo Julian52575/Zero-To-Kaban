@@ -1,0 +1,67 @@
+name: RGAA cache lookup
+description: >
+  On workflow_dispatch, looks for a prior pull_request run of the calling
+  workflow that already produced an eqo RGAA report for this exact commit,
+  and downloads it into <working-directory>/rgaa-reports if found. No-ops on
+  pull_request runs (always cache-hit=false), so PRs always audit fresh.
+
+inputs:
+  artifact-name:
+    description: Name of the eqo report artifact to look for / download.
+    required: true
+  working-directory:
+    description: Directory to download a cached report into, as <dir>/rgaa-reports.
+    required: true
+
+outputs:
+  cache-hit:
+    description: "'true' if a cached report was found and downloaded, else 'false'."
+    value: ${{ steps.set-output.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Look up a prior pull_request run for this commit
+      id: find_run
+      if: github.event_name == 'workflow_dispatch'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # `gh api` defaults to POST once any -f is given; GET must be explicit.
+        # The workflow's own filename isn't exposed as a plain context value --
+        # pull it out of workflow_ref, shaped like
+        # "owner/repo/.github/workflows/<file>.yml@refs/heads/<branch>".
+        workflow_file=$(echo "${{ github.workflow_ref }}" \
+          | sed -E 's#^[^/]+/[^/]+/\.github/workflows/([^@]+)@.*#\1#')
+        run_id=$(gh api --method GET \
+          "repos/${{ github.repository }}/actions/workflows/${workflow_file}/runs" \
+          -f event=pull_request -f status=completed -f head_sha="${{ github.sha }}" \
+          --jq '.workflow_runs[0].id // empty')
+        if [ -n "$run_id" ]; then
+          echo "Reusing the eqo report from run $run_id (commit ${{ github.sha }})"
+        else
+          echo "No prior pull_request run found for commit ${{ github.sha }}; will audit fresh"
+        fi
+        echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+    - name: Download the cached report
+      id: download
+      if: steps.find_run.outputs.run_id != ''
+      continue-on-error: true # fall through to a fresh audit if the artifact is gone (e.g. expired)
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.working-directory }}/rgaa-reports
+        github-token: ${{ github.token }}
+        run-id: ${{ steps.find_run.outputs.run_id }}
+
+    - name: Set cache-hit output
+      id: set-output
+      shell: bash
+      run: |
+        if [ "${{ steps.download.outcome }}" = "success" ]; then
+          echo "cache-hit=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "cache-hit=false" >> "$GITHUB_OUTPUT"
+        fi
