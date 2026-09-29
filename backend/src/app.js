@@ -13,6 +13,8 @@ const updateItem = require('./routes/item/updateItem');
 const deleteItem = require('./routes/item/deleteItem');
 
 const getProjects = require('./routes/project/getProjects');
+const getUserProjects = require('./routes/project/getUserProjects');
+const getProjectCollaborators = require('./routes/project/getProjectCollaborators');
 const getProject = require('./routes/project/getProject');
 const createProject = require('./routes/project/createProject');
 const updateProject = require('./routes/project/updateProject');
@@ -45,8 +47,10 @@ apiRouter.patch('/items/:id', updateItem);
 apiRouter.delete('/items/:id', deleteItem);
 
 
+apiRouter.get('/users/:id/projects', getUserProjects);
 apiRouter.get('/projects', getProjects);
 apiRouter.get('/projects/:id', getProject);
+apiRouter.get('/projects/:id/collaborators', getProjectCollaborators);
 apiRouter.post('/projects', validateCreateProject, createProject);
 apiRouter.delete('/projects/:id', deleteProject);
 apiRouter.put('/projects/:id', validateUpdateProject, updateProject);

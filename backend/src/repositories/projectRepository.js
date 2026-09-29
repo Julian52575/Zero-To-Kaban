@@ -8,6 +8,14 @@ async function getAll(userId) {
     return db.getProjects(userId);
 }
 
+async function getAllFromUser(userId) {
+    return db.getProjectsFromUser(userId);
+}
+
+async function getProjectCollaborators(projectId) {
+    return db.getProjectCollaborators(projectId);
+}
+
 async function getById(id) {
     return db.getProject(id);
 }
@@ -31,6 +39,8 @@ async function userCanAccessProject(userId, projectId) {
 module.exports = {
     create,
     getAll,
+    getAllFromUser,
+    getProjectCollaborators,
     getById,
     update,
     deleteProject,

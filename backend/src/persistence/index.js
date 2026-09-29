@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const { use } = require("../app");
 
 const prisma = new PrismaClient();
 
@@ -48,6 +49,21 @@ async function userCanAccessProject(userId, projectId) {
   const project = await prisma.project.findFirst({
     where: { id: projectId, ownerId: userId },
     select: { id: true },
+  });
+  return project !== null;
+}
+
+async function userCanEditProject(userId, projectId) {
+  if (!userId || !projectId) return false;
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      OR: [
+        { ownerId: userId },
+        { collaborators: { some: { userId: userId, role: 'EDITOR', state: 'ACCEPTED',},},},],},
+    select: {
+      id: true,
+    },
   });
   return project !== null;
 }
@@ -135,6 +151,31 @@ async function getProjects(userId) {
   });
 }
 
+async function getProjectsFromUser(userId) {
+  if (!userId) throw new Error("getProjectsFromUser: userId is required");
+  return prisma.project.findMany({
+    where: {
+      OR: [
+        { ownerId: userId },
+        { collaborators: { some: { userId: userId, state: 'ACCEPTED' } } },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  
+}
+
+async function getProjectCollaborators(projectId) {
+  if (!projectId) throw new Error("getProjectCollaborators: projectId is required");
+
+  const project = await prisma.project.findMany({
+    where: { id: projectId },
+    select: { collaborators: true } 
+  });
+
+  return project ? project.collaborators : [];
+}
+
 async function getProject(id) {
   return prisma.project.findUnique({
     where: { id },
@@ -147,6 +188,14 @@ async function updateProject(id, data) {
     where: { id },
     data: { name: data.name },
     include: { columns: { orderBy: { order: "asc" } } },
+  });
+}
+
+async function updateDeletedProjectCollaborator(id, data) {
+  return prisma.project.update({
+    where: { id },
+    data: {ownerId: data.ownerID, collaborators: data.collaborators},
+    include: { columns: { orderBy: { order: "asc" } } }
   });
 }
 
@@ -166,6 +215,7 @@ module.exports = {
   removeItem,
 
   userCanAccessProject,
+  userCanEditProject,
   columnBelongsToProject,
 
   getColumns,
@@ -178,8 +228,11 @@ module.exports = {
 
   createProject,
   getProjects,
+  getProjectsFromUser,
+  getProjectCollaborators,
   getProject,
   updateProject,
+  updateDeletedProjectCollaborator,
   deleteProject,
 
   prisma,

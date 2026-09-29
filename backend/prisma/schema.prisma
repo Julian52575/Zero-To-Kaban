@@ -39,16 +39,44 @@ model Task {
   columnId    String
   column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
 
-  creatorId   String
+  creatorId   String?
   assigneeId  String?
 }
 
-model Project {
+enum CollaboratorRole {
+  VIEWER
+  EDITOR
+}
+
+enum CollaboratorInvitationState {
+  PENDING
+  ACCEPTED
+  REFUSED
+}
+
+model ProjectCollaborator {
   id        String  @id @default(uuid())
+  projectId String
+  userId    String
+
+  role      CollaboratorRole @default(VIEWER)
+  state     CollaboratorInvitationState @default(PENDING)
+
+  invitedAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Project {
+  id        String   @id @default(uuid())
   name      String
   createdAt DateTime @default(now())
-  ownerId   String
-  columns   Column[]
+  ownerId   String?
+
+  columns       Column[]
+  collaborators ProjectCollaborator[]
 
   @@map("projects")
   @@index([ownerId])

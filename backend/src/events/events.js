@@ -5,7 +5,7 @@ const taskStatusUpdatedSchema = require("./schemas/taskStatusUpdated");
 const projectCreatedSchema = require("./schemas/projectCreated");
 const projectUpdatedSchema = require("./schemas/projectUpdated");
 const projectDeletedSchema = require("./schemas/projectDeleted");
-const userDeletedSchema = require("./schemas/UserDeleted");
+const userDeletedSchema = require("./schemas/userDeleted");
 
 const EVENTS = {
   TASK_CREATED: "task.created.v1",
@@ -16,6 +16,7 @@ const EVENTS = {
   PROJECT_CREATED: "project.created.v1",
   PROJECT_UPDATED: "project.updated.v1",
   PROJECT_DELETED: "project.deleted.v1",
+
   USER_DELETED: "user.deleted.v1",
 };
 
@@ -29,7 +30,7 @@ const EVENT_SCHEMAS = {
   [EVENTS.PROJECT_UPDATED]: projectUpdatedSchema,
   [EVENTS.PROJECT_DELETED]: projectDeletedSchema,
 
-  [EVENTS.USER_DELETED]:  userDeletedSchema,
+  [EVENTS.USER_DELETED]: userDeletedSchema,
 };
 
 module.exports = {

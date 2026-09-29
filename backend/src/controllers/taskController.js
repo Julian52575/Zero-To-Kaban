@@ -66,6 +66,10 @@ async function createTask(req, res, next) {
       return res.status(400).json({ error: "invalid column" });
     }
 
+    if (!(await userCanAccessProject(creatorId, projectId))) {
+      return res.status(403).json({ error: "invalid role" });
+    }
+
     const task = await storeTask(columnId, creatorId, {
       title,
       description,
@@ -103,6 +107,10 @@ async function updateTask(req, res, next) {
       !(await columnBelongsToProject(columnId, projectId))
     ) {
       return res.status(400).json({ error: "invalid column" });
+    }
+
+    if (!(await userCanAccessProject(req.userId, projectId))) {
+      return res.status(400).json({ error: "invalid role" });
     }
 
     const task = await taskService.updateTask(id, req.body);

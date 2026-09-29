@@ -44,6 +44,15 @@ async function startConsumers() {
     );
   });
   await startConsumeFor(EVENTS.USER_DELETED, async (data,eventId) => {
+    list = db.getProjectsFromUser(data);
+    for (i in list) {
+      if (i.ownerID == data) {
+        i.ownerID = "00000000-0000-0000-0000-000000000000";
+      } else {
+        i.collaborators.indexOf(data) = "00000000-0000-0000-0000-000000000000";
+      }
+      db.project.updateDeletedProjectCollaborator(data, {ownerID: i.ownerID, collaborators: i.collaborators});
+    }
     console.log(
       `Handling event: ${EVENTS.USER_DELETED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
