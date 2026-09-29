@@ -3,11 +3,12 @@ import { Form, InputGroup, Button } from 'react-bootstrap';
 import type { Item } from '../types/item';
 import { getErrorMessage } from '../utils/errorMessage';
 import { createTask } from '../services/taskService';
+import InviteCollaborator from './InviteCollaborator';
 
 interface AddItemFormProps {
     projectId: string;
     onNewItem: (item: Item) => void;
-    columnId?: string; // Optional columnId prop
+    columnId?: string;
 }
 
 function AddItemForm({projectId, onNewItem ,columnId}: AddItemFormProps) {
@@ -43,6 +44,7 @@ function AddItemForm({projectId, onNewItem ,columnId}: AddItemFormProps) {
     const isDisabled = submitting || !columnId || newItem.trim().length === 0;
 
     return (
+        <>
         <Form onSubmit={submitNewItem}>
             <InputGroup className="mb-3">
                 <Form.Control
@@ -67,6 +69,8 @@ function AddItemForm({projectId, onNewItem ,columnId}: AddItemFormProps) {
                 </p>
             )}
         </Form>
+        <InviteCollaborator projectId={projectId} />
+        </>
     );
 }
 

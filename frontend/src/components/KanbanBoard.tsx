@@ -20,7 +20,6 @@ const COLUMNS: { id: ItemStatus; title: string }[] = [
   { id: "done", title: "Done" },
 ];
 
-// Si l'item n'a pas encore de statut, on le déduit de "completed"
 export function getStatus(item: Item): ItemStatus {
   if (item.status) return item.status;
   return item.completed ? "done" : "todo";
