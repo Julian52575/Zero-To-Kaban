@@ -56,6 +56,15 @@ async function getProjectCollaborators(req, res) {
 
 async function createProjectCollaborator(req, res) {
     const collaborator = await projectService.createProjectCollaborator(req.params.id, req.userId);
+    try {
+        await publishEvent(EVENTS.PROJECT_INVITATION, {
+            projectId: req.params.id,
+            userId: req.userId,
+        });
+
+    } catch (error) {
+        console.error('Failed to publish PROJECT_INVITATION event:', error);
+    }
 
     res.json(collaborator);
 }

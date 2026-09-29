@@ -37,3 +37,13 @@ export const updateProject = async (item: Project): Promise<Project> => {
 export const deleteProject = (id: string): Promise<void> => {
   return apiClient.delete(`/api/projects/${id}`);
 };
+
+export const inviteCollaborator = async (
+  projectId: string,
+  collaboratorId: string,
+): Promise<unknown> => {
+  const rep = await apiClient.post(`/api/projects/${projectId}/invitation`, {
+    userId: collaboratorId,
+  });
+  return rep;
+};

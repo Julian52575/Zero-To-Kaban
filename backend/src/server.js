@@ -10,7 +10,7 @@ const notificationRepository = require("./repositories/notificationRepository");
 const PORT = 3000;
 
 async function startConsumers() {
-  await startConsumeFor(EVENTS.TASK_CREATED, async (data, eventId, tx) => {
+  await startConsumeFor(EVENTS.TASK_CREATED, async (data, eventId) => {
     console.log(
       `Handling event: ${EVENTS.TASK_CREATED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
@@ -46,7 +46,7 @@ async function startConsumers() {
     );
   });
 
-  await startConsumeFor(EVENTS.TASK_ASSIGNED, async (data, eventId) => {
+  await startConsumeFor(EVENTS.TASK_ASSIGNED, async (data, eventId,tx) => {
     console.log(
       `Handling event: ${EVENTS.TASK_ASSIGNED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
@@ -70,10 +70,23 @@ async function startConsumers() {
     });
   });
 
-  await startConsumeFor(EVENTS.PROJECT_INVITATION, async (data, eventId) => {
+  await startConsumeFor(EVENTS.PROJECT_INVITATION, async (data, eventId, tx) => {
     console.log(
       `Handling event: ${EVENTS.PROJECT_INVITATION} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
+    const rep = await notificationRepository.create(
+      {
+        userId: data.userId,
+        type: EVENTS.PROJECT_INVITATION,
+        eventId,
+        data,
+      },
+      tx,
+    );
+    if (!rep) {
+      console.error("Failed to create notification for PROJECT_INVITATION event");
+      return;
+    }
     sendToUser(data.userId, {
       type: EVENTS.PROJECT_INVITATION,
       data,

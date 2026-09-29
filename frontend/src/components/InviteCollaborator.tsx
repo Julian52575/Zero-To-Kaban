@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Button, Form, Offcanvas, Alert } from "react-bootstrap";
 import Dropdown from "react-bootstrap/Dropdown";
 import { getAllUsers } from "../services/collaboratorService";
+import { inviteCollaborator } from "../services/ProjectApi";
 
 interface InviteCollaboratorProps {
   projectId: string;
@@ -48,12 +49,14 @@ function InviteCollaborator({ projectId }: InviteCollaboratorProps) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     setSubmitting(true);
     setError("");
     setSuccess(false);
 
     try {
+      for (const collaboratorId of selectedCollaborators) {
+        await inviteCollaborator(projectId, collaboratorId);
+      }
       setSuccess(true);
       setSelectedCollaborators([]);
     } catch {
