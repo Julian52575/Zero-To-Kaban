@@ -1,16 +1,24 @@
 import React from "react";
 import { Button, Form, InputGroup } from "react-bootstrap";
 import type { Item } from "../types/item";
+import TaskDetailsModal from "./TaskDetailsModal";
 
 interface Props {
   item: Item;
   onRename: (item: Item, name: string) => void;
   onDelete: (item: Item) => void;
+  onUpdate?: (item: Item, changes: Partial<Item>) => void;
 }
 
-function ItemDisplay({ item, onRename, onDelete }: Props) {
+function ItemDisplay({
+  item,
+  onRename,
+  onDelete,
+  onUpdate,
+}: Props) {
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(item.name);
+  const [showDetails, setShowDetails] = React.useState(false);
 
   const startEditing = () => {
     setDraft(item.name);
@@ -23,11 +31,28 @@ function ItemDisplay({ item, onRename, onDelete }: Props) {
   };
 
   const save = () => {
+    const trimmed = draft.trim();
+
+    if (!trimmed) {
+      return;
+    }
+
     setEditing(false);
-    onRename(item, draft);
+    onRename(item, trimmed);
   };
 
-  
+  const handleDetailsSave = (
+    currentItem: Item,
+    changes: Partial<Item>,
+  ) => {
+    if (onUpdate) {
+      onUpdate(currentItem, changes);
+    }
+
+    if (changes.name && changes.name !== currentItem.name) {
+      onRename(currentItem, changes.name);
+    }
+  };
 
   if (editing) {
     return (
@@ -41,6 +66,7 @@ function ItemDisplay({ item, onRename, onDelete }: Props) {
             if (e.key === "Escape") cancel();
           }}
         />
+
         <Button variant="success" onClick={save}>
           OK
         </Button>
@@ -49,27 +75,51 @@ function ItemDisplay({ item, onRename, onDelete }: Props) {
   }
 
   return (
-    <div className="d-flex justify-content-between align-items-center gap-2">
-      <div className="d-flex gap-2 justify-content-center align-items-center">
-        <input
-          type="checkbox"
-          checked={item.completed}
-          
-        />
-
-        <span onDoubleClick={startEditing} title="Double-clic pour renommer">
-          {item.name}
-        </span>
-      </div>
-      <Button
-        size="sm"
-        variant="outline-danger"
-        aria-label={`Delete "${item.name}"`}
-        onClick={() => onDelete(item)}
+    <>
+      <div
+        className="d-flex justify-content-between align-items-center gap-2"
+        onClick={() => setShowDetails(true)}
+        style={{ cursor: "pointer" }}
       >
-        <i className="fa fa-trash" />
-      </Button>
-    </div>
+        <div className="d-flex gap-2 justify-content-center align-items-center">
+          <input
+            type="checkbox"
+            checked={item.completed}
+            readOnly
+            onClick={(event) => event.stopPropagation()}
+          />
+
+          <span
+            onDoubleClick={(event) => {
+              event.stopPropagation();
+              startEditing();
+            }}
+            title="Double-clic pour renommer"
+          >
+            {item.name}
+          </span>
+        </div>
+
+        <Button
+          size="sm"
+          variant="outline-danger"
+          aria-label={`Delete "${item.name}"`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete(item);
+          }}
+        >
+          <i className="fa fa-trash" />
+        </Button>
+      </div>
+
+      <TaskDetailsModal
+        item={item}
+        show={showDetails}
+        onClose={() => setShowDetails(false)}
+        onSave={handleDetailsSave}
+      />
+    </>
   );
 }
 
