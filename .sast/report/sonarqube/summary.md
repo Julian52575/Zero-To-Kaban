@@ -1,15 +1,21 @@
 ## SonarQube Cloud — `main`
 
-**Quality Gate: :white_check_mark: Passed** · [Open in SonarQube Cloud](https://sonarcloud.io/project/overview?id=Julian52575_Zero-To-Kanban&branch=main)
+**Quality Gate: :x: Failed** · [Open in SonarQube Cloud](https://sonarcloud.io/project/overview?id=Julian52575_Zero-To-Kanban&branch=main)
 
 | Metric | Value |
 | --- | --- |
-| Reliability | A · 0 bug(s) |
+| Reliability | C · 1 bug(s) |
 | Security | A · 0 vulnerability(ies) |
 | Security hotspots | 0 |
-| Maintainability | A · 20 smell(s) |
+| Maintainability | A · 22 smell(s) |
 | Coverage | 91.9% |
 | Duplication | 0.0% |
 | Lines of code | 2319 |
 
-_Analysis `7062ffec-d27b-40a1-bbdb-8c382465a82c` · refreshed 2026-09-29T13:04:35Z._
+### Failing conditions
+
+| Metric | Comparator | Threshold | Actual |
+| --- | --- | --- | --- |
+| new_reliability_rating | GT | 1 | 3 |
+
+_Analysis `fed6a784-0855-4242-88e4-f1bed90bb3b7` · refreshed 2026-09-29T18:51:23Z._
