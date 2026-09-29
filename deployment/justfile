@@ -158,7 +158,7 @@ simulate-traffic rps="20" seconds="60": _k3s-ready
     fi
     ( while true; do kubectl -n "$ns" top pods --no-headers >>"$tmp/load.txt" 2>/dev/null || true; sleep 10; done ) &
     sampler=$!
-    BASE_URL="http://localhost:{{traefik_port}}" "{{deploy_dir}}/scripts/simulate-traffic.sh" {{rps}} {{seconds}}
+    BASE_URL="http://localhost:{{traefik_port}}" "{{deploy_dir}}/scripts/simulate-traffic.py" {{rps}} {{seconds}}
     echo
     echo "waiting 30s for the last pod metrics..."
     sleep 30
@@ -166,7 +166,7 @@ simulate-traffic rps="20" seconds="60": _k3s-ready
     sampler=""
     echo
     echo "pods ($ns): idle -> peak while under load"
-    "{{deploy_dir}}/scripts/usage-summary.sh" "$tmp/idle.txt" "$tmp/load.txt"
+    just usage-summary "$tmp/idle.txt" "$tmp/load.txt"
     # Prometheus's own numbers, through the API server's service proxy (no port-forward needed).
     prom_query() {
         local q; q="$(jq -rn --arg q "$1" '$q|@uri')"
@@ -188,6 +188,33 @@ simulate-traffic rps="20" seconds="60": _k3s-ready
         echo
         echo "prometheus: not installed here, so no metrics-store sizing (kubectl apply -n argocd -f argocd/environments/monitoring-k3s-app.yaml)"
     fi
+
+# Summarise two `kubectl top pods --no-headers` sample files: each pod's idle vs peak CPU/memory
+usage-summary idle load:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Input lines look like: <pod> <cpu: 12m | 1> <memory: 45Mi | 1Gi | 900Ki>.
+    # The first file is the idle sample, the second the samples taken under load.
+    awk '
+        function cpu(v) { return v ~ /m$/ ? v + 0 : v * 1000 }
+        function mem(v) {
+            if (v ~ /Gi$/) return v * 1024
+            if (v ~ /Ki$/) return v / 1024
+            return v + 0
+        }
+        FNR == 1 { file++ }
+        file == 1 { idle_cpu[$1] = cpu($2); idle_mem[$1] = mem($3); pods[$1] = 1; next }
+        {
+            pods[$1] = 1
+            if (cpu($2) > peak_cpu[$1]) peak_cpu[$1] = cpu($2)
+            if (mem($3) > peak_mem[$1]) peak_mem[$1] = mem($3)
+        }
+        END {
+            printf "  %-52s %-16s %s\n", "pod", "CPU (millicores)", "memory (MiB)"
+            for (p in pods)
+                printf "  %-52s %5d -> %-6d %6.0f -> %.0f\n", p, idle_cpu[p], peak_cpu[p], idle_mem[p], peak_mem[p]
+        }
+    ' "{{idle}}" "{{load}}" | { IFS= read -r header; echo "$header"; sort; }
 
 # (internal) print UI/password hints
 _argocd-info:

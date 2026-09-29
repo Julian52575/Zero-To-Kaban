@@ -8,7 +8,7 @@ rootless k3s node.
 deployment/
 ├── flake.nix                 dev shell (k3s, kubectl, helm, argocd, just); auto-starts k3s
 ├── justfile                  bootstrap / refresh / teardown / load-test recipes
-├── scripts/                  simulate-traffic.sh, usage-summary.sh (see "Simulating traffic")
+├── scripts/                  simulate-traffic.py (see "Simulating traffic")
 ├── argocd/
 │   ├── root-app.yaml         app-of-apps for the prod cluster (creates prod-app.yaml + monitoring-prod-app.yaml)
 │   └── environments/         one Argo CD Application per environment
@@ -84,14 +84,14 @@ just simulate-traffic          # 20 req/s for 60s
 just simulate-traffic 100 120  # 100 req/s for 2 minutes
 ```
 
-`scripts/simulate-traffic.sh` signs in once (login is rate limited per IP, so
+`scripts/simulate-traffic.py` signs in once (login is rate limited per IP, so
 it never signs in per request), creates its own project and sends a
-read-heavy mix through Traefik, so every request goes through the same login
+read-heavy mix through Traefik over keep-alive connections, so every request goes through the same login
 check as a browser: 40% task list, 15% project list, 10% columns, 10% the
 frontend page, 10% `/auth/me`, 10% task creation, 5% one project. It then
 deletes its project (tasks and columns go with it) and prints the status codes
-and p50/p95/max latency per route. The rate is a target: slow answers lower
-it, and the summary shows what was reached. A `5xx` in the summary means the
+and p50/p95/max latency per route. The workers pace themselves to hold the
+target rate; the summary shows what was actually reached. A `5xx` in the summary means the
 app is struggling at that rate.
 
 If the backend has no tasks endpoints (an older image), the script says so, leaves
@@ -115,10 +115,10 @@ To run it against another target, e.g. the docker-compose stack, call the
 script directly:
 
 ```bash
-BASE_URL=http://localhost:8000 deployment/scripts/simulate-traffic.sh 50 30
+BASE_URL=http://localhost:8000 deployment/scripts/simulate-traffic.py 50 30
 ```
 
-It needs `curl`, `jq` and `awk` on your `PATH` (the dev shell adds `jq`).
+It needs Python 3.8 or newer and nothing else (standard library only; the dev shell provides it).
 
 It registers an account with a public password (`loadtest`) and generates load, so it refuses any target that isn't `localhost` / `127.x` unless you set `ALLOW_REMOTE=1`. Never point it at prod.
 
@@ -129,6 +129,7 @@ It registers an account with a public password (`loadtest`) and generates load, 
 | `just`                         | list recipes                                                           |
 | `just up-local` / `up-gitops`  | install Argo CD (version pinned by `argocd_version` in the `justfile`) if missing, apply the Application, bind the local ports (safe to re-run) |
 | `just refresh-local` / `refresh-gitops` | make Argo CD re-read the repo now instead of on its next poll |
+| `just usage-summary <idle> <load>` | summarise two `kubectl top pods --no-headers` sample files: each pod's idle vs peak CPU/memory (used by `simulate-traffic`) |
 | `just simulate-traffic [rps] [seconds]` | send simulated user traffic (default 20 req/s for 60s) to the local dev app, then print each pod's idle vs peak CPU/memory. See [Simulating traffic](#simulating-traffic) |
 | `just rm`                      | delete the Argo CD Applications, everything they deployed, and Argo CD itself. Database volumes and the k3s node are kept. |
 | `just down`                    | stop k3s and the port-forwards. Data on disk is kept.                  |
