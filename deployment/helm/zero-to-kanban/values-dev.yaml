@@ -13,6 +13,10 @@ auth:
     tag: latest
     pullPolicy: Always
   replicaCount: 1
+  # Dev has no login/register rate limits, so load tests and scripted runs
+  # aren't stopped after 10 sign-ins. Takes effect with an auth image that
+  # knows RATE_LIMIT_DISABLED (releases after this change); older images ignore it.
+  rateLimitDisabled: "true"
 
 frontend:
   image:
