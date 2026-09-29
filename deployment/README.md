@@ -103,8 +103,10 @@ climb while the rate stays flat. On the dev app, through `kubectl
 port-forward`, that was roughly 150 to 250 req/s; the docker-compose stack,
 reached directly, saturated around 600 to 700 req/s. Raise the number of
 parallel clients with `WORKERS=32 just simulate-traffic 300 30`. Login is
-limited to 10 per 15 minutes per IP and each run signs in once, so more than 10
-runs in 15 minutes get "login is rate limited".
+limited to 10 per 15 minutes per IP where the rate limits are on. Dev turns them
+off (see the table below), but an auth image without the switch still has them:
+each run signs in once, so more than 10 runs in 15 minutes then get "login is
+rate limited".
 
 If the backend has no tasks endpoints (an older image), the script says so, leaves
 tasks out of the mix and writes by creating and deleting a project instead.
@@ -272,6 +274,7 @@ first created. On an older dev volume, run `just nuke` to reset them.
 | replicas (be/auth/fe)  | 1 / 1 / 1                            | 4 / 2 / 2                               |
 | frontend memory limit  | 1Gi                                  | 128Mi                                   |
 | secrets                | plaintext defaults in `values.yaml`  | pre-created Secrets (`existingSecret`)  |
+| auth rate limits       | off (`RATE_LIMIT_DISABLED=true`)     | on (login 10 per 15 min, register 5 per hour, per IP) |
 | entrypoint / TLS       | `web`, no TLS                        | `websecure`, TLS from Secret `kanban-tls` |
 | `/metrics` route       | on                                   | off                                     |
 | DB volume sizes        | 1Gi / 1Gi                            | 10Gi / 5Gi                              |

@@ -296,7 +296,7 @@ def run(args):
         if status == 401:
             api(main, "POST", "/auth/register", credentials)
         elif status == 429:
-            raise Fatal("login is rate limited (10 per 15 min per IP); wait, or restart the auth service")
+            raise Fatal("login is rate limited (10 per 15 min per IP); wait, restart the auth service, or turn the limits off for local dev with RATE_LIMIT_DISABLED=true on it")
         elif status != 200:
             raise Fatal("login answered %s" % (status or "nothing"))
 
