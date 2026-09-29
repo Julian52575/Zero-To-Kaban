@@ -222,13 +222,17 @@ def print_summary(records, elapsed):
     for status in sorted(counts):
         print("  %s  %d" % (status, counts[status]))
     print()
-    print("latency (s):     p50    p95    max        requests")
     by_route = defaultdict(list)
     for method, route, _, seconds in records:
         by_route[method + " " + route].append(seconds)
+    # One format for the header and the rows, so the columns always line up.
+    width = max([len("route")] + [len(key) for key in by_route])
+    row = "  %-" + str(width) + "s %8s %8s %8s %9s"
+    print("latency (seconds):")
+    print(row % ("route", "p50", "p95", "max", "requests"))
     for key in sorted(by_route):
         values = sorted(by_route[key])
-        print("  %-30s %-6.3f %-6.3f %-6.3f     %d" % (key, percentile(values, 0.50), percentile(values, 0.95), values[-1], len(values)))
+        print(row % (key, "%.3f" % percentile(values, 0.50), "%.3f" % percentile(values, 0.95), "%.3f" % values[-1], len(values)))
     failures = sum(n for status, n in counts.items() if status.startswith("5") or status == "000")
     if failures:
         print(file=sys.stderr)
