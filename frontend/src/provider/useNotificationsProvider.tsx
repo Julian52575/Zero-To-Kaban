@@ -15,14 +15,17 @@ import {
 
 type Notification = {
   id: string;
-  type : string;
+  type: string;
   title: string;
   message: string;
+  projectId?: string;
+  collaboratorId?: string;
 };
 
 type NotificationContextType = {
   unreadNotifications: Notification[];
   markAllTaskAsRead: () => void;
+  resolveNotification: (id: string) => void;
 };
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
@@ -49,28 +52,29 @@ export function NotificationProvider({
 
   useWebSocket((type, data, eventId) => {
     switch (type) {
-      case "task.assigned.v1":
-        const notificationIndex = data as {
-          id: string;
-          data: { title: string };
-        };
+      case "task.assigned.v1": {
+        const task = data as { title: string };
         addNotification({
-          id: notificationIndex.id,
-          type : "task",
+          id: eventId,
+          type: "task",
           title: "Task assigned",
-          message: `You were assigned to task "${(data as { title: string }).title}".`,
+          message: `You were assigned to task "${task.title}".`,
         });
         break;
+      }
 
-      case "project.invitation.v1":
-        const notificationIndex2 = data as { id: string };
+      case "project.invitation.v1": {
+        const invitation = data as { projectId: string; userId: string };
         addNotification({
-          id: notificationIndex2.id,
-          type : "invitation",
+          id: eventId,
+          projectId: invitation.projectId,
+          collaboratorId: invitation.userId,
+          type: "invitation",
           title: "Project invitation",
           message: `You have been invited to a project.`,
         });
         break;
+      }
 
       default:
         console.log("Unknown notification type:", type);
@@ -81,18 +85,25 @@ export function NotificationProvider({
     const getNoReadNotifications = async () => {
       const rep = await fetchUnreadNotifications();
       setUnreadNotifications(
-        rep.map((n) => ({
-          id: n.id,
-          type : n.type === "task.assigned.v1" ? "task" : "invitation",
-          title:
-            n.type === "task.assigned.v1"
-              ? "Task assigned"
-              : "Project invitation",
-          message:
-            n.type === "task.assigned.v1"
-              ? `You were assigned to "${(n.data as { title: string }).title}".`
+        rep.map((n) => {
+          const isTask = n.type === "task.assigned.v1";
+          const d = n.data as {
+            title?: string;
+            projectId?: string;
+            userId?: string;
+          };
+
+          return {
+            id: n.id,
+            type: isTask ? "task" : "invitation",
+            title: isTask ? "Task assigned" : "Project invitation",
+            message: isTask
+              ? `You were assigned to "${d.title}".`
               : `You have been invited to a project.`,
-        })),
+            projectId: d.projectId,
+            collaboratorId: d.userId,
+          };
+        }),
       );
     };
 
@@ -122,22 +133,21 @@ export function NotificationProvider({
     );
   }
 
+  // Retire une notification (ex. invitation acceptée/refusée) et la marque comme lue
+  function resolveNotification(id: string) {
+    setUnreadNotifications((current) => current.filter((n) => n.id !== id));
+    markNotificationAsRead(id).catch((err) =>
+      console.error("Failed to mark notification as read:", err),
+    );
+  }
+
   function dismissToast(id: string) {
     setNotifications((current) => current.filter((n) => n.id !== id));
   }
 
-  function removeNotification(id: string) {
-    setNotifications((current) =>
-      current.filter((notification) => notification.id !== id),
-    );
-    markNotificationAsRead(id).catch((err) => {
-      console.error("Failed to mark notification as read:", err);
-    });
-  }
-
   return (
     <NotificationContext.Provider
-      value={{ unreadNotifications, markAllTaskAsRead }}
+      value={{ unreadNotifications, markAllTaskAsRead, resolveNotification }}
     >
       {children}
 

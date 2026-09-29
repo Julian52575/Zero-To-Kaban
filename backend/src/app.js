@@ -58,8 +58,10 @@ apiRouter.put("/items/:id", updateItem);
 apiRouter.patch("/items/:id", updateItem);
 apiRouter.delete("/items/:id", deleteItem);
 
-apiRouter.get("/users/:id/projects", validateGetUserProjects, getUserProjects);
-apiRouter.get("/projects", getProjects);
+// apiRouter.get("/users/:id/projects", validateGetUserProjects, getUserProjects);
+// apiRouter.get("/projects", getProjects);
+apiRouter.get("/projects",getUserProjects);
+
 apiRouter.get("/projects/:id", getProject);
 apiRouter.post("/projects", validateCreateProject, createProject);
 apiRouter.delete("/projects/:id", deleteProject);

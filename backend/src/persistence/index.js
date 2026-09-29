@@ -42,13 +42,20 @@ async function removeItem(id) {
   await prisma.todoItem.delete({ where: { id } });
 }
 
-// Prisma drops `undefined` filters, so a missing id would match any row.
 async function userCanAccessProject(userId, projectId) {
   if (!userId || !projectId) return false;
+
   const project = await prisma.project.findFirst({
-    where: { id: projectId, ownerId: userId },
+    where: {
+      id: projectId,
+      OR: [
+        { ownerId: userId },
+        { collaborators: { some: { userId, state: "ACCEPTED" } } },
+      ],
+    },
     select: { id: true },
   });
+
   return project !== null;
 }
 
@@ -59,7 +66,17 @@ async function userCanEditProject(userId, projectId) {
       id: projectId,
       OR: [
         { ownerId: userId },
-        { collaborators: { some: { userId: userId, role: $Enums.CollaboratorRole.EDITOR, state: $Enums.CollaboratorInvitationState.ACCEPTED,},},},],},
+        {
+          collaborators: {
+            some: {
+              userId: userId,
+              role: $Enums.CollaboratorRole.EDITOR,
+              state: $Enums.CollaboratorInvitationState.ACCEPTED,
+            },
+          },
+        },
+      ],
+    },
     select: {
       id: true,
     },
@@ -82,7 +99,6 @@ async function getColumns(projectId) {
     orderBy: { order: "asc" },
   });
 }
-
 
 async function getTasks(projectId) {
   return prisma.task.findMany({
@@ -205,35 +221,43 @@ async function getProjectCollaborators(projectId) {
         select: {
           userId: true,
           role: true,
-          state: true
-        }
-      }
-    }
+          state: true,
+        },
+      },
+    },
   });
 
-  if (!project || !project.collaborators || project.collaborators.length === 0) {
+  if (
+    !project ||
+    !project.collaborators ||
+    project.collaborators.length === 0
+  ) {
     return [];
   }
 
-  const userIds = project.collaborators.map(c => c.userId);
+  const userIds = project.collaborators.map((c) => c.userId);
 
   try {
-    const response = await fetch('/internal/users/lookup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: userIds }),
+    const response = await fetch("/internal/users/lookup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: userIds }),
     });
 
     if (!response.ok) {
-      throw new Error(`Auth service lookup failed with status: ${response.status}`);
+      throw new Error(
+        `Auth service lookup failed with status: ${response.status}`,
+      );
     }
 
     const users = await response.json();
 
     return users;
-
   } catch (error) {
-    console.error("Failed to lookup user profile items from auth container:", error);
+    console.error(
+      "Failed to lookup user profile items from auth container:",
+      error,
+    );
     return [];
   }
 }
@@ -257,7 +281,7 @@ async function updateProjectCollaborator(projectId, userId, data) {
   return prisma.projectCollaborator.update({
     where: {
       projectId: { projectId },
-      userId: { userId }
+      userId: { userId },
     },
     data: {
       role: data.role,
@@ -269,7 +293,7 @@ async function updateProjectCollaborator(projectId, userId, data) {
 async function updateDeletedProjectCollaborator(
   projectId,
   userId,
-  anonymousUserId
+  anonymousUserId,
 ) {
   const project = await prisma.project.findUnique({
     where: {
@@ -289,9 +313,7 @@ async function updateDeletedProjectCollaborator(
       id: projectId,
     },
     data: {
-      ...(project.ownerId === userId
-        ? { ownerId: anonymousUserId }
-        : {}),
+      ...(project.ownerId === userId ? { ownerId: anonymousUserId } : {}),
       collaborators: {
         updateMany: {
           where: {
@@ -317,7 +339,6 @@ async function updateDeletedProjectCollaborator(
 async function deleteProject(id) {
   return prisma.project.delete({ where: { id } });
 }
-
 
 module.exports = {
   init,

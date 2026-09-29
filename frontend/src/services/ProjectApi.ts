@@ -47,3 +47,15 @@ export const inviteCollaborator = async (
   });
   return rep;
 };
+
+export const AcceptInvitation = async (
+  projectId: string,
+  collaboratorId: string,
+): Promise<unknown> => {
+  const rep = await apiClient.put(`/api/projects/${projectId}/invitation`,{
+    userId:collaboratorId,
+    role: "EDITOR",
+    state: "accepted"
+  });
+  return rep;
+};
