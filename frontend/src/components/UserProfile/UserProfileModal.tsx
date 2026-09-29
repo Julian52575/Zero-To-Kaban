@@ -3,7 +3,7 @@ import {
     Alert,
     Button,
     Form,
-    Modal,
+    Offcanvas,
     Spinner,
 } from 'react-bootstrap';
 
@@ -27,7 +27,7 @@ function UserProfileModal({
 }: UserProfileModalProps) {
     const [user, setUser] = React.useState<User | null>(null);
     const [username, setUsername] = React.useState('');
-    const [email, setEmail] = React.useState('');
+    const [password, setpassword] = React.useState('');
 
     const [loading, setLoading] = React.useState(false);
     const [saving, setSaving] = React.useState(false);
@@ -48,7 +48,7 @@ function UserProfileModal({
             .then(currentUser => {
                 setUser(currentUser);
                 setUsername(currentUser.username);
-                setEmail(currentUser.email);
+                setpassword(currentUser.password);
             })
             .catch(() => {
                 setError('Unable to load your profile.');
@@ -74,12 +74,12 @@ function UserProfileModal({
             const updatedUser = await updateUser({
                 ...user,
                 username,
-                email,
+                password,
             });
 
             setUser(updatedUser);
             setUsername(updatedUser.username);
-            setEmail(updatedUser.email);
+            setpassword(updatedUser.password);
         } catch {
             setError('Unable to update your profile.');
         } finally {
@@ -95,7 +95,6 @@ function UserProfileModal({
         try {
             await deleteUser(user.id);
 
-            // À adapter à ton système de navigation/authentification.
             window.location.href = '/';
         } catch {
             setError('Unable to delete your account.');
@@ -107,7 +106,6 @@ function UserProfileModal({
         try {
             await logout();
 
-            // À adapter à ton système de navigation.
             window.location.href = '/';
         } catch {
             setError('Unable to logout.');
@@ -115,16 +113,20 @@ function UserProfileModal({
     };
 
     return (
-        <Modal
+        <Offcanvas
             show={show}
             onHide={onClose}
-            centered
+            placement="end"
+            scroll={false}
+            backdrop={true}
         >
-            <Modal.Header closeButton>
-                <Modal.Title>User profile</Modal.Title>
-            </Modal.Header>
+            <Offcanvas.Header closeButton>
+                <Offcanvas.Title>
+                    User profile
+                </Offcanvas.Title>
+            </Offcanvas.Header>
 
-            <Modal.Body>
+            <Offcanvas.Body>
                 {error && (
                     <Alert variant="danger">
                         {error}
@@ -132,7 +134,7 @@ function UserProfileModal({
                 )}
 
                 {loading ? (
-                    <div className="text-center">
+                    <div className="text-center py-4">
                         <Spinner animation="border" />
                     </div>
                 ) : (
@@ -157,14 +159,14 @@ function UserProfileModal({
 
                             <Form.Group className="mb-3">
                                 <Form.Label>
-                                    Email
+                                    Password
                                 </Form.Label>
 
                                 <Form.Control
-                                    type="email"
-                                    value={email}
+                                    type="password"
+                                    value={password}
                                     onChange={event =>
-                                        setEmail(
+                                        setpassword(
                                             event.target.value,
                                         )
                                     }
@@ -176,6 +178,7 @@ function UserProfileModal({
                                 type="submit"
                                 variant="primary"
                                 disabled={saving}
+                                className="w-100"
                             >
                                 {saving
                                     ? 'Saving...'
@@ -183,9 +186,9 @@ function UserProfileModal({
                             </Button>
                         </Form>
 
-                        <hr />
+                        <hr className="my-4" />
 
-                        <div className="d-flex justify-content-between">
+                        <div className="d-grid gap-2">
                             <Button
                                 variant="outline-secondary"
                                 onClick={handleLogout}
@@ -217,7 +220,7 @@ function UserProfileModal({
                                     cannot be undone.
                                 </p>
 
-                                <div className="d-flex gap-2">
+                                <div className="d-grid gap-2">
                                     <Button
                                         variant="danger"
                                         onClick={handleDelete}
@@ -240,17 +243,8 @@ function UserProfileModal({
                         )}
                     </>
                 )}
-            </Modal.Body>
-
-            <Modal.Footer>
-                <Button
-                    variant="secondary"
-                    onClick={onClose}
-                >
-                    Close
-                </Button>
-            </Modal.Footer>
-        </Modal>
+            </Offcanvas.Body>
+        </Offcanvas>
     );
 }
 

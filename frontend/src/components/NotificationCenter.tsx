@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Button,
-    Modal,
+    Offcanvas,
     ListGroup,
     Badge,
 } from 'react-bootstrap';
@@ -16,7 +16,7 @@ interface Notification {
 function NotificationCenter() {
     const [show, setShow] = React.useState(false);
 
-    // Temporary notifications. Put list of notification here.
+    // Temporary notifications. Put list of notifications here.
     const [notifications] = React.useState<Notification[]>([
         {
             id: 1,
@@ -38,6 +38,23 @@ function NotificationCenter() {
 
     return (
         <>
+            <style>{`
+                .position-relative {
+                        margin-left: auto;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        color: #fff;
+                        background-color: #198754;
+                        border: none;
+                        margin : 5px;
+                    }
+
+                .position-relative:hover {
+                    background-color: #146c43;
+                    transform: scale(1.02);
+                    transition: transform 0.2s ease-in-out;
+                }
+            `}</style>
             <Button
                 variant="outline-secondary"
                 onClick={() => setShow(true)}
@@ -57,18 +74,20 @@ function NotificationCenter() {
                 )}
             </Button>
 
-            <Modal
+            <Offcanvas
                 show={show}
                 onHide={() => setShow(false)}
-                centered
+                placement="end"
+                scroll={false}
+                backdrop={true}
             >
-                <Modal.Header closeButton>
-                    <Modal.Title>
+                <Offcanvas.Header closeButton>
+                    <Offcanvas.Title>
                         Notifications
-                    </Modal.Title>
-                </Modal.Header>
+                    </Offcanvas.Title>
+                </Offcanvas.Header>
 
-                <Modal.Body className="p-0">
+                <Offcanvas.Body className="p-0">
                     {notifications.length === 0 ? (
                         <p className="text-center text-muted p-4 mb-0">
                             No notifications.
@@ -78,8 +97,9 @@ function NotificationCenter() {
                             {notifications.map(notification => (
                                 <ListGroup.Item
                                     key={notification.id}
+                                    className="py-3 px-3"
                                 >
-                                    <div className="d-flex justify-content-between">
+                                    <div className="d-flex justify-content-between align-items-start gap-2">
                                         <strong>
                                             {notification.title}
                                         </strong>
@@ -98,8 +118,8 @@ function NotificationCenter() {
                             ))}
                         </ListGroup>
                     )}
-                </Modal.Body>
-            </Modal>
+                </Offcanvas.Body>
+            </Offcanvas>
         </>
     );
 }

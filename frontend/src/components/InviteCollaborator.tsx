@@ -2,7 +2,7 @@ import React from 'react';
 import {
     Button,
     Form,
-    Modal,
+    Offcanvas,
     InputGroup,
     Alert,
 } from 'react-bootstrap';
@@ -21,6 +21,10 @@ function InviteCollaborator({
     const [success, setSuccess] = React.useState(false);
 
     const handleClose = () => {
+        if (submitting) {
+            return;
+        }
+
         setShow(false);
         setEmail('');
         setError('');
@@ -58,7 +62,12 @@ function InviteCollaborator({
              * });
              */
 
-            console.log('Inviting:', email, 'to project:', projectId);
+            console.log(
+                'Inviting:',
+                email,
+                'to project:',
+                projectId,
+            );
 
             setSuccess(true);
             setEmail('');
@@ -82,19 +91,21 @@ function InviteCollaborator({
                 Invite
             </Button>
 
-            <Modal
+            <Offcanvas
                 show={show}
                 onHide={handleClose}
-                centered
+                placement="end"
+                scroll={false}
+                backdrop={true}
             >
-                <Modal.Header closeButton>
-                    <Modal.Title>
+                <Offcanvas.Header closeButton>
+                    <Offcanvas.Title>
                         Invite a collaborator
-                    </Modal.Title>
-                </Modal.Header>
+                    </Offcanvas.Title>
+                </Offcanvas.Header>
 
                 <Form onSubmit={handleSubmit}>
-                    <Modal.Body>
+                    <Offcanvas.Body>
                         {success && (
                             <Alert variant="success">
                                 Invitation sent successfully.
@@ -107,7 +118,10 @@ function InviteCollaborator({
                             </Alert>
                         )}
 
-                        <Form.Group controlId="collaboratorEmail">
+                        <Form.Group
+                            className="mb-3"
+                            controlId="collaboratorEmail"
+                        >
                             <Form.Label>
                                 Collaborator's email
                             </Form.Label>
@@ -122,7 +136,9 @@ function InviteCollaborator({
                                     placeholder="user@example.com"
                                     value={email}
                                     onChange={event =>
-                                        setEmail(event.target.value)
+                                        setEmail(
+                                            event.target.value,
+                                        )
                                     }
                                     disabled={submitting}
                                     required
@@ -134,31 +150,33 @@ function InviteCollaborator({
                                 want to invite to this project.
                             </Form.Text>
                         </Form.Group>
-                    </Modal.Body>
+                    </Offcanvas.Body>
 
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={handleClose}
-                            disabled={submitting}
-                        >
-                            Cancel
-                        </Button>
+                    <div className="border-top p-3">
+                        <div className="d-grid gap-2">
+                            <Button
+                                variant="primary"
+                                type="submit"
+                                disabled={
+                                    submitting || !email.trim()
+                                }
+                            >
+                                {submitting
+                                    ? 'Sending...'
+                                    : 'Send invitation'}
+                            </Button>
 
-                        <Button
-                            variant="primary"
-                            type="submit"
-                            disabled={
-                                submitting || !email.trim()
-                            }
-                        >
-                            {submitting
-                                ? 'Sending...'
-                                : 'Send invitation'}
-                        </Button>
-                    </Modal.Footer>
+                            <Button
+                                variant="secondary"
+                                onClick={handleClose}
+                                disabled={submitting}
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
                 </Form>
-            </Modal>
+            </Offcanvas>
         </>
     );
 }
