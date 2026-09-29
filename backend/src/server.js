@@ -14,24 +14,6 @@ async function startConsumers() {
     console.log(
       `Handling event: ${EVENTS.TASK_CREATED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
-    const rep = await notificationRepository.create(
-      {
-        userId: data.creatorId,
-        type: EVENTS.TASK_ASSIGNED,
-        eventId,
-        data,
-      },
-      tx,
-    );
-    if (!rep) {
-      console.error("Failed to create notification for TASK_ASSIGNED event");
-      return;
-    }
-    sendToUser(data.creatorId, {
-      type: EVENTS.TASK_ASSIGNED,
-      data: rep,
-      eventId,
-    });
   });
   await startConsumeFor(EVENTS.TASK_UPDATED, async (data, eventId) => {
     console.log(
@@ -68,7 +50,20 @@ async function startConsumers() {
     console.log(
       `Handling event: ${EVENTS.TASK_ASSIGNED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
-    sendToUser(data.userId, {
+    const rep = await notificationRepository.create(
+      {
+        userId: data.assigneeId,
+        type: EVENTS.TASK_ASSIGNED,
+        eventId,
+        data,
+      },
+      tx,
+    );
+    if (!rep) {
+      console.error("Failed to create notification for TASK_ASSIGNED event");
+      return;
+    }
+    sendToUser(data.assigneeId, {
       type: EVENTS.TASK_ASSIGNED,
       data,
       eventId,
@@ -85,9 +80,9 @@ async function startConsumers() {
       eventId,
     });
   });
+
   await startConsumeFor(EVENTS.USER_DELETED, async (data, eventId) => {
-    const ANONYMOUS_USER_ID =
-      "00000000-0000-0000-0000-000000000000";
+    const ANONYMOUS_USER_ID = "00000000-0000-0000-0000-000000000000";
 
     const projects = await db.getProjectsFromUser(data);
 
@@ -95,7 +90,7 @@ async function startConsumers() {
       await db.updateDeletedProjectCollaborator(
         project.id,
         data,
-        ANONYMOUS_USER_ID
+        ANONYMOUS_USER_ID,
       );
     }
 
