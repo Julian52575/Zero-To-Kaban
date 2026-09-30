@@ -6,7 +6,7 @@ function PrivacyPolicy() {
       <a className="visually-hidden-focusable" href="#main-content">
         Skip to content
       </a>
-      <article id="main-content" tabIndex={-1}>
+      <article id="privacy-policy-content" tabIndex={-1}>
         <h1 className="mb-4">Privacy Policy</h1>
 
         <p className="text-muted">

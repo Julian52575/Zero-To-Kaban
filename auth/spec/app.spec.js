@@ -33,6 +33,15 @@ describe('public routes', () => {
         expect(res.headers.get('content-type')).toMatch(/text\/html/);
     });
 
+    test('GET /privacy-policy includes a focusable skip-link target', async () => {
+        const res = await call('GET', '/privacy-policy');
+        const html = await res.text();
+
+        expect(html).toContain('href="#main-content"');
+        expect(html).toContain('id="main-content"');
+        expect(html).toContain('tabindex="-1"');
+    });
+
     test('POST /auth/logout clears the session without authentication', async () => {
         const res = await call('POST', '/auth/logout');
 
