@@ -10,7 +10,8 @@ import {
     moveTask,
     deleteTask,
 } from '../services/taskService';
-import { getProject, getProjectCollaborators } from '../services/ProjectApi';
+import Swal from 'sweetalert2';
+import { getProject, getProjectCollaborators, leaveProject } from '../services/ProjectApi';
 import { ApiError } from '../services/apiClient';
 
 vi.mock('../services/taskService', () => ({
@@ -24,7 +25,10 @@ vi.mock('../services/taskService', () => ({
 vi.mock('../services/ProjectApi', () => ({
     getProject: vi.fn(),
     getProjectCollaborators: vi.fn().mockResolvedValue([]),
+    leaveProject: vi.fn(),
 }));
+
+vi.mock('sweetalert2', () => ({ default: { fire: vi.fn() } }));
 
 vi.mock('./InviteCollaborator', () => ({
     default: ({ ownerId }: { ownerId: string }) => <div>invite:{ownerId}</div>,
@@ -102,7 +106,7 @@ describe('TodoList', () => {
 
         render(<TodoList projectId="p1" />);
 
-        expect(screen.getByText('Chargement…')).toBeInTheDocument();
+        expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
     test('fetches columns and tasks for the project and maps them to items', async () => {
@@ -265,7 +269,7 @@ describe('TodoList', () => {
             render(<TodoList projectId="p1" />);
 
             expect(await screen.findByText('invite:u1')).toBeInTheDocument();
-            expect(screen.queryByRole('button', { name: 'Quitter' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Leave Project' })).not.toBeInTheDocument();
         });
 
         test('a non-owner can leave the project', async () => {
@@ -273,7 +277,67 @@ describe('TodoList', () => {
 
             render(<TodoList projectId="p1" />);
 
-            expect(await screen.findByRole('button', { name: 'Quitter' })).toBeInTheDocument();
+            expect(await screen.findByRole('button', { name: 'Leave Project' })).toBeInTheDocument();
+        });
+
+        describe('leaving the project', () => {
+            const original = window.location;
+
+            beforeEach(() => {
+                vi.mocked(getProject).mockResolvedValue({ ...project(), isOwner: false });
+                Object.defineProperty(window, 'location', {
+                    configurable: true,
+                    value: { href: '/projects/p1' },
+                });
+            });
+
+            afterEach(() => {
+                Object.defineProperty(window, 'location', { configurable: true, value: original });
+            });
+
+            const clickLeave = async () => {
+                render(<TodoList projectId="p1" />);
+                await userEvent.click(await screen.findByRole('button', { name: 'Leave Project' }));
+            };
+
+            test('goes back home once confirmed', async () => {
+                vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true } as never);
+                vi.mocked(leaveProject).mockResolvedValue('EDITOR');
+
+                await clickLeave();
+
+                await waitFor(() => expect(window.location.href).toBe('/'));
+                expect(leaveProject).toHaveBeenCalledWith('p1');
+            });
+
+            test('stays when the confirmation is dismissed', async () => {
+                vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: false } as never);
+
+                await clickLeave();
+
+                await waitFor(() => expect(Swal.fire).toHaveBeenCalled());
+                expect(leaveProject).not.toHaveBeenCalled();
+            });
+
+            test('explains that an owner cannot leave', async () => {
+                vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true } as never);
+                vi.mocked(leaveProject).mockResolvedValue('OWNER');
+
+                await clickLeave();
+
+                expect(await screen.findByText(/owner of the project and cannot leave/)).toBeInTheDocument();
+                expect(window.location.href).toBe('/projects/p1');
+            });
+
+            test('shows the error when leaving fails', async () => {
+                vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true } as never);
+                vi.mocked(leaveProject).mockRejectedValue(new ApiError(404, 'HTTP error: 404'));
+
+                await clickLeave();
+
+                expect(await screen.findByText('The requested resource was not found.')).toBeInTheDocument();
+                expect(window.location.href).toBe('/projects/p1');
+            });
         });
 
         test('a viewer cannot add tasks', async () => {

@@ -8,7 +8,17 @@ import { getProjects, createProject, deleteProject } from '../services/ProjectAp
 
 vi.mock('sweetalert2', () => ({ default: { fire: vi.fn() } }));
 vi.mock('../components/UserProfile/UserProfileButton', () => ({ default: () => null }));
-vi.mock('../components/NotificationCenter', () => ({ default: () => null }));
+vi.mock('../components/NotificationCenter', () => ({
+    default: ({ onProjectAccepted }: { onProjectAccepted: (project: unknown) => void }) => (
+        <button
+            onClick={() => onProjectAccepted({
+                id: '9', name: 'Joined', role: 'EDITOR', isOwner: false, canEdit: false, canManage: false,
+            })}
+        >
+            simulate accepted invitation
+        </button>
+    ),
+}));
 
 const confirmDialog = (isConfirmed: boolean) =>
     vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed } as never);
@@ -51,6 +61,16 @@ describe('Projects', () => {
 
         expect(await screen.findByText(/Alpha/)).toBeInTheDocument();
         expect(screen.getByText(/Beta/)).toBeInTheDocument();
+    });
+
+    test('adds a project whose invitation was just accepted', async () => {
+        vi.mocked(getProjects).mockResolvedValue(projects);
+        renderProjects();
+        await screen.findByText(/Alpha/);
+
+        await userEvent.click(screen.getByRole('button', { name: 'simulate accepted invitation' }));
+
+        expect(screen.getByText(/Joined/)).toBeInTheDocument();
     });
 
     test('shows an empty state when there are no projects', async () => {

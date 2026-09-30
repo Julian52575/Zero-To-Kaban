@@ -20,6 +20,7 @@ const mockPrismaInstance = {
         create: jest.fn(),
         findFirst: jest.fn(),
         update: jest.fn(),
+        deleteMany: jest.fn(),
     },
     task: {
         findMany: jest.fn(),
@@ -189,6 +190,28 @@ describe('persistence', () => {
 
         expect(mockPrismaInstance.project.delete).toHaveBeenCalledWith({
             where: { id: 'p1' },
+        });
+    });
+
+    test('getProjectOwner selects only the owner id', async () => {
+        mockPrismaInstance.project.findUnique.mockResolvedValue({ ownerId: 'u1' });
+
+        await expect(db.getProjectOwner('p1')).resolves.toEqual({ ownerId: 'u1' });
+        expect(mockPrismaInstance.project.findUnique).toHaveBeenCalledWith({
+            where: { id: 'p1' },
+            select: { ownerId: true },
+        });
+    });
+
+    test.each([
+        ['removes the collaborator', 1, true],
+        ['reports when nobody was removed', 0, false],
+    ])('deleteProjectCollaborator %s', async (_name, count, expected) => {
+        mockPrismaInstance.projectCollaborator.deleteMany.mockResolvedValue({ count });
+
+        await expect(db.deleteProjectCollaborator('p1', 'u2')).resolves.toBe(expected);
+        expect(mockPrismaInstance.projectCollaborator.deleteMany).toHaveBeenCalledWith({
+            where: { projectId: 'p1', userId: 'u2' },
         });
     });
 
@@ -402,7 +425,7 @@ describe('persistence', () => {
 
         test('resolves the collaborators through the auth service', async () => {
             const users = [{ id: 'u2', pseudo: 'Bob' }];
-            mockPrismaInstance.project.findUnique.mockResolvedValue({ collaborators });
+            mockPrismaInstance.project.findUnique.mockResolvedValue({ ownerId: 'u1', collaborators });
             global.fetch.mockResolvedValue({ ok: true, json: async () => users });
 
             const result = await db.getProjectCollaborators('p1');
@@ -411,7 +434,7 @@ describe('persistence', () => {
                 'http://auth.test:4000/internal/users/lookup',
                 expect.objectContaining({
                     method: 'POST',
-                    body: JSON.stringify({ ids: ['u2', 'u3'] }),
+                    body: JSON.stringify({ ids: ['u1', 'u2', 'u3'] }),
                 })
             );
             expect(result).toEqual(users);
@@ -473,6 +496,7 @@ describe('persistence', () => {
             expect(mockPrismaInstance.projectCollaborator.update).toHaveBeenCalledWith({
                 where: { id: 'c1' },
                 data: { role: 'EDITOR', state: 'ACCEPTED' },
+                include: { project: { select: { id: true, name: true } } },
             });
         });
 
@@ -484,6 +508,7 @@ describe('persistence', () => {
             expect(mockPrismaInstance.projectCollaborator.update).toHaveBeenCalledWith({
                 where: { id: 'c1' },
                 data: {},
+                include: { project: { select: { id: true, name: true } } },
             });
         });
 

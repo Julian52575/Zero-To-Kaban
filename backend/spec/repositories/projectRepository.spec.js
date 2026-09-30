@@ -148,6 +148,8 @@ describe('projectRepository', () => {
             ['getProjectCollaborator', 'getProjectCollaborator', ['p1', 'u1']],
             ['getColumnsByProject', 'getColumns', ['p1']],
             ['userCanAccessProject', 'userCanAccessProject', ['u1', 'p1']],
+            ['getProjectOwner', 'getProjectOwner', ['p1']],
+            ['deleteProjectCollaborator', 'deleteProjectCollaborator', ['p1', 'u2']],
         ])('%s delegates to db.%s', async (method, dbMethod, args) => {
             db[dbMethod].mockResolvedValue('result');
 

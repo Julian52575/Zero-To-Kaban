@@ -69,6 +69,16 @@ async function deleteProject(id, userId) {
   return projectRepository.deleteProject(id);
 }
 
+async function leaveProject(projectId, userId) {
+  const project = await projectRepository.getProjectOwner(projectId);
+  if (project && project.ownerId === userId) {
+    return "OWNER";
+  }
+
+  const deleted = await projectRepository.deleteProjectCollaborator(projectId, userId);
+  return deleted ? "OK" : "NOT_FOUND";
+}
+
 module.exports = {
   createProject,
   createProjectCollaborator,
@@ -79,4 +89,5 @@ module.exports = {
   updateProject,
   updateProjectCollaborator,
   deleteProject,
+  leaveProject,
 };

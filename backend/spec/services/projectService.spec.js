@@ -332,4 +332,39 @@ describe('projectService', () => {
             expect(projectRepository.updateProjectCollaborator).not.toHaveBeenCalled();
         });
     });
+
+    describe('leaveProject', () => {
+        it('should refuse to remove the owner', async () => {
+            projectRepository.getProjectOwner.mockResolvedValue({ ownerId: 'u1' });
+
+            const result = await projectService.leaveProject('p1', 'u1');
+
+            expect(result).toBe('OWNER');
+            expect(projectRepository.deleteProjectCollaborator).not.toHaveBeenCalled();
+        });
+
+        it('should remove a collaborator', async () => {
+            projectRepository.getProjectOwner.mockResolvedValue({ ownerId: 'u1' });
+            projectRepository.deleteProjectCollaborator.mockResolvedValue(true);
+
+            const result = await projectService.leaveProject('p1', 'u2');
+
+            expect(projectRepository.deleteProjectCollaborator).toHaveBeenCalledWith('p1', 'u2');
+            expect(result).toBe('OK');
+        });
+
+        it('should report NOT_FOUND when the user is not a collaborator', async () => {
+            projectRepository.getProjectOwner.mockResolvedValue({ ownerId: 'u1' });
+            projectRepository.deleteProjectCollaborator.mockResolvedValue(false);
+
+            await expect(projectService.leaveProject('p1', 'u2')).resolves.toBe('NOT_FOUND');
+        });
+
+        it('should report NOT_FOUND for an unknown project', async () => {
+            projectRepository.getProjectOwner.mockResolvedValue(null);
+            projectRepository.deleteProjectCollaborator.mockResolvedValue(false);
+
+            await expect(projectService.leaveProject('nope', 'u2')).resolves.toBe('NOT_FOUND');
+        });
+    });
 });

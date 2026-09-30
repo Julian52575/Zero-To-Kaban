@@ -83,7 +83,11 @@ function Projects() {
 
   return (
     <Container className="py-4">
-      <NotificationCenter />
+      <NotificationCenter
+        onProjectAccepted={(project) => {
+          setProjects([...projects, project]);
+        }}
+      />
       <UserProfileButton />
       <Row>
         <Col md={{ offset: 3, span: 6 }}>
@@ -110,7 +114,7 @@ function Projects() {
           </Form>
           {error && <p className="text-danger">{error}</p>}
 
-          {projects.length === 0  && !error ? (
+          {projects.length === 0 && !error ? (
             <p className="text-muted">No projects at the moment.</p>
           ) : (
             <ListGroup>
@@ -131,7 +135,7 @@ function Projects() {
                     <Button
                       variant="outline-danger"
                       size="sm"
-                      onClick={async (e) =>await handleDelete(e, project.id)}
+                      onClick={async (e) => await handleDelete(e, project.id)}
                     >
                       Delete
                     </Button>

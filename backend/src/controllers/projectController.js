@@ -110,24 +110,35 @@ async function updateProject(req, res) {
 
 async function updateProjectCollaborator(req, res) {
   try {
-    const { state } = req.body;
+    const { state, role } = req.body;
 
     if (!["ACCEPTED", "REFUSED"].includes(state)) {
       return res.status(400).json({ error: "Invalid state" });
+    }
+
+    if (role !== undefined && !["VIEWER", "EDITOR"].includes(role)) {
+      return res.status(400).json({ error: "Invalid role" });
     }
 
     // L'invité est l'utilisateur connecté : on ne fait pas confiance au body
     const updated = await projectService.updateProjectCollaborator(
       req.params.id,
       req.userId,
-      { state },
+      { state, role },
     );
 
     if (!updated) {
       return res.status(404).json({ error: "Collaborator not found" });
     }
-
-    res.json(updated);
+    const { after } = updated;
+    if (after.state !== "ACCEPTED") {
+      return res.json({ state: after.state });
+    }
+    res.json({
+      state: after.state,
+      role: after.role,
+      project: { id: after.project.id, name: after.project.name },
+    });
   } catch (error) {
     console.error("Failed to update project collaborator:", error);
     res.status(500).json({ error: "Failed to update collaborator" });
@@ -152,6 +163,24 @@ async function deleteProject(req, res) {
   res.status(200).end();
 }
 
+async function leaveProject(req, res) {
+  try {
+    const result = await projectService.leaveProject(req.params.id, req.userId);
+
+    if (result === "NOT_FOUND") {
+      return res.status(404).json({ error: "Collaborator not found" });
+    }
+    if (result === "OWNER") {
+      return res.status(403).json({ error: "The owner cannot leave the project" });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    console.error("Failed to leave project:", error);
+    res.status(500).json({ error: "Failed to leave project" });
+  }
+}
+
 module.exports = {
   getProjects,
   getProject,
@@ -162,4 +191,5 @@ module.exports = {
   updateProject,
   updateProjectCollaborator,
   deleteProject,
+  leaveProject,
 };

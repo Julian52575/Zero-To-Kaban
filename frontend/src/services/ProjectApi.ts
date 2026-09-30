@@ -77,7 +77,6 @@ export const AcceptInvitation = async (
   collaboratorId: string,
 ): Promise<unknown> => {
   const rep = await apiClient.put(`/api/projects/${projectId}/invitation`, {
-    userId: collaboratorId,
     role: "EDITOR",
     state: "ACCEPTED",
   });
@@ -89,7 +88,6 @@ export const declineInvitation = async (
   collaboratorId: string,
 ): Promise<unknown> => {
   const rep = await apiClient.put(`/api/projects/${projectId}/invitation`, {
-    userId: collaboratorId,
     state: "REFUSED",
   });
   return rep;
@@ -102,4 +100,11 @@ export const getProjectCollaborators = async (
     `/api/projects/${projectId}/collaborators`,
   );
   return data as { id: string; pseudo: string }[];
+};
+
+export const leaveProject = async (projectId: string): Promise<unknown> => {
+  const data = await apiClient.delete(
+    `/api/projects/${projectId}/collaborators/me`,
+  );
+  return data;
 };

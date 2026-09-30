@@ -16,7 +16,6 @@ const validateGetProjectCollaborators = require('./middlewares/getProjectCollabo
 const updateProjectCollaborator = require('./routes/project/updateProjectCollaborator');
 const createProjectCollaborator = require('./routes/project/createProjetCollaborator');
 
-const getProjects = require("./routes/project/getProjects");
 const getUserProjects = require("./routes/project/getUserProjects");
 const getProjectCollaborators = require("./routes/project/getProjectCollaborators");
 const getProject = require("./routes/project/getProject");
@@ -30,7 +29,6 @@ const getNotifications = require("./routes/notifications/getNotifications");
 const markAsRead = require("./routes/notifications/markAsRead");
 const markAllAsRead = require("./routes/notifications/markAllAsRead");
 
-const validateGetUserProjects = require("./middlewares/getUserProjectsValidation");
 
 const { getColumns } = require("./controllers/ColumnController");
 
@@ -40,6 +38,7 @@ const {
 } = require('./middlewares/projectValidation');
 
 const requireUser = require('./middlewares/requireUser');
+const { leaveProject } = require("./controllers/projectController");
 
 
 const app = express();
@@ -58,8 +57,7 @@ apiRouter.put("/items/:id", updateItem);
 apiRouter.patch("/items/:id", updateItem);
 apiRouter.delete("/items/:id", deleteItem);
 
-// apiRouter.get("/users/:id/projects", validateGetUserProjects, getUserProjects);
-// apiRouter.get("/projects", getProjects);
+
 apiRouter.get("/projects",getUserProjects);
 
 apiRouter.get("/projects/:id", getProject);
@@ -89,6 +87,7 @@ apiRouter.get(
 
 apiRouter.post('/projects/:id/invitation', createProjectCollaborator);
 apiRouter.put('/projects/:id/invitation/', updateProjectCollaborator);
+apiRouter.delete("/projects/:id/collaborators/me", leaveProject);
 
 app.use(apiRouter);
 

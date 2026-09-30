@@ -48,6 +48,14 @@ async function userCanAccessProject(userId, projectId) {
   return db.userCanAccessProject(userId, projectId);
 }
 
+async function getProjectOwner(projectId) {
+  return db.getProjectOwner(projectId);
+}
+
+async function deleteProjectCollaborator(projectId, userId) {
+    return db.deleteProjectCollaborator(projectId, userId);
+}
+
 module.exports = {
     create,
     createProjectCollaborator,
@@ -61,4 +69,6 @@ module.exports = {
     deleteProject,
     getColumnsByProject,
     userCanAccessProject,
+    getProjectOwner,
+    deleteProjectCollaborator,
 };
