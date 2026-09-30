@@ -10,6 +10,7 @@ function Kanban() {
   if (!projectId) return <Navigate to="/" replace />;
   return (
     <Container>
+      <h1 className="visually-hidden">Project board</h1>
       <BackButton />
       <NotificationCenter />
       <UserProfileButton />

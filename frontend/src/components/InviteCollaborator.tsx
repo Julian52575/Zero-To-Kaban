@@ -91,7 +91,7 @@ function InviteCollaborator({ projectId, ownerId }: InviteCollaboratorProps) {
         onClick={() => setShow(true)}
         aria-label="Invite collaborator"
       >
-        <i className="fa fa-user-plus me-2" />
+        <span aria-hidden="true" className="fa fa-user-plus me-2" />
         Invite
       </Button>
 
@@ -150,7 +150,7 @@ function InviteCollaborator({ projectId, ownerId }: InviteCollaboratorProps) {
               </Button>
 
               <Button
-                variant="secondary"
+                variant="danger"
                 onClick={handleClose}
                 disabled={submitting}
               >

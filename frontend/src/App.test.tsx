@@ -43,6 +43,17 @@ describe('App', () => {
         expect(screen.getByText('todo-list-stub:42')).toBeInTheDocument();
     });
 
+    test.each([
+        ['/accessibility', "Déclaration d'accessibilité"],
+        ['/terms-of-use', 'Terms of Use'],
+        ['/privacy', 'Privacy Policy'],
+        ['/legal', 'Legal Notice'],
+    ])('renders %s', (path, heading) => {
+        renderAt(path);
+
+        expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    });
+
     test('redirects unknown routes to the project list', () => {
         renderAt('/does/not/exist');
 

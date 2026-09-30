@@ -17,6 +17,9 @@ export default ({
     { path: "/", name: "Home" },
     { path: "/projects/a11y-test-project", name: "Kanban board" },
     { path: "/accessibility", name: "Accessibility declaration" },
+    { path: "/terms-of-use", name: "Terms of use" },
+    { path: "/privacy", name: "Privacy policy" },
+    { path: "/legal", name: "Legal notice" },
   ],
 
   output: [

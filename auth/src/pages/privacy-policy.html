@@ -12,6 +12,11 @@
       :root {
         color-scheme: light dark;
       }
+      .skip-link {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
       /* Valeurs à remplacer avant la mise en production */
       mark {
         background-color: #f1c40f55;
@@ -22,7 +27,10 @@
     </style>
   </head>
   <body>
-    <main class="container py-5" style="max-width: 44rem">
+    <a class="skip-link btn btn-primary" href="#main-content"
+      >Skip to main content</a
+    >
+    <main id="main-content" class="container py-5" style="max-width: 44rem" tabindex="-1">
       <a class="d-inline-block small mb-4" href="/register">&larr; Retour</a>
 
       <h1 class="h3 mb-1">Politique de confidentialité</h1>

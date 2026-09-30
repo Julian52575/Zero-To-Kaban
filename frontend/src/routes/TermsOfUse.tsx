@@ -2,7 +2,7 @@ import React from "react";
 
 function TermsOfUse() {
   return (
-    <main className="container py-5">
+    <div className="container py-5">
       <article>
         <h1 className="mb-4">Terms of Use</h1>
 
@@ -375,16 +375,10 @@ function TermsOfUse() {
 
           <ul>
             <li>
-              <strong>Operator:</strong> [Legal name / Company name]
+              <strong>Operator:</strong> RulianServ
             </li>
             <li>
-              <strong>Email:</strong> [Contact email]
-            </li>
-            <li>
-              <strong>Address:</strong> [Legal address]
-            </li>
-            <li>
-              <strong>Company status:</strong> [Legal status, if applicable]
+              <strong>Email:</strong> contact@zero-to-kanban.fr
             </li>
           </ul>
         </section>
@@ -398,7 +392,7 @@ function TermsOfUse() {
           service before publication.
         </p>
       </article>
-    </main>
+    </div>
   );
 }
 

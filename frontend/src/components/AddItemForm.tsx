@@ -38,8 +38,10 @@ function AddItemForm({ projectId, onNewItem, columnId }: AddItemFormProps) {
 
   return (
     <Form onSubmit={submitNewItem}>
+      <Form.Label htmlFor={`new-item-${projectId}`}>Add a new task</Form.Label>
       <InputGroup className="mb-3">
         <Form.Control
+          id={`new-item-${projectId}`}
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
           type="text"

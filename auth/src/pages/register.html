@@ -20,10 +20,19 @@
       .auth-card {
         width: min(92vw, 24rem);
       }
+      .skip-link {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
     </style>
+    
   </head>
   <body>
-    <main class="auth-card">
+    <a class="skip-link btn btn-primary" href="#main-content"
+      >Skip to main content</a
+    >
+    <main id="main-content" class="auth-card" tabindex="-1">
       <div class="card shadow-sm">
         <div class="card-body p-4">
           <form id="form" novalidate>
