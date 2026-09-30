@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import Projects from './Projects';
@@ -67,6 +67,27 @@ describe('Projects', () => {
         expect(
             await screen.findByText('Unable to retrieve the projects. Please try again later.'),
         ).toBeInTheDocument();
+    });
+
+    test('shows the first validation message when fetching returns issues', async () => {
+        vi.mocked(getProjects).mockRejectedValue([{ message: 'Invalid project data' }]);
+        renderProjects();
+
+        expect(await screen.findByText('Invalid project data')).toBeInTheDocument();
+    });
+
+    test('rejects a one-character name even when the form is submitted directly', async () => {
+        vi.mocked(getProjects).mockResolvedValue([]);
+        renderProjects();
+
+        const input = screen.getByPlaceholderText('Name of the new project');
+        await userEvent.type(input, 'G');
+        fireEvent.submit(input.closest('form')!);
+
+        expect(
+            screen.getByText('Project name must be at least 2 characters long.'),
+        ).toBeInTheDocument();
+        expect(createProject).not.toHaveBeenCalled();
     });
 
     test('creates a project and clears the input', async () => {

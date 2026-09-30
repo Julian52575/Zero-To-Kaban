@@ -1,6 +1,16 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import apiClient from './apiClient';
-import { getProjects, createProject, updateProject, deleteProject } from './ProjectApi';
+import {
+    getProjects,
+    getProject,
+    createProject,
+    updateProject,
+    deleteProject,
+    inviteCollaborator,
+    AcceptInvitation,
+    declineInvitation,
+    getProjectCollaborators,
+} from './ProjectApi';
 
 const perms = { role: 'OWNER', isOwner: true, canEdit: true, canManage: true };
 
@@ -74,5 +84,57 @@ describe('ProjectApi', () => {
         api.delete.mockResolvedValue(undefined);
         await deleteProject('1');
         expect(api.delete).toHaveBeenCalledWith('/api/projects/1');
+    });
+
+    test('getProject fetches one project and converts createdAt', async () => {
+        api.get.mockResolvedValue({ id: '1', name: 'A', createdAt: '2026-01-01T00:00:00.000Z', ...perms });
+
+        const project = await getProject('1');
+
+        expect(api.get).toHaveBeenCalledWith('/api/projects/1');
+        expect(project.createdAt).toEqual(new Date('2026-01-01T00:00:00.000Z'));
+    });
+
+    test('getProject defaults createdAt when missing', async () => {
+        api.get.mockResolvedValue({ id: '1', name: 'A', ...perms });
+
+        expect((await getProject('1')).createdAt).toBeInstanceOf(Date);
+    });
+
+    test('inviteCollaborator posts the user id', async () => {
+        api.post.mockResolvedValue({ ok: 1 });
+
+        await expect(inviteCollaborator('p1', 'u2')).resolves.toEqual({ ok: 1 });
+        expect(api.post).toHaveBeenCalledWith('/api/projects/p1/invitation', { userId: 'u2' });
+    });
+
+    test('AcceptInvitation puts an accepted editor state', async () => {
+        api.put.mockResolvedValue({ ok: 1 });
+
+        await AcceptInvitation('p1', 'u2');
+
+        expect(api.put).toHaveBeenCalledWith('/api/projects/p1/invitation', {
+            userId: 'u2',
+            role: 'EDITOR',
+            state: 'ACCEPTED',
+        });
+    });
+
+    test('declineInvitation puts a refused state', async () => {
+        api.put.mockResolvedValue({ ok: 1 });
+
+        await declineInvitation('p1', 'u2');
+
+        expect(api.put).toHaveBeenCalledWith('/api/projects/p1/invitation', {
+            userId: 'u2',
+            state: 'REFUSED',
+        });
+    });
+
+    test('getProjectCollaborators returns the collaborators', async () => {
+        api.get.mockResolvedValue([{ id: 'u1', pseudo: 'a' }]);
+
+        await expect(getProjectCollaborators('p1')).resolves.toEqual([{ id: 'u1', pseudo: 'a' }]);
+        expect(api.get).toHaveBeenCalledWith('/api/projects/p1/collaborators');
     });
 });
