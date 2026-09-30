@@ -100,6 +100,8 @@ services:
       RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
 
+      # "true" turns the login/register rate limits off (local load tests only).
+      RATE_LIMIT_DISABLED: ${RATE_LIMIT_DISABLED:-false}
     depends_on:
       authdb:
         condition: service_healthy
