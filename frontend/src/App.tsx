@@ -18,7 +18,7 @@ function App() {
             Skip to main content
           </a>
         </header>
-        <main className="app-content">
+        <main id="main-content" className="app-content" tabIndex={-1}>
           <Routes>
             <Route path="/" element={<Projects />} />
             <Route path="/projects/:projectId" element={<Kanban />} />

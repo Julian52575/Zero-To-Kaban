@@ -34,7 +34,7 @@ function BackButton() {
                 aria-label="Go back"
                 className="back-button"
             >
-                <i className="fa fa-arrow-left me-2" />
+                <span aria-hidden="true" className="fa fa-arrow-left me-2" />
                 Back
             </Button>
         </>
