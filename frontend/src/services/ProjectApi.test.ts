@@ -2,6 +2,8 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import apiClient from './apiClient';
 import { getProjects, createProject, updateProject, deleteProject } from './ProjectApi';
 
+const perms = { role: 'OWNER', isOwner: true, canEdit: true, canManage: true };
+
 vi.mock('./apiClient', () => ({
     default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }));
@@ -15,8 +17,8 @@ describe('ProjectApi', () => {
 
     test('getProjects converts createdAt to a Date', async () => {
         api.get.mockResolvedValue([
-            { id: '1', name: 'A', createdAt: '2026-01-01T00:00:00.000Z' },
-            { id: '2', name: 'B' },
+            { id: '1', name: 'A', createdAt: '2026-01-01T00:00:00.000Z', ...perms },
+            { id: '2', name: 'B', ...perms },
         ]);
 
         const projects = await getProjects();
@@ -38,7 +40,12 @@ describe('ProjectApi', () => {
         const project = await createProject('A');
 
         expect(api.post).toHaveBeenCalledWith('/api/projects', { name: 'A' });
-        expect(project).toEqual({ id: '1', name: 'A', createdAt: new Date('2026-01-01T00:00:00.000Z') });
+        expect(project).toEqual({
+            id: '1',
+            name: 'A',
+            createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            ...perms,
+        });
     });
 
     test('createProject defaults createdAt when missing', async () => {
@@ -49,17 +56,17 @@ describe('ProjectApi', () => {
 
     test('updateProject puts the name and createdAt', async () => {
         const createdAt = new Date('2026-01-01T00:00:00.000Z');
-        api.put.mockResolvedValue({ id: '1', name: 'B', createdAt: createdAt.toISOString() });
+        api.put.mockResolvedValue({ id: '1', name: 'B', createdAt: createdAt.toISOString(), ...perms });
 
-        const project = await updateProject({ id: '1', name: 'B', createdAt });
+        const project = await updateProject({ id: '1', name: 'B', createdAt, ...perms } as any);
 
         expect(api.put).toHaveBeenCalledWith('/api/projects/1', { name: 'B', createdAt });
-        expect(project).toEqual({ id: '1', name: 'B', createdAt });
+        expect(project).toEqual({ id: '1', name: 'B', createdAt, ...perms });
     });
 
     test('updateProject defaults createdAt when missing', async () => {
-        api.put.mockResolvedValue({ id: '1', name: 'B' });
-        const project = await updateProject({ id: '1', name: 'B' });
+        api.put.mockResolvedValue({ id: '1', name: 'B', ...perms });
+        const project = await updateProject({ id: '1', name: 'B', ...perms } as any);
         expect(project.createdAt).toBeInstanceOf(Date);
     });
 

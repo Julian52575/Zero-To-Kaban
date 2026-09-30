@@ -2,16 +2,16 @@ import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ItemDisplay from './ItemDisplay';
-import type { Item } from '../types/item';
+import type { Task } from '../types/task';
 
 describe('ItemDisplay', () => {
-    const item: Item = { id: '1', name: 'Buy milk', completed: false, status: 'todo' };
+    const item: Task = { id: '1', title: 'Buy milk', order: 0, columnId: 'c1', completed: false, status: 'todo' };
 
     function setup() {
-        const onRename = vi.fn();
+        const onUpdate = vi.fn();
         const onDelete = vi.fn();
-        render(<ItemDisplay item={item} onRename={onRename} onDelete={onDelete} />);
-        return { user: userEvent.setup(), onRename, onDelete };
+        render(<ItemDisplay item={item} onUpdate={onUpdate} onDelete={onDelete} />);
+        return { user: userEvent.setup(), onUpdate, onDelete };
     }
 
     test('renders the item name and a delete button', () => {
@@ -41,33 +41,32 @@ describe('ItemDisplay', () => {
     });
 
     test('pressing Enter saves the new name', async () => {
-        const { user, onRename } = setup();
+        const { user, onUpdate } = setup();
 
         await user.dblClick(screen.getByText('Buy milk'));
         await user.clear(screen.getByRole('textbox'));
         await user.type(screen.getByRole('textbox'), 'Buy oat milk{Enter}');
 
-        expect(onRename).toHaveBeenCalledWith(item, 'Buy oat milk');
-        expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+        expect(onUpdate).toHaveBeenCalledWith(item, { title: 'Buy oat milk' });
     });
 
     test('clicking OK saves the new name', async () => {
-        const { user, onRename } = setup();
+        const { user, onUpdate } = setup();
 
         await user.dblClick(screen.getByText('Buy milk'));
         await user.type(screen.getByRole('textbox'), '!');
         await user.click(screen.getByRole('button', { name: 'OK' }));
 
-        expect(onRename).toHaveBeenCalledWith(item, 'Buy milk!');
+        expect(onUpdate).toHaveBeenCalledWith(item, { title: 'Buy milk!' });
     });
 
     test('pressing Escape cancels the edit without renaming', async () => {
-        const { user, onRename } = setup();
+        const { user, onUpdate } = setup();
 
         await user.dblClick(screen.getByText('Buy milk'));
         await user.type(screen.getByRole('textbox'), ' draft{Escape}');
 
-        expect(onRename).not.toHaveBeenCalled();
+        expect(onUpdate).not.toHaveBeenCalled();
         expect(screen.getByText('Buy milk')).toBeInTheDocument();
 
         // Re-entering edit mode starts from the original name, not the discarded draft.

@@ -43,15 +43,11 @@ describe('AddItemForm', () => {
         expect(screen.getByRole('button', { name: /add item/i })).toBeDisabled();
     });
 
-    test('submitting creates the task and reports it back as an item', async () => {
+    test('submitting creates the task and reports it back', async () => {
         const user = userEvent.setup();
         const onNewItem = vi.fn();
-        mockedCreateTask.mockResolvedValue({
-            id: 't1',
-            title: 'Buy milk',
-            order: 0,
-            columnId: 'c-todo',
-        });
+        const task = { id: 't1', title: 'Buy milk', order: 0, columnId: 'c-todo' };
+        mockedCreateTask.mockResolvedValue(task);
 
         render(<AddItemForm projectId="p1" columnId="c-todo" onNewItem={onNewItem} />);
 
@@ -64,14 +60,7 @@ describe('AddItemForm', () => {
             columnId: 'c-todo',
         });
 
-        await waitFor(() =>
-            expect(onNewItem).toHaveBeenCalledWith({
-                id: 't1',
-                name: 'Buy milk',
-                completed: false,
-                status: 'todo',
-            }),
-        );
+        await waitFor(() => expect(onNewItem).toHaveBeenCalledWith(task));
         expect(screen.getByPlaceholderText('New Item')).toHaveValue('');
     });
 
