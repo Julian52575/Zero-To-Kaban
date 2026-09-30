@@ -25,15 +25,15 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **1.3** For each informative image with a text alternative, is the alternative relevant? | ⚠️ Review Needs review | The front end do not use any image |
-| **1.4** For each image used as a CAPTCHA or test, is the text alternative describing its nature and function? | ⚠️ Review Needs review | The front end do not use any image or CAPTCHA |
-| **1.5** For each CAPTCHA image, is there an alternative access method that does not rely on visual identification? | ⚠️ Review Needs review | The front end do not use any image CAPTCHA |
-| **1.6** Does each informative image have a detailed description if necessary? | ⚠️ Review Needs review | The front end do not use any image |
-| **1.7** For each image with a detailed description, is the description relevant? | ⚠️ Review Needs review | The front end do not use any image |
-| **1.1** Does each informative image have a text alternative? | ✅ Validated Validated | --- |
-| **1.2** Is each decorative image correctly ignored by assistive technologies? | ✅ Validated Validated | --- |
-| **1.8** Does each text image carrying information have the same information in styled text (when no replacement mechanism exists)? | ✅ Validated Validated | --- |
-| **1.9** Is each image caption correctly linked to the corresponding image? | ✅ Validated Validated | --- |
+| **1.3** For each informative image with a text alternative, is the alternative relevant? | ⚠️ Needs review | The front end do not use any image |
+| **1.4** For each image used as a CAPTCHA or test, is the text alternative describing its nature and function? | ⚠️ Needs review | The front end do not use any image or CAPTCHA |
+| **1.5** For each CAPTCHA image, is there an alternative access method that does not rely on visual identification? | ⚠️ Needs review | The front end do not use any image CAPTCHA |
+| **1.6** Does each informative image have a detailed description if necessary? | ⚠️ Needs review | The front end do not use any image |
+| **1.7** For each image with a detailed description, is the description relevant? | ⚠️ Needs review | The front end do not use any image |
+| **1.1** Does each informative image have a text alternative? | ✅ Validated | --- |
+| **1.2** Is each decorative image correctly ignored by assistive technologies? | ✅ Validated | --- |
+| **1.8** Does each text image carrying information have the same information in styled text (when no replacement mechanism exists)? | ✅ Validated | --- |
+| **1.9** Is each image caption correctly linked to the corresponding image? | ✅ Validated | --- |
 
 </details>
 
@@ -41,8 +41,8 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **2.1** Does each frame have a title attribute? | ✅ Validated Validated | --- |
-| **2.2** For each frame with a title, is the title relevant? | ✅ Validated Validated | --- |
+| **2.1** Does each frame have a title attribute? | ✅ Validated | --- |
+| **2.2** For each frame with a title, is the title relevant? | ✅ Validated | --- |
 
 </details>
 
@@ -50,9 +50,9 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **3.1** Is information not conveyed by color alone? | ⚠️ Review Needs review | All information is provided in addition to the color specifications. |
-| **3.2** Does the contrast between text color and background meet the minimum required level? | ✅ Validated Validated | --- |
-| **3.3** Does the contrast of user interface components and graphical elements meet the minimum required level? | ✅ Validated Validated | --- |
+| **3.1** Is information not conveyed by color alone? | ⚠️ Needs review | All information is provided in addition to the color specifications. |
+| **3.2** Does the contrast between text color and background meet the minimum required level? | ✅ Validated | --- |
+| **3.3** Does the contrast of user interface components and graphical elements meet the minimum required level? | ✅ Validated | --- |
 
 </details>
 
@@ -60,19 +60,19 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **4.1** Does each pre-recorded time-based media have, if necessary, a text transcript or audio description? | ⚠️ Review Needs review | The front end do not use any Multimedia |
-| **4.2** For each pre-recorded time-based media with a text transcript or audio description, is it relevant? | ⚠️ Review Needs review | The front end do not use any Multimedia |
-| **4.4** For each pre-recorded synchronized media with synchronized captions, are the captions relevant? | ⚠️ Review Needs review | The front end do not use any Multimedia |
-| **4.5** Does each pre-recorded time-based media have, if necessary, an audio description? | ⚠️ Review Needs review | The front end do not use any Multimedia |
-| **4.6** For each pre-recorded time-based media with an audio description, is it relevant? | ⚠️ Review Needs review | The front end do not use any Multimedia |
-| **4.8** Does each non-time-based media have, if necessary, an alternative? | ⚠️ Review Needs review | The front end do not use any Multimedia |
-| **4.9** For each non-time-based media with an alternative, is the alternative relevant? | ⚠️ Review Needs review | The front end do not use any Multimedia |
-| **4.13** Is each time-based and non-time-based media compatible with assistive technologies? | ⚠️ Review Needs review | The front end do not use any Multimedia |
-| **4.3** Does each pre-recorded synchronized media have, if necessary, synchronized captions? | ✅ Validated Validated | --- |
-| **4.7** Is each time-based media clearly identifiable? | ✅ Validated Validated | --- |
-| **4.10** Is each automatically triggered sound controllable by the user? | ✅ Validated Validated | --- |
-| **4.11** Can each time-based media be controlled by the keyboard and any pointing device? | ✅ Validated Validated | --- |
-| **4.12** Can each non-time-based media be controlled by the keyboard and any pointing device? | ✅ Validated Validated | --- |
+| **4.1** Does each pre-recorded time-based media have, if necessary, a text transcript or audio description? | ⚠️ Needs review | The front end do not use any Multimedia |
+| **4.2** For each pre-recorded time-based media with a text transcript or audio description, is it relevant? | ⚠️ Needs review | The front end do not use any Multimedia |
+| **4.4** For each pre-recorded synchronized media with synchronized captions, are the captions relevant? | ⚠️ Needs review | The front end do not use any Multimedia |
+| **4.5** Does each pre-recorded time-based media have, if necessary, an audio description? | ⚠️ Needs review | The front end do not use any Multimedia |
+| **4.6** For each pre-recorded time-based media with an audio description, is it relevant? | ⚠️ Needs review | The front end do not use any Multimedia |
+| **4.8** Does each non-time-based media have, if necessary, an alternative? | ⚠️ Needs review | The front end do not use any Multimedia |
+| **4.9** For each non-time-based media with an alternative, is the alternative relevant? | ⚠️ Needs review | The front end do not use any Multimedia |
+| **4.13** Is each time-based and non-time-based media compatible with assistive technologies? | ⚠️ Needs review | The front end do not use any Multimedia |
+| **4.3** Does each pre-recorded synchronized media have, if necessary, synchronized captions? | ✅ Validated | --- |
+| **4.7** Is each time-based media clearly identifiable? | ✅ Validated | --- |
+| **4.10** Is each automatically triggered sound controllable by the user? | ✅ Validated | --- |
+| **4.11** Can each time-based media be controlled by the keyboard and any pointing device? | ✅ Validated | --- |
+| **4.12** Can each non-time-based media be controlled by the keyboard and any pointing device? | ✅ Validated | --- |
 
 </details>
 
@@ -80,14 +80,14 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **5.2** For each complex data table with a summary, is the summary relevant? | ⚠️ Review Needs review | The front end do not use any data table |
-| **5.5** For each data table with a title, is the title relevant? | ⚠️ Review Needs review | The front end do not use any data table |
-| **5.1** Does each complex data table have a summary? | ✅ Validated Validated |
-| **5.3** For each layout table, does the linearized content remain comprehensible? | ✅ Validated Validated | --- |
-| **5.4** For each data table with a title, is the title correctly associated with the table? | ✅ Validated Validated | --- |
-| **5.6** For each data table, are column and row headers properly identified? | ✅ Validated Validated | --- |
-| **5.7** For each data table, is the appropriate technique used to associate data with headers? | ✅ Validated Validated | --- |
-| **5.8** Does each layout table refrain from using structural table elements? | ✅ Validated Validated | --- |
+| **5.2** For each complex data table with a summary, is the summary relevant? | ⚠️ Needs review | The front end do not use any data table |
+| **5.5** For each data table with a title, is the title relevant? | ⚠️ Needs review | The front end do not use any data table |
+| **5.1** Does each complex data table have a summary? | ✅ Validated |
+| **5.3** For each layout table, does the linearized content remain comprehensible? | ✅ Validated | --- |
+| **5.4** For each data table with a title, is the title correctly associated with the table? | ✅ Validated | --- |
+| **5.6** For each data table, are column and row headers properly identified? | ✅ Validated | --- |
+| **5.7** For each data table, is the appropriate technique used to associate data with headers? | ✅ Validated | --- |
+| **5.8** Does each layout table refrain from using structural table elements? | ✅ Validated | --- |
 
 </details>
 
@@ -95,8 +95,8 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **6.1** Is each link explicit? | ✅ Validated Validated | --- |
-| **6.2** Does each link have a label? | ✅ Validated Validated | --- |
+| **6.1** Is each link explicit? | ✅ Validated | --- |
+| **6.2** Does each link have a label? | ✅ Validated | --- |
 
 </details>
 
@@ -104,11 +104,11 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **7.2** For each script with an alternative, is the alternative relevant? | ⚠️ Review Needs review | The front end do not use any script |
-| **7.4** For each script that triggers a context change, is the user warned? | ⚠️ Review Needs review | The front end do not use any script |
-| **7.1** Is each script, if necessary, compatible with assistive technologies? | ✅ Validated Validated | --- |
-| **7.3** Is each script controllable by the keyboard and any pointing device? | ✅ Validated Validated | --- |
-| **7.5** In each web page, are status messages correctly rendered by assistive technologies? | ✅ Validated Validated | --- |
+| **7.2** For each script with an alternative, is the alternative relevant? | ⚠️ Needs review | The front end do not use any script |
+| **7.4** For each script that triggers a context change, is the user warned? | ⚠️ Needs review | The front end do not use any script |
+| **7.1** Is each script, if necessary, compatible with assistive technologies? | ✅ Validated | --- |
+| **7.3** Is each script controllable by the keyboard and any pointing device? | ✅ Validated | --- |
+| **7.5** In each web page, are status messages correctly rendered by assistive technologies? | ✅ Validated | --- |
 
 </details>
 
@@ -116,16 +116,16 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **8.1** Is each web page defined by a document type? | ✅ Validated Validated | --- |
-| **8.2** For each web page, is the generated source code valid according to the specified document type? | ✅ Validated Validated | --- |
-| **8.3** In each web page, is the default language present? | ✅ Validated Validated | --- |
-| **8.4** For each web page with a default language, is the language code relevant? | ✅ Validated Validated | --- |
-| **8.5** Does each web page have a page title? | ✅ Validated Validated | --- |
-| **8.6** For each web page with a title, is the title relevant? | ✅ Validated Validated | --- |
-| **8.7** In each web page, is each language change indicated in the source code? | ✅ Validated Validated | --- |
-| **8.8** In each web page, is each language change code valid and relevant? | ✅ Validated Validated | --- |
-| **8.9** In each web page, tags must not be used solely for presentational purposes. | ✅ Validated Validated | --- |
-| **8.10** In each web page, are reading direction changes indicated? | ✅ Validated Validated | --- |
+| **8.1** Is each web page defined by a document type? | ✅ Validated | --- |
+| **8.2** For each web page, is the generated source code valid according to the specified document type? | ✅ Validated | --- |
+| **8.3** In each web page, is the default language present? | ✅ Validated | --- |
+| **8.4** For each web page with a default language, is the language code relevant? | ✅ Validated | --- |
+| **8.5** Does each web page have a page title? | ✅ Validated | --- |
+| **8.6** For each web page with a title, is the title relevant? | ✅ Validated | --- |
+| **8.7** In each web page, is each language change indicated in the source code? | ✅ Validated | --- |
+| **8.8** In each web page, is each language change code valid and relevant? | ✅ Validated | --- |
+| **8.9** In each web page, tags must not be used solely for presentational purposes. | ✅ Validated | --- |
+| **8.10** In each web page, are reading direction changes indicated? | ✅ Validated | --- |
 
 </details>
 
@@ -133,10 +133,10 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **9.1** In each web page, is information structured through the appropriate use of headings? | ✅ Validated Validated | --- |
-| **9.2** In each web page, is the document structure coherent? | ✅ Validated Validated | --- |
-| **9.3** In each web page, is each list correctly structured? | ✅ Validated Validated | --- |
-| **9.4** In each web page, is each quotation correctly indicated? | ✅ Validated Validated | --- |
+| **9.1** In each web page, is information structured through the appropriate use of headings? | ✅ Validated | --- |
+| **9.2** In each web page, is the document structure coherent? | ✅ Validated | --- |
+| **9.3** In each web page, is each list correctly structured? | ✅ Validated | --- |
+| **9.4** In each web page, is each quotation correctly indicated? | ✅ Validated | --- |
 
 </details>
 
@@ -144,20 +144,20 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **10.2** In each web page, does visible informative content remain present when stylesheets are disabled? | ⚠️ Review Needs review | Yes |
-| **10.3** In each web page, does information remain comprehensible when stylesheets are disabled? | ⚠️ Review Needs review | Yes |
-| **10.9** In each web page, information must not be conveyed solely by shape, size, or position. | ⚠️ Review Needs review |
-| **10.10** In each web page, information must not be given by shape or size alone. | ⚠️ Review Needs review | All information is provided in addition to the color, size or shape specifications. |
-| **10.1** In the website, are style sheets used to control the presentation of information? | ✅ Validated Validated | --- |
-| **10.4** In each web page, does text remain legible when text size is increased by 200%? | ✅ Validated Validated | --- |
-| **10.5** In each web page, are background and foreground color declarations present together? | ✅ Validated Validated | --- |
-| **10.6** In each web page, is each link whose nature is not obvious visually distinguishable from surrounding text? | ✅ Validated Validated | --- |
-| **10.7** In each web page, is focus visibility ensured for each element receiving keyboard focus? | ✅ Validated Validated | --- |
-| **10.8** For each web page, are hidden contents intended to be ignored by assistive technologies? | ✅ Validated Validated | --- |
-| **10.11** For each web page, can contents be presented without horizontal scrolling when viewport is 320 CSS pixels wide? | ✅ Validated Validated | --- |
-| **10.12** In each web page, can text spacing properties be adjusted without loss of content or functionality? | ✅ Validated Validated | --- |
-| **10.13** In each web page, are additional contents appearing on keyboard focus or pointer hover dismissible, hoverable, and persistent? | ✅ Validated Validated | --- |
-| **10.14** In each web page, are additional contents triggered via CSS visible to all users? | ✅ Validated Validated | --- |
+| **10.2** In each web page, does visible informative content remain present when stylesheets are disabled? | ⚠️ Needs review | Yes |
+| **10.3** In each web page, does information remain comprehensible when stylesheets are disabled? | ⚠️ Needs review | Yes |
+| **10.9** In each web page, information must not be conveyed solely by shape, size, or position. | ⚠️ Needs review | All information is provided in addition to the color, size or shape specifications. |
+| **10.10** In each web page, information must not be given by shape or size alone. | ⚠️ Needs review | All information is provided in addition to the color, size or shape specifications. |
+| **10.1** In the website, are style sheets used to control the presentation of information? | ✅ Validated | --- |
+| **10.4** In each web page, does text remain legible when text size is increased by 200%? | ✅ Validated | --- |
+| **10.5** In each web page, are background and foreground color declarations present together? | ✅ Validated | --- |
+| **10.6** In each web page, is each link whose nature is not obvious visually distinguishable from surrounding text? | ✅ Validated | --- |
+| **10.7** In each web page, is focus visibility ensured for each element receiving keyboard focus? | ✅ Validated | --- |
+| **10.8** For each web page, are hidden contents intended to be ignored by assistive technologies? | ✅ Validated | --- |
+| **10.11** For each web page, can contents be presented without horizontal scrolling when viewport is 320 CSS pixels wide? | ✅ Validated | --- |
+| **10.12** In each web page, can text spacing properties be adjusted without loss of content or functionality? | ✅ Validated | --- |
+| **10.13** In each web page, are additional contents appearing on keyboard focus or pointer hover dismissible, hoverable, and persistent? | ✅ Validated | --- |
+| **10.14** In each web page, are additional contents triggered via CSS visible to all users? | ✅ Validated | --- |
 
 </details>
 
@@ -165,19 +165,19 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **11.2** Is each label associated with a form field relevant? | ⚠️ Review Needs review | All information is provided in addition to the color, size or shape specifications. |
-| **11.7** In each form, is each legend associated with a group of fields relevant? | ⚠️ Review Needs review | All information is provided in addition to the color, size or shape specifications. |
-| **11.12** For each form that modifies or deletes data, or transmits answers to a test, can the user verify, correct, and confirm the data before submission? | ⚠️ Review Needs review | The user can download, modify, correct and confirm all data before submission and after |
-| **11.1** Does each form field have a label? | ✅ Validated Validated | --- |
-| **11.3** In each form, is each label associated with a field visible? | ✅ Validated Validated | --- |
-| **11.4** In each form, are labels and their associated fields adjacent? | ✅ Validated Validated | --- |
-| **11.5** In each form, are fields of the same nature grouped together when necessary? | ✅ Validated Validated | --- |
-| **11.6** In each form, does each group of fields of the same nature have a legend? | ✅ Validated Validated | --- |
-| **11.8** In each form, are options of the same nature in a choice list grouped? | ✅ Validated Validated | --- |
-| **11.9** In each form, is each button label relevant? | ✅ Validated Validated | --- |
-| **11.10** In each form, is input validation used appropriately? | ✅ Validated Validated | --- |
-| **11.11** In each form, is input validation accompanied by suggestions when needed? | ✅ Validated Validated | --- |
-| **11.13** Can the purpose of a form input field be determined to facilitate autocomplete? | ✅ Validated Validated | --- |
+| **11.2** Is each label associated with a form field relevant? | ⚠️ Needs review | All information is provided in addition to the color, size or shape specifications. |
+| **11.7** In each form, is each legend associated with a group of fields relevant? | ⚠️ Needs review | All information is provided in addition to the color, size or shape specifications. |
+| **11.12** For each form that modifies or deletes data, or transmits answers to a test, can the user verify, correct, and confirm the data before submission? | ⚠️ Needs review | The user can download, modify, correct and confirm all data before submission and after |
+| **11.1** Does each form field have a label? | ✅ Validated | --- |
+| **11.3** In each form, is each label associated with a field visible? | ✅ Validated | --- |
+| **11.4** In each form, are labels and their associated fields adjacent? | ✅ Validated | --- |
+| **11.5** In each form, are fields of the same nature grouped together when necessary? | ✅ Validated | --- |
+| **11.6** In each form, does each group of fields of the same nature have a legend? | ✅ Validated | --- |
+| **11.8** In each form, are options of the same nature in a choice list grouped? | ✅ Validated | --- |
+| **11.9** In each form, is each button label relevant? | ✅ Validated | --- |
+| **11.10** In each form, is input validation used appropriately? | ✅ Validated | --- |
+| **11.11** In each form, is input validation accompanied by suggestions when needed? | ✅ Validated | --- |
+| **11.13** Can the purpose of a form input field be determined to facilitate autocomplete? | ✅ Validated | --- |
 
 </details>
 
@@ -185,17 +185,17 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **12.3** Is the site map page relevant? | ⚠️ Review Needs review | The front end do not use any map |
-| **12.10** In each web page, do keyboard shortcuts using a single character key meet requirements? | ⚠️ Review Needs review | Yes, you can navigate in all the page with TAB |
-| **12.1** Does each set of pages have at least two navigation systems? | ✅ Validated Validated | --- |
-| **12.2** In each set of pages, are the navigation menu and navigation bars consistent? | ✅ Validated Validated | --- |
-| **12.4** In each set of pages, is the site map accessible from any page? | ✅ Validated Validated | --- |
-| **12.5** In each set of pages, is the search engine accessible from any page? | ✅ Validated Validated | --- |
-| **12.6** Are grouping areas of content present on multiple web pages identifiable with HTML structural elements? | ✅ Validated Validated | --- |
-| **12.7** In each web page, is a skip link or quick access link to the main content area present? | ✅ Validated Validated | --- |
-| **12.8** In each web page, is the tab order coherent? | ✅ Validated Validated | --- |
-| **12.9** In each web page, does navigation not contain a keyboard trap? | ✅ Validated Validated | --- |
-| **12.11** In each web page, are additional contents appearing on hover, focus, or interaction controllable? | ✅ Validated Validated | --- |
+| **12.3** Is the site map page relevant? | ⚠️ Needs review | The front end do not use any map |
+| **12.10** In each web page, do keyboard shortcuts using a single character key meet requirements? | ⚠️ Needs review | Yes, you can navigate in all the page with TAB |
+| **12.1** Does each set of pages have at least two navigation systems? | ✅ Validated | --- |
+| **12.2** In each set of pages, are the navigation menu and navigation bars consistent? | ✅ Validated | --- |
+| **12.4** In each set of pages, is the site map accessible from any page? | ✅ Validated | --- |
+| **12.5** In each set of pages, is the search engine accessible from any page? | ✅ Validated | --- |
+| **12.6** Are grouping areas of content present on multiple web pages identifiable with HTML structural elements? | ✅ Validated | --- |
+| **12.7** In each web page, is a skip link or quick access link to the main content area present? | ✅ Validated | --- |
+| **12.8** In each web page, is the tab order coherent? | ✅ Validated | --- |
+| **12.9** In each web page, does navigation not contain a keyboard trap? | ✅ Validated | --- |
+| **12.11** In each web page, are additional contents appearing on hover, focus, or interaction controllable? | ✅ Validated | --- |
 
 </details>
 
@@ -203,18 +203,18 @@
 
 | Criterion | Status | Manual review |
 | --- | --- | --- |
-| **13.1** For each web page, does the user have control over each time limit? | ⚠️ Review Needs review | The front end do not use any time limit |
-| **13.3** In each web page, does each downloadable office document have, if necessary, an accessible version? | ⚠️ Review Needs review | The front end do not use any office document |
-| **13.7** In each web page, are sudden brightness changes or flash effects controlled? | ⚠️ Review Needs review | The front end do not use any brightness changes or flash effects |
-| **13.10** In each web page, are multi-point or path-based gestures operable with a single pointer? | ⚠️ Review Needs review | Yes |
-| **13.12** In each web page, can functionalities using device motion be operated with user interface components? | ⚠️ Review Needs review | Yes |
-| **13.2** In each web page, must the opening of a new window not be triggered automatically? | ✅ Validated Validated | --- |
-| **13.4** For each downloadable document with an accessible version, is this version up to date? | ✅ Validated Validated | --- |
-| **13.5** In each web page, does each cryptic content have an alternative? | ✅ Validated Validated | --- |
-| **13.6** In each web page, is each cryptic content alternative visible? | ✅ Validated Validated | --- |
-| **13.8** In each web page, is each moving or blinking content controllable by the user? | ✅ Validated Validated | --- |
-| **13.9** In each web page, can the proposed content be consulted regardless of screen orientation? | ✅ Validated Validated | --- |
-| **13.11** In each web page, can actions triggered by a pointing device be cancelled? | ✅ Validated Validated | --- |
+| **13.1** For each web page, does the user have control over each time limit? | ⚠️ Needs review | The front end do not use any time limit |
+| **13.3** In each web page, does each downloadable office document have, if necessary, an accessible version? | ⚠️ Needs review | The front end do not use any office document |
+| **13.7** In each web page, are sudden brightness changes or flash effects controlled? | ⚠️ Needs review | The front end do not use any brightness changes or flash effects |
+| **13.10** In each web page, are multi-point or path-based gestures operable with a single pointer? | ⚠️ Needs review | Yes |
+| **13.12** In each web page, can functionalities using device motion be operated with user interface components? | ⚠️ Needs review | Yes |
+| **13.2** In each web page, must the opening of a new window not be triggered automatically? | ✅ Validated | --- |
+| **13.4** For each downloadable document with an accessible version, is this version up to date? | ✅ Validated | --- |
+| **13.5** In each web page, does each cryptic content have an alternative? | ✅ Validated | --- |
+| **13.6** In each web page, is each cryptic content alternative visible? | ✅ Validated | --- |
+| **13.8** In each web page, is each moving or blinking content controllable by the user? | ✅ Validated | --- |
+| **13.9** In each web page, can the proposed content be consulted regardless of screen orientation? | ✅ Validated | --- |
+| **13.11** In each web page, can actions triggered by a pointing device be cancelled? | ✅ Validated | --- |
 
 </details>
 
