@@ -42,15 +42,19 @@ describe('userApi', () => {
     test('deleteMe deletes the account', async () => {
         fetchMock.mockResolvedValue({ ok: true });
 
-        await deleteMe();
+        await deleteMe('secret');
 
-        expect(fetchMock).toHaveBeenCalledWith('/auth/me', { method: 'DELETE' });
+        expect(fetchMock).toHaveBeenCalledWith('/auth/me', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: 'secret' }),
+        });
     });
 
     test('deleteMe throws on failure', async () => {
         fetchMock.mockResolvedValue({ ok: false });
 
-        await expect(deleteMe()).rejects.toThrow('Failed to delete user account');
+        await expect(deleteMe('secret')).rejects.toThrow('Failed to delete user account');
     });
 
     test('logout posts to logout-all', async () => {
