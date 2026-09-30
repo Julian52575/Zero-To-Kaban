@@ -26,6 +26,10 @@ vi.mock('../services/ProjectApi', () => ({
     getProjectCollaborators: vi.fn().mockResolvedValue([]),
 }));
 
+vi.mock('./InviteCollaborator', () => ({
+    default: ({ ownerId }: { ownerId: string }) => <div>invite:{ownerId}</div>,
+}));
+
 // Drag and drop can't be driven in jsdom, so the board is replaced by a stub
 // exposing each callback as a button. KanbanBoard has its own render tests.
 vi.mock('./KanbanBoard', () => ({
@@ -252,5 +256,66 @@ describe('TodoList', () => {
 
         expect(moveTask).not.toHaveBeenCalled();
         expect(statusOf('Buy milk')).toHaveTextContent('todo');
+    });
+
+    describe('permissions and lifecycle', () => {
+        test('a manager sees the invite panel with the owner id', async () => {
+            vi.mocked(getProject).mockResolvedValue({ ...project(), canManage: true });
+
+            render(<TodoList projectId="p1" />);
+
+            expect(await screen.findByText('invite:u1')).toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Quitter' })).not.toBeInTheDocument();
+        });
+
+        test('a non-owner can leave the project', async () => {
+            vi.mocked(getProject).mockResolvedValue({ ...project(), isOwner: false });
+
+            render(<TodoList projectId="p1" />);
+
+            expect(await screen.findByRole('button', { name: 'Quitter' })).toBeInTheDocument();
+        });
+
+        test('a viewer cannot add tasks', async () => {
+            vi.mocked(getProject).mockResolvedValue({ ...project(), role: 'VIEWER', canEdit: false });
+
+            render(<TodoList projectId="p1" />);
+
+            await screen.findByRole('listitem', { name: 'Buy milk' });
+            expect(screen.queryByPlaceholderText('New Item')).not.toBeInTheDocument();
+        });
+
+        test('a project without columns puts every task in todo and blocks adding', async () => {
+            vi.mocked(getProject).mockResolvedValue({ ...project(), columns: undefined });
+
+            render(<TodoList projectId="p1" />);
+
+            await screen.findByRole('listitem', { name: 'Buy milk' });
+            expect(statusOf('Walk dog')).toHaveTextContent('todo');
+            expect(screen.getByRole('button', { name: /add item/i })).toBeDisabled();
+        });
+
+        test('ignores a response that arrives after unmount', async () => {
+            let resolve: (value: Task[]) => void = () => {};
+            vi.mocked(getTasks).mockReturnValue(new Promise((r) => { resolve = r; }));
+
+            const { unmount } = render(<TodoList projectId="p1" />);
+            unmount();
+            resolve(tasks);
+
+            await waitFor(() => expect(getTasks).toHaveBeenCalled());
+            expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
+        });
+
+        test('ignores an error that arrives after unmount', async () => {
+            let reject: (error: Error) => void = () => {};
+            vi.mocked(getTasks).mockReturnValue(new Promise((_, r) => { reject = r; }));
+
+            const { unmount } = render(<TodoList projectId="p1" />);
+            unmount();
+            reject(new Error('late'));
+
+            await waitFor(() => expect(console.error).toHaveBeenCalledWith(expect.any(Error)));
+        });
     });
 });

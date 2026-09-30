@@ -55,6 +55,15 @@ describe('InviteCollaborator', () => {
         expect(await screen.findByText('Owner')).toBeInTheDocument();
     });
 
+    test('says so when nobody is left to invite', async () => {
+        vi.mocked(getAllUsers).mockResolvedValue([users[0]]);
+        await openPanel();
+
+        await userEvent.click(screen.getByRole('combobox'));
+
+        expect(await screen.findByText('Aucun collaborateur trouvé')).toBeInTheDocument();
+    });
+
     test('logs when the options cannot be loaded', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {});
         vi.mocked(getAllUsers).mockRejectedValue(new Error('down'));

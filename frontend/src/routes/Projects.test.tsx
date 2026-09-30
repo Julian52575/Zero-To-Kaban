@@ -76,6 +76,16 @@ describe('Projects', () => {
         expect(await screen.findByText('Invalid project data')).toBeInTheDocument();
     });
 
+    test('a blank name submitted directly is ignored', async () => {
+        vi.mocked(getProjects).mockResolvedValue([]);
+        renderProjects();
+
+        fireEvent.submit(screen.getByPlaceholderText('Name of the new project').closest('form')!);
+
+        expect(createProject).not.toHaveBeenCalled();
+        expect(screen.queryByText(/at least 2 characters/)).not.toBeInTheDocument();
+    });
+
     test('rejects a one-character name even when the form is submitted directly', async () => {
         vi.mocked(getProjects).mockResolvedValue([]);
         renderProjects();
