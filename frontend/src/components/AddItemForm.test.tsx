@@ -24,13 +24,14 @@ describe('AddItemForm', () => {
         const user = userEvent.setup();
         render(<AddItemForm projectId="p1" columnId="c-todo" onNewItem={vi.fn()} />);
 
+        const input = screen.getByRole('textbox', { name: 'New item' });
         const button = screen.getByRole('button', { name: /add item/i });
         expect(button).toBeDisabled();
 
-        await user.type(screen.getByPlaceholderText('New Item'), '   ');
+        await user.type(input, '   ');
         expect(button).toBeDisabled();
 
-        await user.type(screen.getByPlaceholderText('New Item'), 'Buy milk');
+        await user.type(input, 'Buy milk');
         expect(button).toBeEnabled();
     });
 
