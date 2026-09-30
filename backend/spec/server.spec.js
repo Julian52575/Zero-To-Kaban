@@ -245,7 +245,7 @@ describe('server', () => {
         const handler = startConsumeFor.mock.calls.find(
             ([name]) => name === EVENTS.USER_DELETED
         )[1];
-        await handler('u9', 'event-id');
+        await handler({ userId: 'u9' }, 'event-id');
 
         expect(db.getProjectsFromUser).toHaveBeenCalledWith('u9');
         const anonymous = '00000000-0000-0000-0000-000000000000';
