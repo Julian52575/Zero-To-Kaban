@@ -20,7 +20,7 @@ interface UserProfileModalProps {
 function UserProfileModal({ show, onClose }: UserProfileModalProps) {
   const [user, setUser] = React.useState<User | null>(null);
   const [username, setUsername] = React.useState("");
-  const [password, setpassword] = React.useState("");
+  // const [password, setpassword] = React.useState("");
 
   const [loading, setLoading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
@@ -70,26 +70,49 @@ function UserProfileModal({ show, onClose }: UserProfileModalProps) {
   };
 
   const handleDelete = async () => {
+    onClose();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
     try {
-      const reply = await Swal.fire({
-        title: "Delete your account?",
+      const passwordPrompte = await Swal.fire({
+        title: "Enter your password to confirm",
         text: "This action is permanent and cannot be undone.",
+        input: "password",
+        inputAttributes: {
+          autocapitalize: "off",
+          autocorrect: "off",
+        },
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#dc3545",
         cancelButtonColor: "#6c757d",
-        confirmButtonText: "Yes, delete my account",
+        confirmButtonText: "Delete my account",
         cancelButtonText: "Cancel",
+        didOpen: () => {
+          const input = Swal.getInput() as HTMLInputElement;
+          if (input) {
+            input.focus();
+          }
+        },
+        inputValidator(value) {
+          if (!value) {
+            return "You need to enter your password!";
+          }
+        },
       });
 
-      if (!reply.isConfirmed) {
+      if (!passwordPrompte.isConfirmed) {
         return;
       }
-      await deleteMe();
+      await deleteMe(passwordPrompte.value);
       window.location.href = "/";
     } catch {
-      setError("Unable to delete your account.");
-      
+      Swal.fire({
+        title: "Error",
+        text: "Unable to delete your account. Please check your password and try again.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
     }
   };
 
@@ -151,7 +174,7 @@ function UserProfileModal({ show, onClose }: UserProfileModalProps) {
                 />
               </Form.Group>
 
-              <Form.Group className="mb-3">
+              {/* <Form.Group className="mb-3">
                 <Form.Label>Password</Form.Label>
 
                 <Form.Control
@@ -159,7 +182,7 @@ function UserProfileModal({ show, onClose }: UserProfileModalProps) {
                   value={password}
                   onChange={(event) => setpassword(event.target.value)}
                 />
-              </Form.Group>
+              </Form.Group> */}
 
               <Button
                 type="submit"
@@ -184,10 +207,7 @@ function UserProfileModal({ show, onClose }: UserProfileModalProps) {
                 Logout
               </Button>
 
-              <Button
-                variant="outline-danger"
-                onClick={handleDelete}
-              >
+              <Button variant="outline-danger" onClick={handleDelete}>
                 Delete account
               </Button>
             </div>
