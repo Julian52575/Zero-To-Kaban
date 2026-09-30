@@ -173,7 +173,7 @@ jobs:
         with:
           working-directory: auth
           base-url: http://127.0.0.1:4000
-          ready-path: /healthz
+          ready-path: /health
           artifact-name: auth-rgaa-report
           cache-hit: ${{ steps.cache.outputs.cache-hit }}
 
