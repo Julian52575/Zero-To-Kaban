@@ -24,7 +24,7 @@ describe('AddItemForm', () => {
         const user = userEvent.setup();
         render(<AddItemForm projectId="p1" columnId="c-todo" onNewItem={vi.fn()} />);
 
-        const input = screen.getByRole('textbox', { name: 'New item' });
+        const input = screen.getByRole('textbox', { name: 'Add a new task' });
         const button = screen.getByRole('button', { name: /add item/i });
         expect(button).toBeDisabled();
 
