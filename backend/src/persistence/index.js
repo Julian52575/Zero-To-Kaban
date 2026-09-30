@@ -1,5 +1,4 @@
 const { PrismaClient, $Enums } = require("@prisma/client");
-const { get } = require("../app");
 
 const prisma = new PrismaClient();
 

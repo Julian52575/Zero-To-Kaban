@@ -333,4 +333,149 @@ describe('projectController', () => {
             ).not.toHaveBeenCalled();
         });
     });
+
+    describe('updateProjectCollaborator', () => {
+        const req = (body) => ({ params: { id: PROJECT_ID }, userId: 'u2', body });
+
+        beforeEach(() => {
+            jest.spyOn(console, 'error').mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            console.error.mockRestore();
+        });
+
+        it('should reject an invalid state', async () => {
+            const res = mockRes();
+
+            await projectController.updateProjectCollaborator(req({ state: 'PENDING' }), res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ error: 'Invalid state' });
+            expect(projectService.updateProjectCollaborator).not.toHaveBeenCalled();
+        });
+
+        it('should reject a role that would grant ownership', async () => {
+            const res = mockRes();
+
+            await projectController.updateProjectCollaborator(
+                req({ state: 'ACCEPTED', role: 'OWNER' }),
+                res
+            );
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ error: 'Invalid role' });
+            expect(projectService.updateProjectCollaborator).not.toHaveBeenCalled();
+        });
+
+        it('should return the joined project once accepted', async () => {
+            projectService.updateProjectCollaborator.mockResolvedValue({
+                before: {},
+                after: { state: 'ACCEPTED', role: 'EDITOR', project: { id: PROJECT_ID, name: 'Mon projet', ownerId: OWNER_ID } },
+            });
+            const res = mockRes();
+
+            await projectController.updateProjectCollaborator(
+                req({ state: 'ACCEPTED', role: 'EDITOR' }),
+                res
+            );
+
+            expect(projectService.updateProjectCollaborator).toHaveBeenCalledWith(
+                PROJECT_ID,
+                'u2',
+                { state: 'ACCEPTED', role: 'EDITOR' }
+            );
+            expect(res.json).toHaveBeenCalledWith({
+                state: 'ACCEPTED',
+                role: 'EDITOR',
+                project: { id: PROJECT_ID, name: 'Mon projet' },
+            });
+        });
+
+        it('should only return the state once refused', async () => {
+            projectService.updateProjectCollaborator.mockResolvedValue({
+                before: {},
+                after: { state: 'REFUSED', role: 'VIEWER', project: { id: PROJECT_ID, name: 'Mon projet' } },
+            });
+            const res = mockRes();
+
+            await projectController.updateProjectCollaborator(req({ state: 'REFUSED' }), res);
+
+            expect(res.json).toHaveBeenCalledWith({ state: 'REFUSED' });
+        });
+
+        it('should return 404 when the collaborator does not exist', async () => {
+            projectService.updateProjectCollaborator.mockResolvedValue(null);
+            const res = mockRes();
+
+            await projectController.updateProjectCollaborator(req({ state: 'ACCEPTED' }), res);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({ error: 'Collaborator not found' });
+        });
+
+        it('should return 500 when the service fails', async () => {
+            projectService.updateProjectCollaborator.mockRejectedValue(new Error('db down'));
+            const res = mockRes();
+
+            await projectController.updateProjectCollaborator(req({ state: 'ACCEPTED' }), res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({ error: 'Failed to update collaborator' });
+        });
+    });
+
+    describe('leaveProject', () => {
+        const req = { params: { id: PROJECT_ID }, userId: 'u2' };
+        const mockSendRes = () => ({ ...mockRes(), send: jest.fn() });
+
+        beforeEach(() => {
+            jest.spyOn(console, 'error').mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            console.error.mockRestore();
+        });
+
+        it('should return 204 once the user left', async () => {
+            projectService.leaveProject.mockResolvedValue('OK');
+            const res = mockSendRes();
+
+            await projectController.leaveProject(req, res);
+
+            expect(projectService.leaveProject).toHaveBeenCalledWith(PROJECT_ID, 'u2');
+            expect(res.status).toHaveBeenCalledWith(204);
+            expect(res.send).toHaveBeenCalled();
+        });
+
+        it('should return 404 when the user is not a collaborator', async () => {
+            projectService.leaveProject.mockResolvedValue('NOT_FOUND');
+            const res = mockSendRes();
+
+            await projectController.leaveProject(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({ error: 'Collaborator not found' });
+        });
+
+        it('should return 403 for the owner', async () => {
+            projectService.leaveProject.mockResolvedValue('OWNER');
+            const res = mockSendRes();
+
+            await projectController.leaveProject(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(403);
+            expect(res.json).toHaveBeenCalledWith({ error: 'The owner cannot leave the project' });
+        });
+
+        it('should return 500 when the service fails', async () => {
+            projectService.leaveProject.mockRejectedValue(new Error('db down'));
+            const res = mockSendRes();
+
+            await projectController.leaveProject(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({ error: 'Failed to leave project' });
+        });
+    });
 });
