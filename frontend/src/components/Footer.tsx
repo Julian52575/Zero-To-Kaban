@@ -13,6 +13,7 @@ function Footer() {
           <a href="/privacy">Privacy Policy</a>
           <a href="/terms-of-use">Terms of Use</a>
           <a href="/accessibility">Accessibility</a>
+          <a href="/projects">Home</a>
         </nav>
       </div>
     </footer>
