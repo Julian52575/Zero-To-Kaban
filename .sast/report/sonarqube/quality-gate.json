@@ -32,7 +32,7 @@
         "comparator": "LT",
         "periodIndex": 1,
         "errorThreshold": "80",
-        "actualValue": "91.4"
+        "actualValue": "92.2"
       },
       {
         "status": "OK",

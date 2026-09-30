@@ -7,10 +7,10 @@
 | Reliability | C · 1 bug(s) |
 | Security | A · 0 vulnerability(ies) |
 | Security hotspots | 0 |
-| Maintainability | A · 48 smell(s) |
-| Coverage | 91.4% |
+| Maintainability | A · 49 smell(s) |
+| Coverage | 92.2% |
 | Duplication | 0.0% |
-| Lines of code | 5869 |
+| Lines of code | 5989 |
 
 ### Failing conditions
 
@@ -18,4 +18,4 @@
 | --- | --- | --- | --- |
 | new_reliability_rating | GT | 1 | 3 |
 
-_Analysis `a5062574-abed-4f5b-a4ae-e2e7780c24fc` · refreshed 2026-09-30T18:41:19Z._
+_Analysis `00a726b3-2495-4182-af9a-6070e34b72e6` · refreshed 2026-09-30T19:16:08Z._
