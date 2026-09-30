@@ -4,7 +4,7 @@
 
 ![Compliance 100%](https://img.shields.io/badge/RGAA%20v4.1.2-100%25-brightgreen)
 
-> Note: This report covers only automatically verifiable criteria. Criteria marked as 'Needs review' require manual inspection. The compliance rate reflects automated checks only. Merged across 1 service(s): zero-to-kaban-frontend.
+> Note: This report covers only automatically verifiable criteria. Criteria marked as 'Needs review' require manual inspection. The compliance rate reflects automated checks only. Merged across 2 service(s): frontend, auth.
 
 ## Summary
 
