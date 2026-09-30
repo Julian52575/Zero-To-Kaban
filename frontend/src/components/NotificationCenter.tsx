@@ -2,8 +2,13 @@ import React from "react";
 import { Button, Offcanvas, ListGroup, Badge } from "react-bootstrap";
 import { useNotifications } from "../provider/useNotificationsProvider";
 import { AcceptInvitation, declineInvitation } from "../services/ProjectApi";
+import { Project } from "../types/Project";
 
-function NotificationCenter() {
+function NotificationCenter({
+  onProjectAccepted,
+}: {
+  onProjectAccepted?: (project: Project) => void;
+}) {
   const [show, setShow] = React.useState(false);
   const { unreadNotifications, markAllTaskAsRead, resolveNotification } =
     useNotifications();
@@ -31,14 +36,28 @@ function NotificationCenter() {
       return;
     }
     try {
-      await AcceptInvitation(projectId, collaboratorId);
+      const rep = await AcceptInvitation(projectId, collaboratorId) as {
+        state: string;
+        role: "OWNER" | "EDITOR" | "VIEWER";
+        project: { id: string; name: string };
+      };
+      onProjectAccepted?.({
+        id: rep.project.id,
+        name: rep.project.name,
+        isOwner: rep.role === "OWNER",
+        createdAt: new Date().toISOString(),
+        ownerId: "",
+        role: rep.role as "OWNER" | "EDITOR" | "VIEWER",
+        canEdit: false,
+        canManage: false,
+      } as Project);
       resolveNotification(notificationId);
     } catch (error) {
       console.error("Error accepting invitation:", error);
     }
   };
 
-   const handleDecline = async (
+  const handleDecline = async (
     notificationId: string,
     projectId: string | undefined,
     collaboratorId: string | undefined,
@@ -144,12 +163,12 @@ function NotificationCenter() {
                         variant="danger"
                         size="sm"
                         className="mt-2 ms-2"
-                        onClick={() => 
-                            handleDecline(
-                              notification.id,
-                              notification.projectId,
-                              notification.collaboratorId,
-                            )
+                        onClick={() =>
+                          handleDecline(
+                            notification.id,
+                            notification.projectId,
+                            notification.collaboratorId,
+                          )
                         }
                       >
                         Decline

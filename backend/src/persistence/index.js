@@ -1,4 +1,5 @@
 const { PrismaClient, $Enums } = require("@prisma/client");
+const { get } = require("../app");
 
 const prisma = new PrismaClient();
 
@@ -228,6 +229,7 @@ async function getProjectCollaborators(projectId) {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     select: {
+      ownerId: true,
       collaborators: {
         select: {
           userId: true,
@@ -246,7 +248,7 @@ async function getProjectCollaborators(projectId) {
     return [];
   }
 
-  const userIds = project.collaborators.map((c) => c.userId);
+  const userIds = [project.ownerId, ...project.collaborators.map((c) => c.userId)];
 
   try {
     // Internal service-to-service call: the base URL (scheme included) comes
@@ -344,6 +346,9 @@ async function updateProjectCollaborator(projectId, userId, data) {
       ...(data.role && { role: data.role }),
       ...(data.state && { state: data.state }),
     },
+    include: {
+      project: { select: { id: true, name: true } },
+    },
   });
 }
 async function updateDeletedProjectCollaborator(
@@ -396,6 +401,22 @@ async function deleteProject(id) {
   return prisma.project.delete({ where: { id } });
 }
 
+async function getProjectOwner(projectId) {
+  return prisma.project.findUnique({
+    where: { id: projectId },
+    select: { ownerId: true },
+  });
+}
+
+async function deleteProjectCollaborator(projectId, userId) {
+  // deleteMany car pas de contrainte unique sur (projectId, userId)
+  const { count } = await prisma.projectCollaborator.deleteMany({
+    where: { projectId, userId },
+  });
+  return count > 0;
+}
+
+
 module.exports = {
   init,
   teardown,
@@ -430,6 +451,9 @@ module.exports = {
   updateProjectCollaborator,
   updateDeletedProjectCollaborator,
   deleteProject,
+
+  getProjectOwner,
+  deleteProjectCollaborator,
 
   prisma,
 };
