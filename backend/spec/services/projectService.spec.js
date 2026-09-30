@@ -1,4 +1,10 @@
 jest.mock('../../src/repositories/projectRepository');
+jest.mock('@prisma/client', () => ({
+    $Enums: {
+        CollaboratorRole: { VIEWER: 'VIEWER' },
+        CollaboratorInvitationState: { PENDING: 'PENDING' },
+    },
+}));
 
 const projectRepository = require('../../src/repositories/projectRepository');
 const projectService = require('../../src/services/projectService');
@@ -77,7 +83,8 @@ describe('projectService', () => {
             );
 
             expect(projectRepository.getById).toHaveBeenCalledWith(
-                'project-id'
+                'project-id',
+                'owner-id'
             );
             expect(result).toEqual(project);
         });
@@ -94,7 +101,7 @@ describe('projectService', () => {
         });
 
         it("should return null for someone else's project", async () => {
-            projectRepository.getById.mockResolvedValue(project);
+            projectRepository.getById.mockResolvedValue(null);
 
             const result = await projectService.getProject(
                 'project-id',
@@ -142,7 +149,7 @@ describe('projectService', () => {
         });
 
         it("should not update someone else's project", async () => {
-            projectRepository.getById.mockResolvedValue(project);
+            projectRepository.getById.mockResolvedValue(null);
 
             const result = await projectService.updateProject(
                 'project-id',
@@ -184,7 +191,7 @@ describe('projectService', () => {
         });
 
         it("should not delete someone else's project", async () => {
-            projectRepository.getById.mockResolvedValue(project);
+            projectRepository.getById.mockResolvedValue(null);
 
             const result = await projectService.deleteProject(
                 'project-id',
@@ -276,6 +283,52 @@ describe('projectService', () => {
             ).toHaveBeenCalledWith('p1');
 
             expect(result).toEqual(collaborators);
+        });
+    });
+
+    describe('createProjectCollaborator', () => {
+        it('should invite the user as a pending viewer', async () => {
+            projectRepository.createProjectCollaborator.mockResolvedValue('created');
+
+            const result = await projectService.createProjectCollaborator('p1', 'u2');
+
+            expect(projectRepository.createProjectCollaborator).toHaveBeenCalledWith({
+                projectId: 'p1',
+                userId: 'u2',
+                role: 'VIEWER',
+                state: 'PENDING',
+            });
+            expect(result).toBe('created');
+        });
+    });
+
+    describe('updateProjectCollaborator', () => {
+        it('should return both versions of the collaborator', async () => {
+            projectRepository.getProjectCollaborator.mockResolvedValue({ role: 'VIEWER' });
+            projectRepository.updateProjectCollaborator.mockResolvedValue({ role: 'EDITOR' });
+
+            const result = await projectService.updateProjectCollaborator('p1', 'u2', {
+                role: 'EDITOR',
+            });
+
+            expect(projectRepository.updateProjectCollaborator).toHaveBeenCalledWith(
+                'p1',
+                'u2',
+                { role: 'EDITOR' }
+            );
+            expect(result).toEqual({
+                before: { role: 'VIEWER' },
+                after: { role: 'EDITOR' },
+            });
+        });
+
+        it('should return null when the collaborator does not exist', async () => {
+            projectRepository.getProjectCollaborator.mockResolvedValue(null);
+
+            const result = await projectService.updateProjectCollaborator('p1', 'u2', {});
+
+            expect(result).toBeNull();
+            expect(projectRepository.updateProjectCollaborator).not.toHaveBeenCalled();
         });
     });
 });
