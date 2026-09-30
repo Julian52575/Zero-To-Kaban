@@ -249,7 +249,14 @@ async function getProjectCollaborators(projectId) {
   const userIds = project.collaborators.map((c) => c.userId);
 
   try {
-    const response = await fetch("http://auth:4000/internal/users/lookup", {
+    // Internal service-to-service call: the base URL (scheme included) comes
+    // from the deployment, since the auth service's address differs per env.
+    const authServiceUrl = process.env.AUTH_SERVICE_URL;
+    if (!authServiceUrl) {
+      throw new Error("AUTH_SERVICE_URL is not set");
+    }
+
+    const response = await fetch(`${authServiceUrl}/internal/users/lookup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: userIds }),
