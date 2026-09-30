@@ -11,9 +11,10 @@ import {
 } from "../services/taskService";
 import { type Column } from "../services/columnService";
 import { getErrorMessage } from "../utils/errorMessage";
-import { getProject } from "../services/ProjectApi";
+import { getProject, leaveProject } from "../services/ProjectApi";
 import InviteCollaborator from "./InviteCollaborator";
 import { Button } from "react-bootstrap";
+import Swal from "sweetalert2";
 
 const STATUSES: ItemStatus[] = ["todo", "doing", "done"];
 
@@ -143,11 +144,39 @@ function TodoList({ projectId }: { projectId: string }) {
     [columns, items, projectId, replaceItem],
   );
 
+  const handleLeaveProject = React.useCallback(async () => {
+    const rep = await Swal.fire({
+      title: "Left Project",
+      text: "Are you sure you want to leave this project? You will lose access to it.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, leave",
+      cancelButtonText: "Cancel",
+    });
+    if (!rep.isConfirmed) {
+      return;
+    }
+    leaveProject(projectId)
+      .then((result) => {
+        if (result === "OWNER") {
+          setActionError(
+            "You are the owner of the project and cannot leave it.",
+          );
+        } else {
+          window.location.href = "/";
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        setActionError(getErrorMessage(err));
+      });
+  }, [projectId]);
+
   if (error !== null) {
     return <p className="text-center text-danger">{error}</p>;
   }
   if (items === null) {
-    return <p className="text-center">Chargement…</p>;
+    return <p className="text-center">Loading...</p>;
   }
 
   return (
@@ -167,10 +196,13 @@ function TodoList({ projectId }: { projectId: string }) {
             <InviteCollaborator projectId={projectId} ownerId={ownerId} />
           )}
           {permissions && !permissions.isOwner && (
-            <Button variant="danger">Quitter</Button>
+            <Button variant="danger" onClick={handleLeaveProject}>
+              Leave Project
+            </Button>
           )}
         </div>
       </div>
+      {error && <p className="text-danger">{error}</p>}
       {actionError && <p className="text-danger">{actionError}</p>}
       <KanbanBoard
         items={items}

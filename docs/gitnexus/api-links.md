@@ -43,6 +43,7 @@ see. Consumers are matched by URL, so they apply to every method on the row.
 | /projects | backend/src/app.js | GET, POST |  |
 | /projects/:id | backend/src/app.js | DELETE, GET, PATCH, PUT |  |
 | /projects/:id/collaborators | backend/src/app.js | GET |  |
+| /projects/:id/collaborators/me | backend/src/app.js | DELETE |  |
 | /projects/:id/invitation | backend/src/app.js | POST, PUT |  |
 | /projects/:projectId/columns | backend/src/app.js | GET |  |
 | /projects/:projectId/tasks | backend/src/app.js | GET, POST |  |

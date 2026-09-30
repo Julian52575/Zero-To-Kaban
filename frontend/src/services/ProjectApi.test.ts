@@ -10,6 +10,7 @@ import {
     AcceptInvitation,
     declineInvitation,
     getProjectCollaborators,
+    leaveProject,
 } from './ProjectApi';
 
 const perms = { role: 'OWNER', isOwner: true, canEdit: true, canManage: true };
@@ -114,7 +115,6 @@ describe('ProjectApi', () => {
         await AcceptInvitation('p1', 'u2');
 
         expect(api.put).toHaveBeenCalledWith('/api/projects/p1/invitation', {
-            userId: 'u2',
             role: 'EDITOR',
             state: 'ACCEPTED',
         });
@@ -126,7 +126,6 @@ describe('ProjectApi', () => {
         await declineInvitation('p1', 'u2');
 
         expect(api.put).toHaveBeenCalledWith('/api/projects/p1/invitation', {
-            userId: 'u2',
             state: 'REFUSED',
         });
     });
@@ -136,5 +135,12 @@ describe('ProjectApi', () => {
 
         await expect(getProjectCollaborators('p1')).resolves.toEqual([{ id: 'u1', pseudo: 'a' }]);
         expect(api.get).toHaveBeenCalledWith('/api/projects/p1/collaborators');
+    });
+
+    test('leaveProject removes the current user from the collaborators', async () => {
+        api.delete.mockResolvedValue('EDITOR');
+
+        await expect(leaveProject('p1')).resolves.toBe('EDITOR');
+        expect(api.delete).toHaveBeenCalledWith('/api/projects/p1/collaborators/me');
     });
 });
