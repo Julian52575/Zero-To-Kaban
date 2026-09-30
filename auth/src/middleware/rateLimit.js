@@ -1,11 +1,6 @@
 'use strict';
 
 const rateLimit = require('express-rate-limit');
-const config = require('../config');
-
-// RATE_LIMIT_DISABLED=true (local dev only) skips both limiters, so a load test
-// isn't stopped after 10 sign-ins. Read once, when config.js loads.
-const skip = () => config.rateLimitDisabled;
 
 // Keyed by IP (req.ip). Requires `app.set('trust proxy', ...)` upstream --
 // see app.js -- otherwise every request looks like it comes from Traefik's
@@ -15,7 +10,6 @@ const skip = () => config.rateLimitDisabled;
 // person who fat-fingers their password a couple of times, tight enough to
 // make guessing impractical.
 const loginLimiter = rateLimit({
-    skip,
     windowMs: 15 * 60 * 1000,
     limit: 10,
     standardHeaders: true,
@@ -26,7 +20,6 @@ const loginLimiter = rateLimit({
 // Register: the risk is mass account creation / enumeration, not a single
 // user retrying -- slightly stricter window.
 const registerLimiter = rateLimit({
-    skip,
     windowMs: 60 * 60 * 1000,
     limit: 5,
     standardHeaders: true,

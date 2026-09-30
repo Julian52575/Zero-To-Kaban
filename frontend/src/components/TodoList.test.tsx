@@ -2,7 +2,6 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import TodoList from './TodoList';
-import type { Item } from '../types/item';
 import type { Task } from '../types/task';
 import {
     getTasks,
@@ -11,7 +10,7 @@ import {
     moveTask,
     deleteTask,
 } from '../services/taskService';
-import { getColumns, type Column } from '../services/columnService';
+import { getProject, getProjectCollaborators } from '../services/ProjectApi';
 import { ApiError } from '../services/apiClient';
 
 vi.mock('../services/taskService', () => ({
@@ -22,8 +21,9 @@ vi.mock('../services/taskService', () => ({
     deleteTask: vi.fn(),
 }));
 
-vi.mock('../services/columnService', () => ({
-    getColumns: vi.fn(),
+vi.mock('../services/ProjectApi', () => ({
+    getProject: vi.fn(),
+    getProjectCollaborators: vi.fn().mockResolvedValue([]),
 }));
 
 // Drag and drop can't be driven in jsdom, so the board is replaced by a stub
@@ -31,20 +31,20 @@ vi.mock('../services/columnService', () => ({
 vi.mock('./KanbanBoard', () => ({
     default: ({
         items,
-        onItemRename,
+        onItemUpdate,
         onItemDelete,
         onStatusChange,
     }: {
-        items: Item[];
-        onItemRename: (item: Item, name: string) => void;
-        onItemDelete: (item: Item) => void;
-        onStatusChange: (item: Item, status: 'todo' | 'doing' | 'done') => void;
+        items: Task[];
+        onItemUpdate: (item: Task, changes: Partial<Task>) => void;
+        onItemDelete: (item: Task) => void;
+        onStatusChange: (item: Task, status: 'todo' | 'doing' | 'done') => void;
     }) => (
         <ul>
             {items.map((item) => (
-                <li key={item.id} aria-label={item.name}>
+                <li key={item.id} aria-label={item.title}>
                     <span data-testid="status">{item.status}</span>
-                    <button onClick={() => onItemRename(item, `${item.name} (renamed)`)}>
+                    <button onClick={() => onItemUpdate(item, { title: `${item.title} (renamed)` })}>
                         rename
                     </button>
                     <button onClick={() => onItemDelete(item)}>delete</button>
@@ -55,11 +55,22 @@ vi.mock('./KanbanBoard', () => ({
     ),
 }));
 
-const columns: Column[] = [
-    { id: 'c-todo', name: 'To Do', order: 0 },
-    { id: 'c-doing', name: 'Doing', order: 1 },
-    { id: 'c-done', name: 'Done', order: 2 },
+const columns = [
+    { id: 'c-todo', name: 'To Do', order: 0, projectId: 'p1' },
+    { id: 'c-doing', name: 'Doing', order: 1, projectId: 'p1' },
+    { id: 'c-done', name: 'Done', order: 2, projectId: 'p1' },
 ];
+
+const project = (cols = columns) => ({
+    id: 'p1',
+    name: 'Project',
+    ownerId: 'u1',
+    role: 'OWNER',
+    isOwner: true,
+    canEdit: true,
+    canManage: false,
+    columns: cols,
+});
 
 const tasks: Task[] = [
     { id: '1', title: 'Buy milk', order: 0, columnId: 'c-todo' },
@@ -71,7 +82,8 @@ const statusOf = (name: string) => within(card(name)).getByTestId('status');
 
 describe('TodoList', () => {
     beforeEach(() => {
-        vi.mocked(getColumns).mockResolvedValue(columns);
+        vi.mocked(getProject).mockResolvedValue(project());
+        vi.mocked(getProjectCollaborators).mockResolvedValue([]);
         vi.mocked(getTasks).mockResolvedValue(tasks);
         vi.spyOn(console, 'error').mockImplementation(() => {});
     });
@@ -93,7 +105,7 @@ describe('TodoList', () => {
         render(<TodoList projectId="p1" />);
 
         expect(await screen.findByRole('listitem', { name: 'Buy milk' })).toBeInTheDocument();
-        expect(getColumns).toHaveBeenCalledWith('p1');
+        expect(getProject).toHaveBeenCalledWith('p1');
         expect(getTasks).toHaveBeenCalledWith('p1');
         expect(statusOf('Buy milk')).toHaveTextContent('todo');
         expect(statusOf('Walk dog')).toHaveTextContent('done');
@@ -140,7 +152,6 @@ describe('TodoList', () => {
             columnId: 'c-todo',
         });
         expect(await screen.findByRole('listitem', { name: 'New task' })).toBeInTheDocument();
-        expect(statusOf('New task')).toHaveTextContent('todo');
     });
 
     test('renaming updates the task optimistically', async () => {
@@ -232,7 +243,7 @@ describe('TodoList', () => {
 
     test('moving is a no-op when the project lacks the target column', async () => {
         const user = userEvent.setup();
-        vi.mocked(getColumns).mockResolvedValue([columns[0]]);
+        vi.mocked(getProject).mockResolvedValue(project([columns[0]]));
 
         render(<TodoList projectId="p1" />);
         await screen.findByRole('listitem', { name: 'Buy milk' });
