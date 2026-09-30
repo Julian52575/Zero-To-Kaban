@@ -5,10 +5,6 @@ const db = require('./db');
 const { createApp } = require('./app');
 const outbox = require('./outbox');
 
-if (config.rateLimitDisabled) {
-    console.warn('auth: WARNING rate limiting is DISABLED (RATE_LIMIT_DISABLED=true) -- local dev only, never in production');
-}
-
 db.init()
     .then(() => {
         const server = createApp().listen(config.port, () =>

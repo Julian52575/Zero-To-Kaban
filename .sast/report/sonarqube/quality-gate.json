@@ -1,14 +1,14 @@
 {
   "projectStatus": {
-    "status": "ERROR",
+    "status": "OK",
     "conditions": [
       {
-        "status": "ERROR",
+        "status": "OK",
         "metricKey": "new_reliability_rating",
         "comparator": "GT",
         "periodIndex": 1,
         "errorThreshold": "1",
-        "actualValue": "3"
+        "actualValue": "1"
       },
       {
         "status": "OK",

@@ -6,8 +6,6 @@ set positional-arguments := true
 
 tool := `command -v podman >/dev/null && echo podman || echo docker`
 compose := tool + " compose"
-# compose derives the project name from the directory name
-project := lowercase(file_name(justfile_directory()))
 
 # List available recipes
 default:
@@ -51,8 +49,8 @@ nuke *args:
             exit 1
         fi
     fi
+    {{compose}} down --volumes --remove-orphans {{args}}
     just rm
-    {{tool}} volume prune --force --filter "label=com.docker.compose.project={{project}}"
     echo "done"
 
 # Show container status

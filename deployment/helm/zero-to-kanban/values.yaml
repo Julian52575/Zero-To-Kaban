@@ -43,8 +43,6 @@ auth:
   containerPort: 4000
   # Set "true" once the proxy terminates HTTPS (session cookie gets Secure).
   cookieSecure: "false"
-  # "true" turns the login/register rate limits off. Dev only (values-dev.yaml).
-  rateLimitDisabled: "false"
   # Pre-created Secret holding the session-signing key (JWT HS256), see
   # deployment/README.md. When empty, the chart creates one from
   # sessionSecret below.

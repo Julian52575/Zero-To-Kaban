@@ -34,7 +34,6 @@
             iptables
 
             jq
-            python3 # scripts/simulate-traffic.py (standard library only)
             util-linux # setsid -- detaches the background k3s server from the tty
           ];
 

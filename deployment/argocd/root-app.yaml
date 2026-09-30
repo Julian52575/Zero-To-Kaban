@@ -24,7 +24,7 @@ spec:
       # cluster. dev-app.yaml is excluded too: the root app runs on the prod
       # cluster, and dev's plaintext default credentials must never be
       # served from it. Apply dev-app.yaml by hand on a dev cluster instead.
-      exclude: "{dev-app.yaml,dev-k3s-app.yaml,monitoring-k3s-app.yaml,grafana-k3s-app.yaml,dev-k3s-local-app.yaml}"
+      exclude: "{dev-app.yaml,dev-k3s-app.yaml,monitoring-k3s-app.yaml,dev-k3s-local-app.yaml}"
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

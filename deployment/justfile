@@ -14,14 +14,9 @@ argocd_ui_port := "18081"
 argocd_pf_unit := "zero-to-kanban-argocd-ui-pf"
 alertmanager_port := "18082"
 alertmanager_pf_unit := "zero-to-kanban-alertmanager-pf"
-grafana_port := "18083"
-grafana_pf_unit := "zero-to-kanban-grafana-pf"
 # Argo CD's Helm release name defaults to the Application's own name --
-# see the metadata.name of argocd/environments/monitoring-k3s-app.yaml and
-# grafana-k3s-app.yaml.
+# see argocd/environments/monitoring-k3s-app.yaml's metadata.name.
 alertmanager_svc := "ztk-monitoring-k3s-alertmanager"
-prometheus_svc := "ztk-monitoring-k3s-prometheus-server"
-grafana_svc := "ztk-grafana-k3s"
 
 # Argo CD release installed by up-local/up-gitops and removed by rm. Pinned
 # so every machine gets the same version and rm deletes exactly what was
@@ -40,9 +35,8 @@ kubeconfig := state_dir + "/k3s.yaml"
 
 export KUBECONFIG := kubeconfig
 
-# Bootstrap Argo CD syncing from your LOCAL working tree -- commits land without a push.
-# Also installs the monitoring stack (Prometheus + Alertmanager + Grafana).
-up-local: _k3s-ready _argocd-base _install-monitoring _bind-traefik _bind-argocd-ui
+# Bootstrap Argo CD syncing from your LOCAL working tree -- commits land without a push
+up-local: _k3s-ready _argocd-base _bind-traefik _bind-argocd-ui _bind-alertmanager-ui
     #!/usr/bin/env bash
     set -euo pipefail
     branch="{{env_var_or_default("GIT_BRANCH", "main")}}"
@@ -63,18 +57,13 @@ up-local: _k3s-ready _argocd-base _install-monitoring _bind-traefik _bind-argocd
       | kubectl apply -n argocd -f -
     echo "argocd: ztk-dev-k3s-local applied -- syncing from your local working tree (file://{{repo_root}}, branch $branch)"
     echo "  -> 'git commit' locally on $branch (no push needed); 'just refresh-local' to sync immediately"
-    # After the app: each waits up to 3 min for Argo CD to deploy its UI.
-    just _bind-alertmanager-ui
-    just _bind-grafana-ui
     just _argocd-info
 
 # Bootstrap Argo CD syncing from git -- the normal GitOps flow: commit + push to pick up edits
-up-gitops: _k3s-ready _argocd-base _bind-traefik _bind-argocd-ui
+up-gitops: _k3s-ready _argocd-base _bind-traefik _bind-argocd-ui _bind-alertmanager-ui
     kubectl apply -n argocd -f "{{deploy_dir}}/argocd/environments/dev-k3s-app.yaml"
     @echo "argocd: ztk-dev-k3s applied -- syncing from git (main), NOT your local working tree"
     @echo "  -> local edits need a commit+push before Argo CD picks them up; 'just refresh-gitops' to sync immediately"
-    @just _bind-alertmanager-ui
-    @just _bind-grafana-ui
     @just _argocd-info
 
 # Force an immediate sync of the local-source Application
@@ -111,18 +100,11 @@ _argocd-base:
           || echo "argocd: server not ready yet -- 'kubectl -n argocd get pods' to check" >&2
     fi
 
-# (internal) apply the local monitoring Applications (needs internet: upstream Helm repos)
-_install-monitoring:
-    kubectl apply -n argocd -f "{{deploy_dir}}/argocd/environments/monitoring-k3s-app.yaml"
-    kubectl apply -n argocd -f "{{deploy_dir}}/argocd/environments/grafana-k3s-app.yaml"
-
 # (internal) background port-forward, shared by the _bind-* recipes below.
 # Same setsid+systemd-run --scope --collect pattern as k3s itself in
 # flake.nix's shellHook -- detaches from the calling recipe's process so
 # the forward outlives it returning, and --collect + an is-active check
 # make repeat calls a no-op instead of stacking forwards.
-# The forward exits when its pod is replaced, so it runs in a loop that
-# reconnects. The loop ends once the Service or the cluster is gone.
 _bind label unit namespace service local_port remote_port:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -131,7 +113,7 @@ _bind label unit namespace service local_port remote_port:
     else
         echo "{{label}}: binding svc/{{service}} :{{remote_port}} -> localhost:{{local_port}} ({{unit}}.scope)"
         setsid systemd-run --user --unit="{{unit}}" --scope --collect \
-          -- bash -c 'while kubectl -n {{namespace}} get svc {{service}} >/dev/null 2>&1; do kubectl -n {{namespace}} port-forward svc/{{service}} {{local_port}}:{{remote_port}} || true; sleep 2; done' \
+          -- kubectl -n {{namespace}} port-forward svc/{{service}} {{local_port}}:{{remote_port}} \
           >"{{state_dir}}/{{label}}-portforward.log" 2>&1 &
         disown 2>/dev/null || true
     fi
@@ -144,113 +126,18 @@ _bind-traefik:
 _bind-argocd-ui:
     @just _bind argocd-ui {{argocd_pf_unit}} argocd argocd-server {{argocd_ui_port}} 443
 
-# (internal) port-forward to a monitoring UI: wait for Argo CD to deploy it, or
-# skip quietly when the Application isn't installed (up-gitops).
-_bind-monitoring-ui label unit app service local_port remote_port:
+# (internal) background port-forward: Alertmanager UI -> localhost.
+# The monitoring stack (argocd/environments/monitoring-k3s-app.yaml) is
+# optional and applied separately from up-local/up-gitops -- skip quietly
+# instead of erroring when it isn't installed yet.
+_bind-alertmanager-ui:
     #!/usr/bin/env bash
     set -euo pipefail
-    have_svc() { kubectl -n monitoring get svc {{service}} >/dev/null 2>&1; }
-    if ! have_svc && kubectl -n argocd get application {{app}} >/dev/null 2>&1; then
-        echo "{{label}}: waiting for Argo CD to deploy {{app}} (up to 3 min)..."
-        for _ in $(seq 36); do
-            have_svc && break
-            sleep 5
-        done
-    fi
-    if ! have_svc; then
-        if kubectl -n argocd get application {{app}} >/dev/null 2>&1; then
-            echo "{{label}}: {{app}} is not deployed yet, skipping bind -- check 'kubectl -n argocd get application {{app}}', then re-run 'just up-local'" >&2
-        else
-            echo "{{label}}: {{app}} not installed, skipping bind (see argocd/environments/)"
-        fi
+    if ! kubectl -n monitoring get svc {{alertmanager_svc}} >/dev/null 2>&1; then
+        echo "alertmanager: monitoring stack not installed, skipping bind (see argocd/environments/monitoring-k3s-app.yaml)"
         exit 0
     fi
-    just _bind {{label}} {{unit}} monitoring {{service}} {{local_port}} {{remote_port}}
-
-# (internal) background port-forward: Alertmanager UI -> localhost
-_bind-alertmanager-ui:
-    @just _bind-monitoring-ui alertmanager {{alertmanager_pf_unit}} ztk-monitoring-k3s {{alertmanager_svc}} {{alertmanager_port}} 9093
-
-# (internal) background port-forward: Grafana UI -> localhost
-_bind-grafana-ui:
-    @just _bind-monitoring-ui grafana {{grafana_pf_unit}} ztk-grafana-k3s {{grafana_svc}} {{grafana_port}} 80
-
-# `kubectl top` lags by a scrape interval, so sampling continues 30s after the load.
-
-# Send simulated user traffic to the local k3s dev app and report resource usage
-simulate-traffic rps="20" seconds="60": _k3s-ready
-    #!/usr/bin/env bash
-    set -euo pipefail
-    ns="ztk-dev-k3s"
-    tmp="$(mktemp -d)"
-    sampler=""
-    trap '[ -n "$sampler" ] && kill "$sampler" 2>/dev/null || true; rm -rf "$tmp"' EXIT
-    if ! kubectl -n "$ns" top pods --no-headers >"$tmp/idle.txt" 2>/dev/null || [ ! -s "$tmp/idle.txt" ]; then
-        echo "no pod metrics for namespace $ns -- is the dev app up ('just up-local') and metrics-server ready?" >&2
-        exit 1
-    fi
-    ( while true; do kubectl -n "$ns" top pods --no-headers >>"$tmp/load.txt" 2>/dev/null || true; sleep 10; done ) &
-    sampler=$!
-    BASE_URL="http://localhost:{{traefik_port}}" "{{deploy_dir}}/scripts/simulate-traffic.py" "{{rps}}" "{{seconds}}"
-    echo
-    echo "waiting 30s for the last pod metrics..."
-    sleep 30
-    kill "$sampler" 2>/dev/null || true
-    sampler=""
-    echo
-    echo "pods ($ns): idle -> peak while under load"
-    just usage-summary "$tmp/idle.txt" "$tmp/load.txt"
-    # Prometheus's own numbers, through the API server's service proxy (no port-forward needed).
-    prom_query() {
-        local q; q="$(jq -rn --arg q "$1" '$q|@uri')"
-        kubectl get --raw "/api/v1/namespaces/monitoring/services/http:{{prometheus_svc}}:80/proxy/api/v1/query?query=$q" 2>/dev/null \
-          | jq -r '.data.result[0].value[1] // empty'
-    }
-    series="$(prom_query 'prometheus_tsdb_head_series' || true)"
-    if [ -n "$series" ]; then
-        rate="$(prom_query 'rate(prometheus_tsdb_head_samples_appended_total[5m])')"
-        rss="$(prom_query 'process_resident_memory_bytes{job="prometheus"}')"
-        echo
-        echo "prometheus (local k3s):"
-        awk -v s="$series" -v r="$rate" -v m="$rss" 'BEGIN {
-            printf "  series in memory      %d\n  samples per second    %.1f\n  server memory (RSS)   %.0f MiB\n", s, r, m / 1048576
-            # Prometheus docs: disk = retention seconds * samples/s * bytes/sample (1 to 2 bytes)
-            printf "  disk for 7d           ~%.0f-%.0f MiB (vs. the 1500MB cap in monitoring-prod-app.yaml)\n", r * 604800 * 1 / 1048576, r * 604800 * 2 / 1048576
-        }'
-    else
-        echo
-        echo "prometheus: not installed here, so no metrics-store sizing (kubectl apply -n argocd -f argocd/environments/monitoring-k3s-app.yaml)"
-    fi
-
-# Summarise two `kubectl top pods --no-headers` sample files: each pod's idle vs peak CPU/memory
-usage-summary idle load:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    # Input: `kubectl top pods --no-headers` lines; file 1 is idle, file 2 under load.
-    awk '
-        function cpu(v) { return v ~ /m$/ ? v + 0 : v * 1000 }
-        function mem(v) {
-            if (v ~ /Gi$/) return v * 1024
-            if (v ~ /Ki$/) return v / 1024
-            return v + 0
-        }
-        FNR == 1 { file++ }
-        file == 1 { idle_cpu[$1] = cpu($2); idle_mem[$1] = mem($3); pods[$1] = 1; next }
-        {
-            pods[$1] = 1
-            if (cpu($2) > peak_cpu[$1]) peak_cpu[$1] = cpu($2)
-            if (mem($3) > peak_mem[$1]) peak_mem[$1] = mem($3)
-        }
-        END {
-            # Size the pod column from the longest name.
-            width = length("pod")
-            for (p in pods) if (length(p) > width) width = length(p)
-            fmt = "  %-" width "s  %-16s  %s\n"
-            row = "  %-" width "s  %6d -> %-6d  %7.0f -> %.0f\n"
-            printf fmt, "pod", "CPU (millicores)", "memory (MiB)"
-            for (p in pods) printf row, p, idle_cpu[p], peak_cpu[p], idle_mem[p], peak_mem[p]
-        }
-    ' "{{idle}}" "{{load}}" | { IFS= read -r header; echo "$header"; sort; }
+    just _bind alertmanager {{alertmanager_pf_unit}} monitoring {{alertmanager_svc}} {{alertmanager_port}} 9093
 
 # (internal) print UI/password hints
 _argocd-info:
@@ -261,9 +148,6 @@ _argocd-info:
     echo "traefik: http://localhost:{{traefik_port}} (auto-bound)"
     if systemctl --user is-active --quiet "{{alertmanager_pf_unit}}.scope" 2>/dev/null; then
         echo "alertmanager UI: http://localhost:{{alertmanager_port}} (auto-bound)"
-    fi
-    if systemctl --user is-active --quiet "{{grafana_pf_unit}}.scope" 2>/dev/null; then
-        echo "grafana UI: http://localhost:{{grafana_port}} (auto-bound; admin / dev-only-change-me)"
     fi
 
 # Remove Argo CD (and everything it manages) from the cluster; the k3s node keeps running

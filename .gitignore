@@ -13,9 +13,6 @@ node_modules/
 dist/
 backend/generated/
 
-# --- python (.github/scripts/*.py) ------------------------------------
-__pycache__/
-
 # --- test coverage --------------------------------------------------
 coverage/
 

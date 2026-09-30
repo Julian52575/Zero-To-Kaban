@@ -61,7 +61,7 @@ describe("event payloads", () => {
   });
 
   test("projectPayload tolerates missing optional fields", () => {
-    const { columns: _columns, createdAt: _createdAt, ...bare } = project;
+    const { columns, createdAt, ...bare } = project;
     const payload = projectPayload(bare);
 
     expect(payload.columns).toEqual([]);

@@ -12,21 +12,21 @@
       },
       {
         "metric": "alert_status",
-        "value": "ERROR"
+        "value": "OK"
       },
       {
         "metric": "bugs",
-        "value": "1",
-        "bestValue": false
+        "value": "0",
+        "bestValue": true
       },
       {
         "metric": "reliability_rating",
-        "value": "3.0",
-        "bestValue": false
+        "value": "1.0",
+        "bestValue": true
       },
       {
         "metric": "code_smells",
-        "value": "22",
+        "value": "20",
         "bestValue": false
       },
       {

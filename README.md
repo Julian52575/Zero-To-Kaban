@@ -55,27 +55,6 @@ Every route except the sign-in flow is behind a login gate. Traefik runs the
 (browser) or returns `401` (API) when there is no valid session cookie. On
 success it injects `X-Auth-User-Id` / `X-Auth-User-Name` for the upstream.
 
-#### Bypassing the login gate for frontend-only development
-
-Running `frontend/` standalone (`npm run dev` or `npm run preview`) against a
-directly-run `backend` -- rather than the full `docker compose` stack -- means
-there's no Traefik in front to set `X-Auth-User-Id`, so every backend call
-gets a `401`. Set `FAKE_AUTH_USER_ID` before starting the frontend to have its
-Vite proxy inject that header itself for every `/api/*` call:
-
-```
-FAKE_AUTH_USER_ID=some-user-id npm run dev
-```
-
-This only affects `npm run dev`/`npm run preview` (see `vite.config.js` --
-`server.proxy` is a dev/preview-only Vite feature, never part of a production
-build) and only when the variable is explicitly set: through `docker compose`
-or in production, the real Traefik + `auth` login flow is what's meant to be
-exercised, and runs exactly as normal. The CI accessibility audits
-(`.github/workflows/frontend-and-auth-accessibility.yml`) use the same
-mechanism to audit the real, data-backed app instead of just its
-logged-out/error-state pages.
-
 ### Working on the app
 
 **WIP**

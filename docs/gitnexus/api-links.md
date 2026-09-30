@@ -12,14 +12,14 @@ see. Consumers are matched by URL, so they apply to every method on the row.
 
 | route | handler | methods | consumers |
 | --- | --- | --- | --- |
-| /auth/login | auth/src/app.js | POST | deployment/scripts/simulate-traffic.py |
+| /auth/login | auth/src/app.js | POST |  |
 | /auth/logout | auth/src/app.js | POST |  |
 | /auth/logout-all | auth/src/app.js | POST |  |
 | /auth/me | auth/src/app.js | GET |  |
 | /auth/register | auth/src/app.js | POST |  |
 | /healthz | auth/src/app.js | GET |  |
 | /internal/verify | auth/src/app.js | GET |  |
-| /login | auth/src/app.js | GET | auth/src/pages/register.html, deployment/scripts/simulate-traffic.py |
+| /login | auth/src/app.js | GET | auth/src/pages/register.html |
 | /register | auth/src/app.js | GET | auth/src/pages/login.html |
 | /projects/00000000-0000-0000-0000-000000000000 | backend/spec/routes/project.spec.js | GET |  |
 | /projects/p1/tasks | backend/spec/routes/task.spec.js | GET, POST |  |

@@ -1,17 +1,5 @@
 # Changelog
 
-## [2.2.0](https://github.com/Julian52575/Zero-To-Kanban/compare/2.1.0...2.2.0) (2026-09-28)
-
-
-### Features
-
-* **frontend:** rgaa placeholder declaration page ([#150](https://github.com/Julian52575/Zero-To-Kanban/issues/150)) ([b4b903b](https://github.com/Julian52575/Zero-To-Kanban/commit/b4b903b0e9f3459dc17931be8993f6850c0ade33))
-
-
-### Bug Fixes
-
-* **ci:** make bump-helm-chart's smoke test actually work ([ab21015](https://github.com/Julian52575/Zero-To-Kanban/commit/ab210150c15100cdb264f295d14375853903ab06))
-
 ## [2.1.0](https://github.com/Julian52575/Zero-To-Kanban/compare/2.0.0...2.1.0) (2026-09-25)
 
 
