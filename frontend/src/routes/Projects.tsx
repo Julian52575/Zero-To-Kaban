@@ -91,10 +91,14 @@ function Projects() {
       <UserProfileButton />
       <Row>
         <Col md={{ offset: 3, span: 6 }}>
-          <h2 className="mb-4">My projects</h2>
+          <h1 className="mb-4">My projects</h1>
 
           <Form onSubmit={handleCreate} className="d-flex gap-2 mb-4">
+            <Form.Label htmlFor="new-project-name" className="visually-hidden">
+              Project name
+            </Form.Label>
             <Form.Control
+              id="new-project-name"
               type="text"
               placeholder="Name of the new project"
               value={name}

@@ -164,7 +164,7 @@ function ItemDisplay({
                 onDelete(item);
               }}
             >
-              <i className="fa fa-trash" />
+              <span aria-hidden="true" className="fa fa-trash" />
             </Button>
           )}
         </div>
@@ -187,7 +187,7 @@ function ItemDisplay({
               className="border"
               title={isOverdue ? "En retard" : "Échéance"}
             >
-              <i className="fa fa-calendar me-1" />
+              <span aria-hidden="true" className="fa fa-calendar me-1" />
               {dueDate.toLocaleDateString()}
             </Badge>
           )}

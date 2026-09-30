@@ -103,7 +103,7 @@ function NotificationCenter({
         aria-label="Open notifications"
         className="position-relative"
       >
-        <i className="fa fa-bell" />
+        <span aria-hidden="true" className="fa fa-bell" />
 
         {unreadNotifications.length > 0 && (
           <Badge
