@@ -13,6 +13,11 @@ function App() {
   return (
     <NotificationProvider position="bottom-end" delay={6000}>
       <div className="app">
+        <header className="app-header">
+          <a className="skip-link" href="#main-content">
+            Skip to main content
+          </a>
+        </header>
         <main className="app-content">
           <Routes>
             <Route path="/" element={<Projects />} />
