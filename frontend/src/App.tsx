@@ -13,7 +13,12 @@ function App() {
   return (
     <NotificationProvider position="bottom-end" delay={6000}>
       <div className="app">
-        <main className="app-content">
+        <header className="app-header">
+          <a className="skip-link" href="#main-content">
+            Skip to main content
+          </a>
+        </header>
+        <main id="main-content" className="app-content" tabIndex={-1}>
           <Routes>
             <Route path="/" element={<Projects />} />
             <Route path="/projects/:projectId" element={<Kanban />} />

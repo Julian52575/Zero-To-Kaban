@@ -2,9 +2,13 @@ import React from "react";
 
 function LegalNotice() {
   return (
-    <main className="container py-5">
-      <article>
-        <h1 className="mb-4">Legal Notice</h1>
+    <div className="container py-5">
+      <article aria-labelledby="legal-notice-title">
+        <a className="visually-hidden-focusable" href="#main-content">
+          Skip to content
+        </a>
+        <div id="legal-notice-content">
+        <h1 id="legal-notice-title" className="mb-4">Legal Notice</h1>
 
         <p className="text-muted">
           Last updated: September 30, 2026
@@ -21,22 +25,10 @@ function LegalNotice() {
 
           <ul>
             <li>
-              <strong>Legal name:</strong> [Legal name / Company name]
+              <strong>Legal name:</strong> Zero-To-Kanban
             </li>
             <li>
-              <strong>Legal status:</strong> [Company status]
-            </li>
-            <li>
-              <strong>Registered office:</strong> [Full legal address]
-            </li>
-            <li>
-              <strong>Registration number:</strong> [Registration number]
-            </li>
-            <li>
-              <strong>Email:</strong> [Contact email]
-            </li>
-            <li>
-              <strong>Telephone:</strong> [Telephone number, if applicable]
+              <strong>Email:</strong> contact@zero-to-kaban.fr
             </li>
           </ul>
         </section>
@@ -51,13 +43,13 @@ function LegalNotice() {
 
           <ul>
             <li>
-              <strong>Name:</strong> [Full name]
+              <strong>Name:</strong> Rulian
             </li>
             <li>
-              <strong>Position:</strong> [Position / Role]
+              <strong>Position:</strong> Project Owner
             </li>
             <li>
-              <strong>Email:</strong> [Contact email]
+              <strong>Email:</strong> contact@zero-to-kanban.fr
             </li>
           </ul>
         </section>
@@ -71,16 +63,10 @@ function LegalNotice() {
 
           <ul>
             <li>
-              <strong>Hosting provider:</strong> [Hosting company]
-            </li>
-            <li>
-              <strong>Address:</strong> [Hosting provider's legal address]
+              <strong>Hosting provider:</strong> RulianServ
             </li>
             <li>
               <strong>Website:</strong>{" "}
-              <a href="[Hosting provider website]">
-                [Hosting provider website]
-              </a>
             </li>
           </ul>
         </section>
@@ -211,13 +197,10 @@ function LegalNotice() {
 
           <ul>
             <li>
-              <strong>Organization:</strong> [Legal name / Company name]
+              <strong>Organization:</strong> Zero-To-Kanban
             </li>
             <li>
-              <strong>Email:</strong> [Contact email]
-            </li>
-            <li>
-              <strong>Address:</strong> [Full legal address]
+              <strong>Email:</strong> contact@zero-to-kanban.fr
             </li>
           </ul>
         </section>
@@ -230,8 +213,9 @@ function LegalNotice() {
           Zero-To-Kanban operator, its hosting provider, and the laws
           applicable to the service before publication.
         </p>
+        </div>
       </article>
-    </main>
+    </div>
   );
 }
 
