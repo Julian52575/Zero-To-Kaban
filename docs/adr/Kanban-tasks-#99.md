@@ -4,7 +4,7 @@
 - **Category:** Architecture Decision Records
 - **Original poster:** @Antoineweisse
 - **Opened:** 2026-09-10 17:58Z
-- **Closed:** 2026-09-24 12:49Z
+- **Closed:** 2026-09-30 19:44Z
 
 ### Discussion
 
@@ -14,100 +14,50 @@
 
 ### Context
 
-The current Task model is limited to a title and a completion checkbox. This is sufficient for a basic todo list but does not provide enough information to properly represent tasks in a Kanban application.
+The original Task model was limited to a title and a completion checkbox, which is not enough to represent tasks in a Kanban application.
 
-Tasks need additional information to support planning, organization, and task relationships.
-
-The initial required properties are:
-
-- Title
-- Description
-- Start date
-- Due date
-- Parent task
-
-The parent task allows a task to reference another task directly, creating a simple task hierarchy.
+This ADR covers the task properties present on `main`: title, description and due date. The start date, the parent task relation and date-consistency validation are not implemented and moved to the amending ADR "Task start date and parent task (amends #99)".
 
 ### Options
 
-- Add the required fields directly to the existing Task entity. This keeps the current model simple while providing the additional information required by the Kanban.
-- Create separate entities for task descriptions, dates, and relationships. This would provide more flexibility but would unnecessarily increase the complexity of a relatively simple task model.
-- Store additional task properties in a JSON field. This would make the model flexible but would reduce type safety, database constraints, and queryability.
+- Add the required fields directly to the existing Task entity. This keeps the model simple.
+- Create separate entities for descriptions, dates and relationships. More flexible but needlessly complex.
+- Store additional task properties in a JSON field. Flexible but loses type safety, constraints and queryability.
 
 ### Interrogation
 
-The main question is how much information should be included in the base Task model.
-
-The requested properties are fundamental task attributes rather than optional extensions. They should therefore be represented explicitly in the relational model.
-
-The parent relationship also needs to be modeled as a self-referencing relationship rather than storing an arbitrary value, allowing the database to maintain a direct relationship between tasks.
+How much information should be included in the base Task model?
 
 ### Decision
 
 Accepted
 
+### Branch
+
+adr-catch-up
+
 ### Justification
 
-The resulting model will contain at least:
+The requested properties are fundamental task attributes, so they are explicit columns on the relational `Task` model (`backend/prisma/schema.prisma`):
 
 Task
 ├── id
-├── title
-├── description
-├── startDate
-├── dueDate
-└── parentId → Task.id
+├── title (required)
+├── description (optional)
+└── dueDate (optional)
 
-The fields should follow these rules:
-
-title — required
-description — optional
-startDate — optional
-dueDate — optional
-parentId — optional
-
-A task without a parent is considered a root task.
-
-Task A
-├── Task B
-│   └── Task D
-└── Task C
-
-The relationship should be implemented as a self-relation in Prisma, allowing tasks to reference other tasks directly.
-
-Date validation should ensure that invalid relationships between dates are rejected where appropriate, such as a due date occurring before the start date.
-
-These fields represent core information required by a Kanban task and should therefore be part of the main Task model.
-
-Keeping them directly on the entity provides:
-
-Simple queries
-Strong typing
-Database-level relationships
-Straightforward CRUD operations
-Easy integration with task filtering
-
-The self-referencing parentId also provides a simple foundation for task hierarchies without introducing a separate hierarchy entity.
-
-Additional task properties such as priority, labels, or attachments can be introduced independently as future features.
+Other columns present on the model (`order`, `priority`, column, creator, assignee) come from other decisions and are out of scope here. Keeping the fields on the entity gives simple queries, strong typing and straightforward CRUD.
 
 ### Consequences -- Upside
 
-- Tasks contain enough information for Kanban usage
-- Task descriptions provide additional context
-- Start and due dates enable planning and filtering
-- Parent tasks allow task hierarchies
-- Data remains strongly typed and queryable
-- Integrates directly with the existing Task CRUD
-- Provides a foundation for future Kanban features
+- Tasks carry enough information for Kanban usage, with more context than a checkbox.
+- Data stays strongly typed and queryable.
+- Integrates directly with the existing Task CRUD.
 
 ### Consequences -- Trade-offs and risks
 
-- The Task model becomes more complex than the original todo model
-- Date validation must be handled consistently
-- Parent-child relationships require additional queries
-- Deleting a parent task requires a defined behavior for its children
-- Deep task hierarchies may require additional handling in the frontend
+- The Task model is more complex than the original todo model.
+- No start date, so planning and date-range filtering are not possible yet.
 
 ### Impact size
 
@@ -115,10 +65,9 @@ Tiny -- minutes
 
 ### References
 
-- [New Database Schema] — Defines the relational domain model.
-- [Task CRUD] — Defines the CRUD operations that must support the extended Task entity.
-- [Filter Tasks] — Uses start date, due date, and parent task as filtering criteria.
-- [Task Labeling] — Adds labels as an additional task categorization mechanism.
+- Task CRUD (#88)
+- Design and Implement New Database Schema (#95)
+- Task start date and parent task (amends #99)
 
 ---
 ## Comments
@@ -134,4 +83,16 @@ Please set Decision to Accepted and close with comment: "/commit 43-61-merge-fro
 #### @Julian52575 -- 2026-09-24 12:49Z
 
 /commit 43-61-merge-frontback
+
+#### @Julian52575 -- 2026-09-24 12:49Z
+
+This discussion was committed into `43-61-merge-frontback`: [4c7ec18](https://github.com/Julian52575/Zero-To-Kanban/commit/4c7ec188037750b9ad00fd1c872795dce0c953c5)
+
+#### @Julian52575 -- 2026-09-24 17:05Z
+
+Reopened as work still need to be done on it
+
+#### @Julian52575 -- 2026-09-30 19:44Z
+
+/commit adr-catch-up
 
