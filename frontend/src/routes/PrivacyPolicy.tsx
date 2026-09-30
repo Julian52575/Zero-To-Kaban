@@ -2,7 +2,7 @@ import React from "react";
 
 function PrivacyPolicy() {
   return (
-    <main className="container py-5">
+    <div className="container py-5">
       <article>
         <h1 className="mb-4">Privacy Policy</h1>
 
@@ -33,16 +33,10 @@ function PrivacyPolicy() {
 
           <ul>
             <li>
-              <strong>Operator:</strong> [Legal name / Company name]
+              <strong>Operator:</strong> RulianServ
             </li>
             <li>
-              <strong>Email:</strong> [Contact email]
-            </li>
-            <li>
-              <strong>Address:</strong> [Legal address]
-            </li>
-            <li>
-              <strong>Company status:</strong> [Legal status, if applicable]
+              <strong>Email:</strong> contact@zero-to-kanban.fr
             </li>
           </ul>
         </section>
@@ -369,17 +363,10 @@ function PrivacyPolicy() {
 
           <ul>
             <li>
-              <strong>Operator:</strong> [Legal name / Company name]
+              <strong>Operator:</strong> RulianServ
             </li>
             <li>
-              <strong>Email:</strong> [Privacy contact email]
-            </li>
-            <li>
-              <strong>Address:</strong> [Legal address]
-            </li>
-            <li>
-              <strong>Data Protection Contact:</strong>{" "}
-              [Contact person or email, if applicable]
+              <strong>Email:</strong> contact@zero-to-kanban.fr
             </li>
           </ul>
         </section>
@@ -394,7 +381,7 @@ function PrivacyPolicy() {
           published as a final legal document.
         </p>
       </article>
-    </main>
+    </div>
   );
 }
 
