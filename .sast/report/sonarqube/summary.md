@@ -5,18 +5,17 @@
 | Metric | Value |
 | --- | --- |
 | Reliability | C · 1 bug(s) |
-| Security | B · 1 vulnerability(ies) |
+| Security | A · 0 vulnerability(ies) |
 | Security hotspots | 0 |
 | Maintainability | A · 48 smell(s) |
 | Coverage | 91.4% |
 | Duplication | 0.0% |
-| Lines of code | 5779 |
+| Lines of code | 5783 |
 
 ### Failing conditions
 
 | Metric | Comparator | Threshold | Actual |
 | --- | --- | --- | --- |
 | new_reliability_rating | GT | 1 | 3 |
-| new_security_rating | GT | 1 | 2 |
 
-_Analysis `3f91bef4-45b0-4a3a-9b12-8391b31efa00` · refreshed 2026-09-30T14:52:47Z._
+_Analysis `86fef8e4-2e0d-4942-bf71-593b7f2928f7` · refreshed 2026-09-30T16:22:31Z._

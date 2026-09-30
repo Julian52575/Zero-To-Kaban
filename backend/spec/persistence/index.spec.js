@@ -373,11 +373,13 @@ describe('persistence', () => {
 
         beforeEach(() => {
             global.fetch = jest.fn();
+            process.env.AUTH_SERVICE_URL = 'http://auth.test:4000';
             jest.spyOn(console, 'error').mockImplementation(() => {});
         });
 
         afterEach(() => {
             delete global.fetch;
+            delete process.env.AUTH_SERVICE_URL;
             console.error.mockRestore();
         });
 
@@ -406,7 +408,7 @@ describe('persistence', () => {
             const result = await db.getProjectCollaborators('p1');
 
             expect(global.fetch).toHaveBeenCalledWith(
-                'http://auth:4000/internal/users/lookup',
+                'http://auth.test:4000/internal/users/lookup',
                 expect.objectContaining({
                     method: 'POST',
                     body: JSON.stringify({ ids: ['u2', 'u3'] }),
@@ -420,6 +422,15 @@ describe('persistence', () => {
             global.fetch.mockResolvedValue({ ok: false, status: 500 });
 
             await expect(db.getProjectCollaborators('p1')).resolves.toEqual([]);
+            expect(console.error).toHaveBeenCalled();
+        });
+
+        test('returns an empty list when the auth service URL is not configured', async () => {
+            delete process.env.AUTH_SERVICE_URL;
+            mockPrismaInstance.project.findUnique.mockResolvedValue({ collaborators });
+
+            await expect(db.getProjectCollaborators('p1')).resolves.toEqual([]);
+            expect(global.fetch).not.toHaveBeenCalled();
             expect(console.error).toHaveBeenCalled();
         });
 
