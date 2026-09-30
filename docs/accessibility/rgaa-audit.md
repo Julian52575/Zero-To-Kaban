@@ -2,19 +2,19 @@
 
 # RGAA v4.1.2 Accessibility Report
 
-![Compliance 96%](https://img.shields.io/badge/RGAA%20v4.1.2-96%25-yellow)
+![Compliance 100%](https://img.shields.io/badge/RGAA%20v4.1.2-100%25-brightgreen)
 
-> Note: This report covers only automatically verifiable criteria. Criteria marked as 'Needs review' require manual inspection. The compliance rate reflects automated checks only. Merged across 2 service(s): frontend, auth.
+> Note: This report covers only automatically verifiable criteria. Criteria marked as 'Needs review' require manual inspection. The compliance rate reflects automated checks only. Merged across 1 service(s): zero-to-kaban-frontend.
 
 ## Summary
 
 | | |
 |---|---|
-| Compliance rate | **96%** |
+| Compliance rate | **100%** |
 | Total criteria | 106 |
 | Applicable | 74 |
-| Validated | 71 |
-| Invalidated | 3 |
+| Validated | 74 |
+| Invalidated | 0 |
 | Not applicable | 0 |
 | Needs review | 32 |
 
@@ -45,12 +45,12 @@
 
 </details>
 
-<details><summary>3. Colors -- 50% (automated) ❌ -- 33% (global)</summary>
+<details><summary>3. Colors -- 100% (automated) ✅ -- 67% (global)</summary>
 
 | Criterion | Status |
 | --- | --- |
-| **3.2** Does the contrast between text color and background meet the minimum required level? | ❌ Failed Invalidated |
 | **3.1** Is information not conveyed by color alone? | ⚠️ Review Needs review |
+| **3.2** Does the contrast between text color and background meet the minimum required level? | ✅ Validated Validated |
 | **3.3** Does the contrast of user interface components and graphical elements meet the minimum required level? | ✅ Validated Validated |
 
 </details>
@@ -180,18 +180,18 @@
 
 </details>
 
-<details><summary>12. Navigation -- 78% (automated) ❌ -- 64% (global)</summary>
+<details><summary>12. Navigation -- 100% (automated) ✅ -- 82% (global)</summary>
 
 | Criterion | Status |
 | --- | --- |
-| **12.6** Are grouping areas of content present on multiple web pages identifiable with HTML structural elements? | ❌ Failed Invalidated |
-| **12.7** In each web page, is a skip link or quick access link to the main content area present? | ❌ Failed Invalidated |
 | **12.3** Is the site map page relevant? | ⚠️ Review Needs review |
 | **12.10** In each web page, do keyboard shortcuts using a single character key meet requirements? | ⚠️ Review Needs review |
 | **12.1** Does each set of pages have at least two navigation systems? | ✅ Validated Validated |
 | **12.2** In each set of pages, are the navigation menu and navigation bars consistent? | ✅ Validated Validated |
 | **12.4** In each set of pages, is the site map accessible from any page? | ✅ Validated Validated |
 | **12.5** In each set of pages, is the search engine accessible from any page? | ✅ Validated Validated |
+| **12.6** Are grouping areas of content present on multiple web pages identifiable with HTML structural elements? | ✅ Validated Validated |
+| **12.7** In each web page, is a skip link or quick access link to the main content area present? | ✅ Validated Validated |
 | **12.8** In each web page, is the tab order coherent? | ✅ Validated Validated |
 | **12.9** In each web page, does navigation not contain a keyboard trap? | ✅ Validated Validated |
 | **12.11** In each web page, are additional contents appearing on hover, focus, or interaction controllable? | ✅ Validated Validated |
@@ -218,166 +218,6 @@
 </details>
 
 ## Issues
-
-<details open><summary>`frontend: /` — 6 issue(s)</summary>
-
-- 🟡 **[12.6]** Document should have one main landmark
-    <html lang="en">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=playwright)
-
-- 🟡 **[9.1]** Page should contain a level-one heading
-    <html lang="en">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/page-has-heading-one?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <h2 class="mb-4">Projets en cours</h2>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <input placeholder="Nom du nouveau projet" class="form-control" type="text" value="">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🔴 **[12.7]** No skip navigation link found
-  > 💡 Add <a href="#main-content" class="sr-only focus:not-sr-only">Skip to content</a>
-
-- 🔴 **[12.6]** Page is missing main landmark region (<main> or role="main")
-  > 💡 Wrap the main content in a <main> element or add role="main"
-
-</details>
-
-<details open><summary>`frontend: /projects/a11y-test-project` — 6 issue(s)</summary>
-
-- 🔴 **[11.2]** Form elements should have a visible label
-    <input placeholder="New Item" aria-describedby="basic-addon1" class="form-control" type="text" value="">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/label-title-only?application=playwright)
-
-- 🟡 **[12.6]** Document should have one main landmark
-    <html lang="en">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=playwright)
-
-- 🟡 **[9.1]** Page should contain a level-one heading
-    <html lang="en">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/page-has-heading-one?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <input placeholder="New Item" aria-describedby="basic-addon1" class="form-control" type="text" value="">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🔴 **[12.7]** No skip navigation link found
-  > 💡 Add <a href="#main-content" class="sr-only focus:not-sr-only">Skip to content</a>
-
-- 🔴 **[12.6]** Page is missing main landmark region (<main> or role="main")
-  > 💡 Wrap the main content in a <main> element or add role="main"
-
-</details>
-
-<details open><summary>`frontend: /accessibility` — 7 issue(s)</summary>
-
-- 🔴 **[3.2]** Elements must meet minimum color contrast ratio thresholds
-    <a href="mailto:contact@zero-to-kaban.fr">contact@zero-to-kaban.fr</a>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright)
-
-- 🔴 **[3.2]** Elements must meet minimum color contrast ratio thresholds
-    <a href="https://formulaire.defenseurdesdroits.fr/" target="_blank" rel="noreferrer">Défenseur des droits</a>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright)
-
-- 🔴 **[3.2]** Elements must meet minimum color contrast ratio thresholds
-    <a href="https://www.defenseurdesdroits.fr/saisir/delegues" target="_blank" rel="noreferrer">le délégué du Défenseur des droits dans votre région</a>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright)
-
-- 🟡 **[12.6]** Document should have one main landmark
-    <html lang="en">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <div id="root">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🔴 **[12.7]** No skip navigation link found
-  > 💡 Add <a href="#main-content" class="sr-only focus:not-sr-only">Skip to content</a>
-
-- 🔴 **[12.6]** Page is missing main landmark region (<main> or role="main")
-  > 💡 Wrap the main content in a <main> element or add role="main"
-
-</details>
-
-<details open><summary>`auth: /login` — 7 issue(s)</summary>
-
-- 🟡 **[12.6]** Document should have one main landmark
-    <html lang="en">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <h1>Sign in</h1>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <label>Username
-            <input type="text" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" pattern="[A-Za-z0-9_-]{3,32}" autofocus="" required="">
-          </label>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <label>Password
-            <input type="password" name="password" autocomplete="current-password" required="">
-          </label>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <p class="switch">No account yet? <a id="register-link" href="/register?next=%2F">Create one</a></p>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🔴 **[12.7]** No skip navigation link found
-  > 💡 Add <a href="#main-content" class="sr-only focus:not-sr-only">Skip to content</a>
-
-- 🔴 **[12.6]** Page is missing main landmark region (<main> or role="main")
-  > 💡 Wrap the main content in a <main> element or add role="main"
-
-</details>
-
-<details open><summary>`auth: /register` — 9 issue(s)</summary>
-
-- 🟡 **[12.6]** Document should have one main landmark
-    <html lang="en">
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <h1>Create account</h1>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <p class="hint">Username: 3-32 characters, letters, digits, "-" or "_". Password: 8+ characters.</p>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <label>Username
-            <input type="text" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" pattern="[A-Za-z0-9_-]{3,32}" autofocus="" required="">
-          </label>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <label>Password
-            <input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="72" required="">
-          </label>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <label>Confirm password
-            <input type="password" name="passwordConfirm" autocomplete="new-password" minlength="8" maxlength="72" required="">
-          </label>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🟡 **[12.6]** All page content should be contained by landmarks
-    <p class="switch">Already have an account? <a id="login-link" href="/login?next=%2F">Sign in</a></p>
-  > 💡 [Documentation axe-core ↗](https://dequeuniversity.com/rules/axe/4.13/region?application=playwright)
-
-- 🔴 **[12.7]** No skip navigation link found
-  > 💡 Add <a href="#main-content" class="sr-only focus:not-sr-only">Skip to content</a>
-
-- 🔴 **[12.6]** Page is missing main landmark region (<main> or role="main")
-  > 💡 Wrap the main content in a <main> element or add role="main"
-
-</details>
 
 ---
 *Generated by [@kodalabs-io/eqo](https://github.com/kodalabs-io/eqo) v1.0.0 -- merged across services by rgaa-summary.py*
