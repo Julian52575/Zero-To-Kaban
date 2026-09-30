@@ -151,7 +151,8 @@ process.on("SIGUSR2", gracefulShutdown);
 // the entrypoint is exercised by the `stack` CI job.
 /* istanbul ignore next */
 if (require.main === module) {
-  startServer();
+  // startServer handles its own failures (logs + exit(1)), so nothing to catch.
+  void startServer();
 }
 
 module.exports = {
