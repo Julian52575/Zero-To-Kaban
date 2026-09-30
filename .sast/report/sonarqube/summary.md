@@ -10,7 +10,7 @@
 | Maintainability | A · 48 smell(s) |
 | Coverage | 91.4% |
 | Duplication | 0.0% |
-| Lines of code | 5783 |
+| Lines of code | 5869 |
 
 ### Failing conditions
 
@@ -18,4 +18,4 @@
 | --- | --- | --- | --- |
 | new_reliability_rating | GT | 1 | 3 |
 
-_Analysis `86fef8e4-2e0d-4942-bf71-593b7f2928f7` · refreshed 2026-09-30T16:22:31Z._
+_Analysis `a5062574-abed-4f5b-a4ae-e2e7780c24fc` · refreshed 2026-09-30T18:41:19Z._
