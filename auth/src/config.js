@@ -50,4 +50,6 @@ module.exports = {
   eventsExchange: process.env.EVENTS_EXCHANGE || "events",
   outboxPollMs: number("OUTBOX_POLL_MS", 2000),
   outboxRetentionDays: number("OUTBOX_RETENTION_DAYS", 7),
+    // Local dev only. Anything but the exact string "true" keeps the limits on.
+    rateLimitDisabled: process.env.RATE_LIMIT_DISABLED === 'true',
 };
