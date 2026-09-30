@@ -2961,7 +2961,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/controllers/notificationController.js",
+                      "uri": "backend/src/app.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 0
                     }
@@ -2990,7 +2990,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/app.js",
+                      "uri": "backend/src/controllers/notificationController.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 1
                     }
@@ -3019,7 +3019,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/controllers/ColumnController.js",
+                      "uri": "backend/src/controllers/itemController.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 2
                     }
@@ -3048,7 +3048,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/controllers/itemController.js",
+                      "uri": "backend/src/controllers/ColumnController.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 3
                     }
@@ -3251,7 +3251,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/schemas/project.js",
+                      "uri": "backend/src/events/rabbitmq.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 10
                     }
@@ -3280,7 +3280,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/schemas/projectCreated.js",
+                      "uri": "backend/src/events/schemas/project.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 11
                     }
@@ -3309,7 +3309,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/rabbitmq.js",
+                      "uri": "backend/src/events/schemas/projectDeleted.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 12
                     }
@@ -3338,7 +3338,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/schemas/projectDeleted.js",
+                      "uri": "backend/src/events/schemas/projectCreated.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 13
                     }
@@ -3367,7 +3367,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/schemas/projectInvitation.js",
+                      "uri": "backend/src/events/schemas/projectUpdated.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 14
                     }
@@ -3396,7 +3396,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/events/schemas/projectUpdated.js",
+                      "uri": "backend/src/events/schemas/projectInvitation.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 15
                     }
@@ -3715,7 +3715,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/middlewares/requireUser.js",
+                      "uri": "backend/src/persistence/index.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 26
                     }
@@ -3744,7 +3744,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/persistence/index.js",
+                      "uri": "backend/src/middlewares/requireUser.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 27
                     }
@@ -3773,7 +3773,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/repositories/itemRepository.js",
+                      "uri": "backend/src/repositories/notificationRepository.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 28
                     }
@@ -3802,7 +3802,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/repositories/notificationRepository.js",
+                      "uri": "backend/src/repositories/itemRepository.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 29
                     }
@@ -3860,7 +3860,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/item/addItem.js",
+                      "uri": "backend/src/repositories/taskRepository.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 31
                     }
@@ -3889,7 +3889,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/repositories/taskRepository.js",
+                      "uri": "backend/src/routes/item/addItem.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 32
                     }
@@ -3947,7 +3947,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/item/getItem.js",
+                      "uri": "backend/src/routes/item/updateItem.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 34
                     }
@@ -4005,7 +4005,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/item/updateItem.js",
+                      "uri": "backend/src/routes/item/getItem.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 36
                     }
@@ -4121,7 +4121,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/notifications/markAllAsRead.js",
+                      "uri": "backend/src/routes/notifications/getUnreadNotifications.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 40
                     }
@@ -4150,7 +4150,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/notifications/getUnreadNotifications.js",
+                      "uri": "backend/src/routes/notifications/markAllAsRead.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 41
                     }
@@ -4208,7 +4208,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/createProjetCollaborator.js",
+                      "uri": "backend/src/routes/project/createProject.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 43
                     }
@@ -4237,7 +4237,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/createProject.js",
+                      "uri": "backend/src/routes/project/createProjetCollaborator.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 44
                     }
@@ -4324,7 +4324,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/getUserProjects.js",
+                      "uri": "backend/src/routes/project/getProjects.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 47
                     }
@@ -4353,7 +4353,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/getProjectCollaborators.js",
+                      "uri": "backend/src/routes/project/getUserProjects.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 48
                     }
@@ -4382,7 +4382,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/getProjects.js",
+                      "uri": "backend/src/routes/project/updateProject.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 49
                     }
@@ -4411,7 +4411,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/updateProject.js",
+                      "uri": "backend/src/routes/project/updateProjectCollaborator.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 50
                     }
@@ -4498,7 +4498,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/task/getTask.js",
+                      "uri": "backend/src/routes/project/getProjectCollaborators.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 53
                     }
@@ -4527,7 +4527,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/project/updateProjectCollaborator.js",
+                      "uri": "backend/src/routes/task/getTask.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 54
                     }
@@ -4585,7 +4585,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/schemas/getProjectCollaboratorsSchema.js",
+                      "uri": "backend/src/routes/task/updateTask.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 56
                     }
@@ -4614,7 +4614,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/routes/task/updateTask.js",
+                      "uri": "backend/src/schemas/getProjectCollaboratorsSchema.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 57
                     }
@@ -4643,7 +4643,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/schemas/projectSchema.js",
+                      "uri": "backend/src/schemas/getUserProjectsSchema.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 58
                     }
@@ -4672,7 +4672,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/schemas/getUserProjectsSchema.js",
+                      "uri": "backend/src/schemas/projectSchema.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 59
                     }
@@ -4817,7 +4817,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/services/projectService.js",
+                      "uri": "backend/src/services/taskService.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 64
                     }
@@ -4846,7 +4846,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "backend/src/services/taskService.js",
+                      "uri": "backend/src/services/projectService.js",
                       "uriBaseId": "%SRCROOT%",
                       "index": 65
                     }
@@ -4933,7 +4933,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/components/AddItemForm.tsx",
+                      "uri": "frontend/src/components/AddItemForm.test.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 68
                     }
@@ -4962,7 +4962,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/components/AddItemForm.test.tsx",
+                      "uri": "frontend/src/components/AddItemForm.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 69
                     }
@@ -4991,7 +4991,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/components/BackButton.tsx",
+                      "uri": "frontend/src/components/BackButton.test.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 70
                     }
@@ -5020,7 +5020,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/components/BackButton.test.tsx",
+                      "uri": "frontend/src/components/BackButton.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 71
                     }
@@ -5078,7 +5078,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/components/InviteCollaborator.tsx",
+                      "uri": "frontend/src/components/InviteCollaborator.test.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 73
                     }
@@ -5107,7 +5107,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/components/InviteCollaborator.test.tsx",
+                      "uri": "frontend/src/components/InviteCollaborator.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 74
                     }
@@ -5716,7 +5716,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/provider/useNotificationsProvider.test.tsx",
+                      "uri": "frontend/src/provider/useNotificationsProvider.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 95
                     }
@@ -5745,7 +5745,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/provider/useNotificationsProvider.tsx",
+                      "uri": "frontend/src/provider/useNotificationsProvider.test.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 96
                     }
@@ -5803,7 +5803,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/routes/Kanban.test.tsx",
+                      "uri": "frontend/src/routes/Accessibility.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 98
                     }
@@ -5832,7 +5832,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/routes/Accessibility.tsx",
+                      "uri": "frontend/src/routes/Kanban.test.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 99
                     }
@@ -5977,7 +5977,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/routes/Projects.test.tsx",
+                      "uri": "frontend/src/routes/Projects.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 104
                     }
@@ -6006,7 +6006,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/routes/Projects.tsx",
+                      "uri": "frontend/src/routes/Projects.test.tsx",
                       "uriBaseId": "%SRCROOT%",
                       "index": 105
                     }
@@ -6325,7 +6325,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/services/notificationService.test.ts",
+                      "uri": "frontend/src/services/columnService.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 116
                     }
@@ -6354,7 +6354,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/services/columnService.ts",
+                      "uri": "frontend/src/services/notificationService.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 117
                     }
@@ -6441,7 +6441,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/services/notificationService.ts",
+                      "uri": "frontend/src/services/notificationService.test.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 120
                     }
@@ -6528,7 +6528,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/services/webSocket.test.ts",
+                      "uri": "frontend/src/services/webSocket.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 123
                     }
@@ -6557,7 +6557,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/services/webSocket.ts",
+                      "uri": "frontend/src/services/webSocket.test.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 124
                     }
@@ -6586,7 +6586,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/types/Notification.ts",
+                      "uri": "frontend/src/setupTests.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 125
                     }
@@ -6644,7 +6644,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/types/collaborator.ts",
+                      "uri": "frontend/src/types/Notification.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 127
                     }
@@ -6702,7 +6702,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/setupTests.ts",
+                      "uri": "frontend/src/types/task.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 129
                     }
@@ -6818,7 +6818,7 @@
                 {
                   "physicalLocation": {
                     "artifactLocation": {
-                      "uri": "frontend/src/types/task.ts",
+                      "uri": "frontend/src/types/collaborator.ts",
                       "uriBaseId": "%SRCROOT%",
                       "index": 133
                     }
@@ -6876,7 +6876,7 @@
                 "text": ""
               },
               "level": "none",
-              "timeUtc": "2026-09-30T20:09:11.387Z",
+              "timeUtc": "2026-09-30T20:32:05.219Z",
               "descriptor": {
                 "id": "codeql-action/overlay-disabled",
                 "index": 0
@@ -6898,28 +6898,28 @@
       "artifacts": [
         {
           "location": {
-            "uri": "backend/src/controllers/notificationController.js",
+            "uri": "backend/src/app.js",
             "uriBaseId": "%SRCROOT%",
             "index": 0
           }
         },
         {
           "location": {
-            "uri": "backend/src/app.js",
+            "uri": "backend/src/controllers/notificationController.js",
             "uriBaseId": "%SRCROOT%",
             "index": 1
           }
         },
         {
           "location": {
-            "uri": "backend/src/controllers/ColumnController.js",
+            "uri": "backend/src/controllers/itemController.js",
             "uriBaseId": "%SRCROOT%",
             "index": 2
           }
         },
         {
           "location": {
-            "uri": "backend/src/controllers/itemController.js",
+            "uri": "backend/src/controllers/ColumnController.js",
             "uriBaseId": "%SRCROOT%",
             "index": 3
           }
@@ -6968,42 +6968,42 @@
         },
         {
           "location": {
-            "uri": "backend/src/events/schemas/project.js",
+            "uri": "backend/src/events/rabbitmq.js",
             "uriBaseId": "%SRCROOT%",
             "index": 10
           }
         },
         {
           "location": {
-            "uri": "backend/src/events/schemas/projectCreated.js",
+            "uri": "backend/src/events/schemas/project.js",
             "uriBaseId": "%SRCROOT%",
             "index": 11
           }
         },
         {
           "location": {
-            "uri": "backend/src/events/rabbitmq.js",
+            "uri": "backend/src/events/schemas/projectDeleted.js",
             "uriBaseId": "%SRCROOT%",
             "index": 12
           }
         },
         {
           "location": {
-            "uri": "backend/src/events/schemas/projectDeleted.js",
+            "uri": "backend/src/events/schemas/projectCreated.js",
             "uriBaseId": "%SRCROOT%",
             "index": 13
           }
         },
         {
           "location": {
-            "uri": "backend/src/events/schemas/projectInvitation.js",
+            "uri": "backend/src/events/schemas/projectUpdated.js",
             "uriBaseId": "%SRCROOT%",
             "index": 14
           }
         },
         {
           "location": {
-            "uri": "backend/src/events/schemas/projectUpdated.js",
+            "uri": "backend/src/events/schemas/projectInvitation.js",
             "uriBaseId": "%SRCROOT%",
             "index": 15
           }
@@ -7080,28 +7080,28 @@
         },
         {
           "location": {
-            "uri": "backend/src/middlewares/requireUser.js",
+            "uri": "backend/src/persistence/index.js",
             "uriBaseId": "%SRCROOT%",
             "index": 26
           }
         },
         {
           "location": {
-            "uri": "backend/src/persistence/index.js",
+            "uri": "backend/src/middlewares/requireUser.js",
             "uriBaseId": "%SRCROOT%",
             "index": 27
           }
         },
         {
           "location": {
-            "uri": "backend/src/repositories/itemRepository.js",
+            "uri": "backend/src/repositories/notificationRepository.js",
             "uriBaseId": "%SRCROOT%",
             "index": 28
           }
         },
         {
           "location": {
-            "uri": "backend/src/repositories/notificationRepository.js",
+            "uri": "backend/src/repositories/itemRepository.js",
             "uriBaseId": "%SRCROOT%",
             "index": 29
           }
@@ -7115,14 +7115,14 @@
         },
         {
           "location": {
-            "uri": "backend/src/routes/item/addItem.js",
+            "uri": "backend/src/repositories/taskRepository.js",
             "uriBaseId": "%SRCROOT%",
             "index": 31
           }
         },
         {
           "location": {
-            "uri": "backend/src/repositories/taskRepository.js",
+            "uri": "backend/src/routes/item/addItem.js",
             "uriBaseId": "%SRCROOT%",
             "index": 32
           }
@@ -7136,7 +7136,7 @@
         },
         {
           "location": {
-            "uri": "backend/src/routes/item/getItem.js",
+            "uri": "backend/src/routes/item/updateItem.js",
             "uriBaseId": "%SRCROOT%",
             "index": 34
           }
@@ -7150,7 +7150,7 @@
         },
         {
           "location": {
-            "uri": "backend/src/routes/item/updateItem.js",
+            "uri": "backend/src/routes/item/getItem.js",
             "uriBaseId": "%SRCROOT%",
             "index": 36
           }
@@ -7178,14 +7178,14 @@
         },
         {
           "location": {
-            "uri": "backend/src/routes/notifications/markAllAsRead.js",
+            "uri": "backend/src/routes/notifications/getUnreadNotifications.js",
             "uriBaseId": "%SRCROOT%",
             "index": 40
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/notifications/getUnreadNotifications.js",
+            "uri": "backend/src/routes/notifications/markAllAsRead.js",
             "uriBaseId": "%SRCROOT%",
             "index": 41
           }
@@ -7199,14 +7199,14 @@
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/createProjetCollaborator.js",
+            "uri": "backend/src/routes/project/createProject.js",
             "uriBaseId": "%SRCROOT%",
             "index": 43
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/createProject.js",
+            "uri": "backend/src/routes/project/createProjetCollaborator.js",
             "uriBaseId": "%SRCROOT%",
             "index": 44
           }
@@ -7227,28 +7227,28 @@
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/getUserProjects.js",
+            "uri": "backend/src/routes/project/getProjects.js",
             "uriBaseId": "%SRCROOT%",
             "index": 47
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/getProjectCollaborators.js",
+            "uri": "backend/src/routes/project/getUserProjects.js",
             "uriBaseId": "%SRCROOT%",
             "index": 48
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/getProjects.js",
+            "uri": "backend/src/routes/project/updateProject.js",
             "uriBaseId": "%SRCROOT%",
             "index": 49
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/updateProject.js",
+            "uri": "backend/src/routes/project/updateProjectCollaborator.js",
             "uriBaseId": "%SRCROOT%",
             "index": 50
           }
@@ -7269,14 +7269,14 @@
         },
         {
           "location": {
-            "uri": "backend/src/routes/task/getTask.js",
+            "uri": "backend/src/routes/project/getProjectCollaborators.js",
             "uriBaseId": "%SRCROOT%",
             "index": 53
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/project/updateProjectCollaborator.js",
+            "uri": "backend/src/routes/task/getTask.js",
             "uriBaseId": "%SRCROOT%",
             "index": 54
           }
@@ -7290,28 +7290,28 @@
         },
         {
           "location": {
-            "uri": "backend/src/schemas/getProjectCollaboratorsSchema.js",
+            "uri": "backend/src/routes/task/updateTask.js",
             "uriBaseId": "%SRCROOT%",
             "index": 56
           }
         },
         {
           "location": {
-            "uri": "backend/src/routes/task/updateTask.js",
+            "uri": "backend/src/schemas/getProjectCollaboratorsSchema.js",
             "uriBaseId": "%SRCROOT%",
             "index": 57
           }
         },
         {
           "location": {
-            "uri": "backend/src/schemas/projectSchema.js",
+            "uri": "backend/src/schemas/getUserProjectsSchema.js",
             "uriBaseId": "%SRCROOT%",
             "index": 58
           }
         },
         {
           "location": {
-            "uri": "backend/src/schemas/getUserProjectsSchema.js",
+            "uri": "backend/src/schemas/projectSchema.js",
             "uriBaseId": "%SRCROOT%",
             "index": 59
           }
@@ -7346,14 +7346,14 @@
         },
         {
           "location": {
-            "uri": "backend/src/services/projectService.js",
+            "uri": "backend/src/services/taskService.js",
             "uriBaseId": "%SRCROOT%",
             "index": 64
           }
         },
         {
           "location": {
-            "uri": "backend/src/services/taskService.js",
+            "uri": "backend/src/services/projectService.js",
             "uriBaseId": "%SRCROOT%",
             "index": 65
           }
@@ -7374,28 +7374,28 @@
         },
         {
           "location": {
-            "uri": "frontend/src/components/AddItemForm.tsx",
+            "uri": "frontend/src/components/AddItemForm.test.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 68
           }
         },
         {
           "location": {
-            "uri": "frontend/src/components/AddItemForm.test.tsx",
+            "uri": "frontend/src/components/AddItemForm.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 69
           }
         },
         {
           "location": {
-            "uri": "frontend/src/components/BackButton.tsx",
+            "uri": "frontend/src/components/BackButton.test.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 70
           }
         },
         {
           "location": {
-            "uri": "frontend/src/components/BackButton.test.tsx",
+            "uri": "frontend/src/components/BackButton.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 71
           }
@@ -7409,14 +7409,14 @@
         },
         {
           "location": {
-            "uri": "frontend/src/components/InviteCollaborator.tsx",
+            "uri": "frontend/src/components/InviteCollaborator.test.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 73
           }
         },
         {
           "location": {
-            "uri": "frontend/src/components/InviteCollaborator.test.tsx",
+            "uri": "frontend/src/components/InviteCollaborator.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 74
           }
@@ -7563,14 +7563,14 @@
         },
         {
           "location": {
-            "uri": "frontend/src/provider/useNotificationsProvider.test.tsx",
+            "uri": "frontend/src/provider/useNotificationsProvider.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 95
           }
         },
         {
           "location": {
-            "uri": "frontend/src/provider/useNotificationsProvider.tsx",
+            "uri": "frontend/src/provider/useNotificationsProvider.test.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 96
           }
@@ -7584,14 +7584,14 @@
         },
         {
           "location": {
-            "uri": "frontend/src/routes/Kanban.test.tsx",
+            "uri": "frontend/src/routes/Accessibility.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 98
           }
         },
         {
           "location": {
-            "uri": "frontend/src/routes/Accessibility.tsx",
+            "uri": "frontend/src/routes/Kanban.test.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 99
           }
@@ -7626,14 +7626,14 @@
         },
         {
           "location": {
-            "uri": "frontend/src/routes/Projects.test.tsx",
+            "uri": "frontend/src/routes/Projects.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 104
           }
         },
         {
           "location": {
-            "uri": "frontend/src/routes/Projects.tsx",
+            "uri": "frontend/src/routes/Projects.test.tsx",
             "uriBaseId": "%SRCROOT%",
             "index": 105
           }
@@ -7710,14 +7710,14 @@
         },
         {
           "location": {
-            "uri": "frontend/src/services/notificationService.test.ts",
+            "uri": "frontend/src/services/columnService.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 116
           }
         },
         {
           "location": {
-            "uri": "frontend/src/services/columnService.ts",
+            "uri": "frontend/src/services/notificationService.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 117
           }
@@ -7738,7 +7738,7 @@
         },
         {
           "location": {
-            "uri": "frontend/src/services/notificationService.ts",
+            "uri": "frontend/src/services/notificationService.test.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 120
           }
@@ -7759,21 +7759,21 @@
         },
         {
           "location": {
-            "uri": "frontend/src/services/webSocket.test.ts",
+            "uri": "frontend/src/services/webSocket.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 123
           }
         },
         {
           "location": {
-            "uri": "frontend/src/services/webSocket.ts",
+            "uri": "frontend/src/services/webSocket.test.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 124
           }
         },
         {
           "location": {
-            "uri": "frontend/src/types/Notification.ts",
+            "uri": "frontend/src/setupTests.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 125
           }
@@ -7787,7 +7787,7 @@
         },
         {
           "location": {
-            "uri": "frontend/src/types/collaborator.ts",
+            "uri": "frontend/src/types/Notification.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 127
           }
@@ -7801,7 +7801,7 @@
         },
         {
           "location": {
-            "uri": "frontend/src/setupTests.ts",
+            "uri": "frontend/src/types/task.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 129
           }
@@ -7829,7 +7829,7 @@
         },
         {
           "location": {
-            "uri": "frontend/src/types/task.ts",
+            "uri": "frontend/src/types/collaborator.ts",
             "uriBaseId": "%SRCROOT%",
             "index": 133
           }
@@ -7882,7 +7882,7 @@
         "codeqlConfigSummary": {
           "disableDefaultQueries": false
         },
-        "jobRunUuid": "b09568d0-23b2-496a-9523-fd6dd0155070"
+        "jobRunUuid": "209ae1c8-fd1d-47e1-b2b4-98aeaf3baf00"
       }
     }
   ]
