@@ -23,13 +23,13 @@ const invitation = {
     collaboratorId: 'c1',
 };
 
-function setup(unreadNotifications: unknown[]) {
+function setup(unreadNotifications: unknown[], onProjectAccepted?: (project: unknown) => void) {
     vi.mocked(useNotifications).mockReturnValue({
         unreadNotifications,
         markAllTaskAsRead,
         resolveNotification,
     } as never);
-    render(<NotificationCenter />);
+    render(<NotificationCenter onProjectAccepted={onProjectAccepted} />);
 }
 
 const open = () => userEvent.click(screen.getByRole('button', { name: 'Open notifications' }));
@@ -77,6 +77,41 @@ describe('NotificationCenter', () => {
 
         expect(AcceptInvitation).toHaveBeenCalledWith('p1', 'c1');
         await waitFor(() => expect(resolveNotification).toHaveBeenCalledWith('n1'));
+    });
+
+    test('accepting an invitation hands the joined project to the parent', async () => {
+        vi.mocked(AcceptInvitation).mockResolvedValue({
+            state: 'ACCEPTED',
+            role: 'EDITOR',
+            project: { id: 'p1', name: 'Alpha' },
+        });
+        const onProjectAccepted = vi.fn();
+        setup([invitation], onProjectAccepted);
+        await open();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Accept' }));
+
+        await waitFor(() => expect(onProjectAccepted).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 'p1', name: 'Alpha', role: 'EDITOR', isOwner: false }),
+        ));
+        expect(resolveNotification).toHaveBeenCalledWith('n1');
+    });
+
+    test('a project accepted as owner is flagged as owned', async () => {
+        vi.mocked(AcceptInvitation).mockResolvedValue({
+            state: 'ACCEPTED',
+            role: 'OWNER',
+            project: { id: 'p1', name: 'Alpha' },
+        });
+        const onProjectAccepted = vi.fn();
+        setup([invitation], onProjectAccepted);
+        await open();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Accept' }));
+
+        await waitFor(() => expect(onProjectAccepted).toHaveBeenCalledWith(
+            expect.objectContaining({ isOwner: true }),
+        ));
     });
 
     test('declining an invitation resolves it', async () => {
