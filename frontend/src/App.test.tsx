@@ -6,10 +6,18 @@ vi.mock('./routes/Projects', () => ({
     default: () => <div>projects-stub</div>,
 }));
 
+vi.mock('./components/NotificationCenter', () => ({ default: () => null }));
+vi.mock('./components/UserProfile/UserProfileButton', () => ({ default: () => null }));
+
 vi.mock('./components/TodoList', () => ({
     default: ({ projectId }: { projectId: string }) => (
         <div>todo-list-stub:{projectId}</div>
     ),
+}));
+
+vi.mock('./provider/useNotificationsProvider', () => ({
+    NotificationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useNotifications: () => ({ unreadNotifications: [], markAllTaskAsRead: vi.fn(), resolveNotification: vi.fn() }),
 }));
 
 import App from './App';

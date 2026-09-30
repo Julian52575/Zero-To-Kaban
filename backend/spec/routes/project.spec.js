@@ -12,7 +12,29 @@ jest.mock('../../src/repositories/projectRepository', () => {
             return stored;
         }),
         getAll: jest.fn(async () => [...mockProjects.values()]),
-        getById: jest.fn(async (id) => mockProjects.get(id) ?? null),
+        
+        getAllFromUser: jest.fn(async (userId) => {
+            return [...mockProjects.values()].filter(
+                (project) => project.ownerId === userId
+            );
+        }),
+
+        // Like persistence: a project is only visible to its owner.
+        getById: jest.fn(async (id, userId) => {
+            const project = mockProjects.get(id);
+            return project && project.ownerId === userId ? project : null;
+        }),
+        
+        getProjectCollaborators: jest.fn(async (projectId) => {
+            const project = mockProjects.get(projectId);
+
+            if (!project) {
+                return null;
+            }
+
+            return [];
+        }),
+        
         update: jest.fn(async (id, data) => {
             const project = { ...mockProjects.get(id), ...data };
             mockProjects.set(id, project);
@@ -237,5 +259,78 @@ describe('Project routes', () => {
         const response = await request(app).get('/projects');
 
         expect(response.status).toBe(401);
+    });
+    describe('GET /projects (current user)', () => {
+        it("should return only the caller's projects", async () => {
+            await as(OWNER).post('/projects').send({ name: 'Projet utilisateur' });
+
+            const response = await as(OWNER).get('/projects');
+
+            expect(response.status).toBe(200);
+            expect(
+                response.body.some((project) => project.name === 'Projet utilisateur')
+            ).toBe(true);
+        });
+
+        it('should return an empty array for a user without projects', async () => {
+            const response = await as('00000000-0000-4000-8000-000000000001').get('/projects');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual([]);
+        });
+
+        it('should no longer expose projects by user id', async () => {
+            const response = await as(OWNER).get(`/users/${OWNER}/projects`);
+
+            expect(response.status).toBe(404);
+        });
+    });
+
+    describe('GET /projects/:id/collaborators', () => {
+        it('should return the project collaborators', async () => {
+            const projectId = await createProject('Projet collaborateurs');
+
+            const response = await as(OWNER)
+                .get(`/projects/${projectId}/collaborators`);
+            console.log('STATUS:', response.status);
+            console.log('BODY:', response.body);
+
+            expect(response.status).toBe(200);
+            expect(Array.isArray(response.body)).toBe(true);
+        });
+
+        it('should return 404 when project does not exist', async () => {
+            const response = await as(OWNER).get(
+                '/projects/00000000-0000-0000-0000-000000000000/collaborators'
+            );
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should reject an invalid project id', async () => {
+            const response = await as(OWNER).get(
+                '/projects/not-a-valid-uuid/collaborators'
+            );
+
+            expect(response.status).toBe(400);
+        });
+
+        it('should reject a missing authentication header', async () => {
+            const response = await request(app).get(
+                `/projects/${OWNER}/collaborators`
+            );
+
+            expect(response.status).toBe(401);
+        });
+
+        it("should not return collaborators for someone else's project", async () => {
+            const projectId = await createProject('Projet privé');
+
+            const response = await as(INTRUDER).get(
+                `/projects/${projectId}/collaborators`
+            );
+
+            expect(response.status).toBe(404);
+        });
     });
 });

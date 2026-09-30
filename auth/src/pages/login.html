@@ -4,60 +4,74 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sign in &middot; Zero-To-Kaban</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
     <style>
-      :root { color-scheme: light dark; }
-      * { box-sizing: border-box; }
+      :root {
+        color-scheme: light dark;
+      }
       body {
-        font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-        margin: 0; min-height: 100vh; display: grid; place-items: center;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
       }
-      form {
-        width: min(92vw, 22rem); display: grid; gap: 0.75rem;
-        padding: 2rem; border: 1px solid #8884; border-radius: 0.75rem;
+      .auth-card {
+        width: min(92vw, 24rem);
       }
-      h1 { margin: 0 0 0.25rem; font-size: 1.25rem; }
-      p.hint { margin: 0; font-size: 0.8125rem; opacity: 0.7; }
-      label { display: grid; gap: 0.25rem; font-size: 0.875rem; }
-      input {
-        padding: 0.5rem 0.625rem; font: inherit;
-        border: 1px solid #8886; border-radius: 0.375rem; background: transparent; color: inherit;
-      }
-      button {
-        margin-top: 0.25rem; padding: 0.55rem; font: inherit; font-weight: 600;
-        border: 0; border-radius: 0.375rem; cursor: pointer;
-      }
-      .error { color: #c0392b; font-size: 0.875rem; min-height: 1.25rem; }
-      .switch { text-align: center; font-size: 0.875rem; margin-top: 0.5rem; }
     </style>
   </head>
   <body>
-    <form id="form" novalidate>
-      <h1>Sign in</h1>
-      <label>Username
-        <input
-          type="text"
-          name="username"
-          autocomplete="username"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
-          pattern="[A-Za-z0-9_-]{3,32}"
-          autofocus
-          required
-        />
-      </label>
-      <label>Password
-        <input
-          type="password"
-          name="password"
-          autocomplete="current-password"
-          required
-        />
-      </label>
-      <div class="error" id="error" role="alert"></div>
-      <button type="submit">Continue</button>
-      <p class="switch">No account yet? <a id="register-link" href="/register">Create one</a></p>
-    </form>
+    <main class="auth-card">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form id="form" novalidate>
+            <h1 class="h5 mb-3">Sign in</h1>
+
+            <div class="mb-3">
+              <label for="username" class="form-label">Username</label>
+              <input
+                type="text"
+                class="form-control"
+                id="username"
+                name="username"
+                autocomplete="username"
+                autocapitalize="none"
+                autocorrect="off"
+                spellcheck="false"
+                pattern="[A-Za-z0-9_-]{3,32}"
+                autofocus
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input
+                type="password"
+                class="form-control"
+                id="password"
+                name="password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+
+            <div class="text-danger small mb-3" id="error" role="alert"></div>
+
+            <button type="submit" class="btn btn-primary w-100">
+              Continue
+            </button>
+
+            <p class="text-center small mt-3 mb-0">
+              No account yet?
+              <a id="register-link" href="/register">Create one</a>
+            </p>
+          </form>
+        </div>
+      </div>
+    </main>
 
     <script>
       const params = new URLSearchParams(location.search);
@@ -69,26 +83,32 @@
       document.getElementById("register-link").href =
         "/register?next=" + encodeURIComponent(next);
 
-      document.getElementById("form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const error = document.getElementById("error");
-        error.textContent = "";
+      document
+        .getElementById("form")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const error = document.getElementById("error");
+          error.textContent = "";
 
-        const form = event.currentTarget;
-        const res = await fetch("/auth/login", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ username: form.username.value, password: form.password.value, next }),
-        });
+          const form = event.currentTarget;
+          const res = await fetch("/auth/login", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              username: form.username.value,
+              password: form.password.value,
+              next,
+            }),
+          });
 
-        if (res.ok) {
+          if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            location.assign(data.next || next);
+            return;
+          }
           const data = await res.json().catch(() => ({}));
-          location.assign(data.next || next);
-          return;
-        }
-        const data = await res.json().catch(() => ({}));
-        error.textContent = data.error || "Sign in failed";
-      });
+          error.textContent = data.error || "Sign in failed";
+        });
     </script>
   </body>
 </html>

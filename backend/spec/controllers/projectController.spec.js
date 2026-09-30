@@ -195,4 +195,142 @@ describe('projectController', () => {
             expect(publishEvent).not.toHaveBeenCalled();
         });
     });
+    describe('getUserProjects', () => {
+        it('should return the user projects', async () => {
+            projectService.getUserProjects.mockResolvedValue([
+                project,
+            ]);
+
+            const req = {
+                userId: OWNER_ID,
+            };
+
+            const res = mockRes();
+
+            await projectController.getUserProjects(req, res);
+
+            expect(
+                projectService.getUserProjects
+            ).toHaveBeenCalledTimes(1);
+
+            expect(
+                projectService.getUserProjects
+            ).toHaveBeenCalledWith(OWNER_ID);
+
+            expect(res.json).toHaveBeenCalledWith([
+                project,
+            ]);
+
+            expect(res.status).not.toHaveBeenCalled();
+        });
+
+        it('should return an empty array when the user has no projects', async () => {
+            projectService.getUserProjects.mockResolvedValue([]);
+
+            const req = {
+                userId: OWNER_ID,
+            };
+
+            const res = mockRes();
+
+            await projectController.getUserProjects(req, res);
+
+            expect(
+                projectService.getUserProjects
+            ).toHaveBeenCalledWith(OWNER_ID);
+
+            expect(res.json).toHaveBeenCalledWith([]);
+
+            expect(res.status).not.toHaveBeenCalled();
+        });
+
+        it('should propagate service errors', async () => {
+            projectService.getUserProjects.mockRejectedValue(
+                new Error('Database error')
+            );
+
+            const req = {
+                userId: OWNER_ID,
+            };
+
+            const res = mockRes();
+
+            await expect(
+                projectController.getUserProjects(req, res)
+            ).rejects.toThrow('Database error');
+
+            expect(res.json).not.toHaveBeenCalled();
+        });
+    });
+    
+    describe('getProjectCollaborators', () => {
+        it('should return the project collaborators', async () => {
+            const collaborators = [
+                {
+                    userId: 'u2',
+                    role: 'EDITOR',
+                    state: 'ACCEPTED',
+                },
+                {
+                    userId: 'u3',
+                    role: 'VIEWER',
+                    state: 'ACCEPTED',
+                },
+            ];
+
+            projectService.getProject.mockResolvedValue({
+                id: 'p1',
+            });
+
+            projectService.getProjectCollaborators.mockResolvedValue(
+                collaborators
+            );
+
+            const req = {
+                params: {
+                    id: 'p1',
+                },
+                userId: 'u1',
+            };
+
+            const res = {
+                json: jest.fn(),
+                status: jest.fn().mockReturnThis(),
+            };
+
+            await projectController.getProjectCollaborators(req, res);
+
+            expect(
+                projectService.getProjectCollaborators
+            ).toHaveBeenCalledWith('p1');
+
+            expect(res.json).toHaveBeenCalledWith(collaborators);
+        });
+        it('should return 404 when the project does not exist', async () => {
+            projectService.getProject.mockResolvedValue(null);
+
+            const req = {
+                params: {
+                    id: 'p1',
+                },
+                userId: 'u1',
+            };
+
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn(),
+            };
+
+            await projectController.getProjectCollaborators(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({
+                error: 'Project not found',
+            });
+
+            expect(
+                projectService.getProjectCollaborators
+            ).not.toHaveBeenCalled();
+        });
+    });
 });

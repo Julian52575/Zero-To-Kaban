@@ -34,4 +34,28 @@ const registerLimiter = rateLimit({
     message: { error: 'too many attempts, please try again later' },
 });
 
-module.exports = { loginLimiter, registerLimiter };
+const deleteMeLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'too many attempts, please try again later' },
+});
+
+const directoryLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'too many requests, please slow down' },
+});
+
+const profileLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'too many attempts, please try again later' },
+});
+
+module.exports = { loginLimiter, registerLimiter, deleteMeLimiter, directoryLimiter, profileLimiter };

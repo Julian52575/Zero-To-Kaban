@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient, $Enums } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
@@ -42,12 +42,44 @@ async function removeItem(id) {
   await prisma.todoItem.delete({ where: { id } });
 }
 
-// Prisma drops `undefined` filters, so a missing id would match any row.
 async function userCanAccessProject(userId, projectId) {
   if (!userId || !projectId) return false;
+
   const project = await prisma.project.findFirst({
-    where: { id: projectId, ownerId: userId },
+    where: {
+      id: projectId,
+      OR: [
+        { ownerId: userId },
+        { collaborators: { some: { userId, state: "ACCEPTED" } } },
+      ],
+    },
     select: { id: true },
+  });
+
+  return project !== null;
+}
+
+async function userCanEditProject(userId, projectId) {
+  if (!userId || !projectId) return false;
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      OR: [
+        { ownerId: userId },
+        {
+          collaborators: {
+            some: {
+              userId: userId,
+              role: $Enums.CollaboratorRole.EDITOR,
+              state: $Enums.CollaboratorInvitationState.ACCEPTED,
+            },
+          },
+        },
+      ],
+    },
+    select: {
+      id: true,
+    },
   });
   return project !== null;
 }
@@ -67,7 +99,6 @@ async function getColumns(projectId) {
     orderBy: { order: "asc" },
   });
 }
-
 
 async function getTasks(projectId) {
   return prisma.task.findMany({
@@ -94,6 +125,8 @@ async function storeTask(columnId, creatorId, taskData) {
       columnId,
       creatorId,
       assigneeId: taskData.assigneeId || null,
+      dueDate: taskData.dueDate || null,
+      priority: $Enums.TaskPriority.MEDIUM,
     },
   });
 }
@@ -107,6 +140,8 @@ async function updateTask(id, updateData) {
       order: updateData.order,
       columnId: updateData.columnId,
       assigneeId: updateData.assigneeId,
+      dueDate: updateData.dueDate,
+      priority: updateData.priority,
     },
   });
 }
@@ -127,6 +162,17 @@ async function createProject(project) {
   });
 }
 
+async function createProjectCollaborator(collaborator) {
+  return prisma.projectCollaborator.create({
+    data: {
+      projectId: collaborator.projectId,
+      userId: collaborator.userId,
+      role: collaborator.role,
+      state: collaborator.state,
+    },
+  });
+}
+
 async function getProjects(userId) {
   if (!userId) throw new Error("getProjects: userId is required");
   return prisma.project.findMany({
@@ -135,11 +181,140 @@ async function getProjects(userId) {
   });
 }
 
-async function getProject(id) {
-  return prisma.project.findUnique({
-    where: { id },
-    include: { columns: { orderBy: { order: "asc" } } },
+async function getProjectsFromUser(userId) {
+  if (!userId) {
+    throw new Error("getProjectsFromUser: userId is required");
+  }
+
+  const projects = await prisma.project.findMany({
+    where: {
+      OR: [
+        { ownerId: userId },
+        {
+          collaborators: {
+            some: {
+              userId,
+              state: $Enums.CollaboratorInvitationState.ACCEPTED,
+            },
+          },
+        },
+      ],
+    },
+    include: {
+      collaborators: {
+        where: {
+          userId,
+          state: $Enums.CollaboratorInvitationState.ACCEPTED,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
   });
+
+  return projects.map((p) => withPermissions(p, userId));
+}
+
+async function getProjectCollaborator(projectId, userId) {
+  return prisma.projectCollaborator.findFirst({
+    where: { projectId, userId },
+  });
+}
+
+async function getProjectCollaborators(projectId) {
+  if (!projectId) {
+    throw new Error("getProjectCollaborators: projectId is required");
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      collaborators: {
+        select: {
+          userId: true,
+          role: true,
+          state: true,
+        },
+      },
+    },
+  });
+
+  if (
+    !project ||
+    !project.collaborators ||
+    project.collaborators.length === 0
+  ) {
+    return [];
+  }
+
+  const userIds = project.collaborators.map((c) => c.userId);
+
+  try {
+    const response = await fetch("http://auth:4000/internal/users/lookup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: userIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Auth service lookup failed with status: ${response.status}`,
+      );
+    }
+
+    const users = await response.json();
+
+    return users;
+  } catch (error) {
+    console.error(
+      "Failed to lookup user profile items from auth container:",
+      error,
+    );
+    return [];
+  }
+}
+
+function withPermissions(project, userId) {
+  const { collaborators, ...rest } = project;
+  const isOwner = rest.ownerId === userId;
+  const role = isOwner ? "OWNER" : collaborators?.[0]?.role; // "EDITOR" | "VIEWER"
+
+  return {
+    ...rest,
+    role,
+    isOwner,
+    canEdit: isOwner || role === "EDITOR",
+    canManage: isOwner,
+  };
+}
+
+async function getProject(id, userId) {
+  const project = await prisma.project.findFirst({
+    where: {
+      id,
+      OR: [
+        { ownerId: userId },
+        {
+          collaborators: {
+            some: {
+              userId,
+              state: $Enums.CollaboratorInvitationState.ACCEPTED,
+            },
+          },
+        },
+      ],
+    },
+    include: {
+      columns: { orderBy: { order: "asc" } },
+      collaborators: {
+        where: {
+          userId,
+          state: $Enums.CollaboratorInvitationState.ACCEPTED,
+        },
+      },
+    },
+  });
+
+  return project ? withPermissions(project, userId) : null;
 }
 
 async function updateProject(id, data) {
@@ -150,10 +325,69 @@ async function updateProject(id, data) {
   });
 }
 
+async function updateProjectCollaborator(projectId, userId, data) {
+  const existing = await prisma.projectCollaborator.findFirst({
+    where: { projectId, userId },
+  });
+  if (!existing) return null;
+
+  return prisma.projectCollaborator.update({
+    where: { id: existing.id },
+    data: {
+      ...(data.role && { role: data.role }),
+      ...(data.state && { state: data.state }),
+    },
+  });
+}
+async function updateDeletedProjectCollaborator(
+  projectId,
+  userId,
+  anonymousUserId,
+) {
+  const project = await prisma.project.findUnique({
+    where: {
+      id: projectId,
+    },
+    select: {
+      ownerId: true,
+    },
+  });
+
+  if (!project) {
+    return null;
+  }
+
+  return prisma.project.update({
+    where: {
+      id: projectId,
+    },
+    data: {
+      ...(project.ownerId === userId ? { ownerId: anonymousUserId } : {}),
+      collaborators: {
+        updateMany: {
+          where: {
+            userId: userId,
+          },
+          data: {
+            userId: anonymousUserId,
+          },
+        },
+      },
+    },
+    include: {
+      columns: {
+        orderBy: {
+          order: "asc",
+        },
+      },
+      collaborators: true,
+    },
+  });
+}
+
 async function deleteProject(id) {
   return prisma.project.delete({ where: { id } });
 }
-
 
 module.exports = {
   init,
@@ -166,6 +400,7 @@ module.exports = {
   removeItem,
 
   userCanAccessProject,
+  userCanEditProject,
   columnBelongsToProject,
 
   getColumns,
@@ -177,9 +412,16 @@ module.exports = {
   deleteTask,
 
   createProject,
+  createProjectCollaborator,
   getProjects,
+  getProjectsFromUser,
+  getProjectCollaborators,
   getProject,
+  getProjectCollaborator,
+
   updateProject,
+  updateProjectCollaborator,
+  updateDeletedProjectCollaborator,
   deleteProject,
 
   prisma,

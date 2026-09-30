@@ -22,6 +22,9 @@ jest.mock('../../src/persistence', () => {
         userCanAccessProject: jest.fn(
             async (userId, projectId) => owners[projectId] === userId
         ),
+        userCanEditProject: jest.fn(
+            async (userId, projectId) => owners[projectId] === userId
+        ),
         columnBelongsToProject: jest.fn(
             async (columnId, projectId) => columnProjects[columnId] === projectId
         ),

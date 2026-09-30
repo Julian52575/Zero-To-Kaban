@@ -1,0 +1,59 @@
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 1rem;
+}
+
+.cancel-button {
+   background-color: #913c3c;
+   color: #ffffff;
+   border: 2px solid #913c3c;
+   padding: 8px 16px;
+   border-radius: 4px;
+   cursor: pointer;
+   transition: background-color 0.3s ease;
+}
+
+.cancel-button:hover {
+  background-color: #ffffff;
+  transition: 0.3s ease;
+  color: #913c3c;
+}
+
+.cancel-button:active {
+  background-color: #913c3c;
+  color: #ffffff;
+  border: 2px solid #913c3c;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.save-button {
+  background-color: #0D6EFD;
+  color: #ffffff;
+  border: 2px solid #0D6EFD;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.save-button:hover {
+  background-color: #ffffff;
+  transition: 0.3s ease;
+  color: #0D6EFD;
+}
+
+.save-button:active {
+  background-color: #0D6EFD;
+  color: #ffffff;
+  border: 2px solid #0D6EFD;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
