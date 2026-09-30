@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.3.0](https://github.com/Julian52575/Zero-To-Kanban/compare/2.2.0...2.3.0) (2026-09-30)
+
+
+### Features
+
+* **deployment:** monitoring the deployed app ([#159](https://github.com/Julian52575/Zero-To-Kanban/issues/159)) ([a2f5422](https://github.com/Julian52575/Zero-To-Kanban/commit/a2f5422b97a57532464922b8e89d2f114a9d48a6))
+* notifications, collaborators' tasks and project and gestion, footer ([#163](https://github.com/Julian52575/Zero-To-Kanban/issues/163)) ([e502de2](https://github.com/Julian52575/Zero-To-Kanban/commit/e502de2c21f669ffde3d3d716c53e9eccc24353e))
+
+
+### Bug Fixes
+
+* **accessibility:** rgaa compliance ([#168](https://github.com/Julian52575/Zero-To-Kanban/issues/168)) ([e9cdfa9](https://github.com/Julian52575/Zero-To-Kanban/commit/e9cdfa9b6588af27906cb2c6dada3d7687d78894))
+* **auth:** point CI readiness check and helm probes at /health ([3569467](https://github.com/Julian52575/Zero-To-Kanban/commit/3569467ae9b824bf5b287c4f6384e404287d5c9b))
+* **backend:** make the auth service URL configurable ([#172](https://github.com/Julian52575/Zero-To-Kanban/issues/172)) ([6e2d4ea](https://github.com/Julian52575/Zero-To-Kanban/commit/6e2d4ea84710d22c5039dc08350949a5cb80f565))
+* **backend:** mark startServer() promise as intentionally ignored ([#177](https://github.com/Julian52575/Zero-To-Kanban/issues/177)) ([98563dc](https://github.com/Julian52575/Zero-To-Kanban/commit/98563dca59c0c369f9c932c9f6e155c86a1b07ac))
+* new project's collaboration permissions ([#170](https://github.com/Julian52575/Zero-To-Kanban/issues/170)) ([827db2d](https://github.com/Julian52575/Zero-To-Kanban/commit/827db2d300840aafa159fe441552d807ee337d60))
+* user deletion ask for password ([#171](https://github.com/Julian52575/Zero-To-Kanban/issues/171)) ([6e02e2f](https://github.com/Julian52575/Zero-To-Kanban/commit/6e02e2f45474e1ef12b01721681658d2adeff9b9))
+
 ## [2.2.0](https://github.com/Julian52575/Zero-To-Kanban/compare/2.1.0...2.2.0) (2026-09-28)
 
 
