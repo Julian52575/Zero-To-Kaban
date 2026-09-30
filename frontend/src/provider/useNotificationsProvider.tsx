@@ -107,7 +107,7 @@ export function NotificationProvider({
       );
     };
 
-    getNoReadNotifications();
+    void getNoReadNotifications();
   }, []);
 
   function addNotification(notification: Notification) {

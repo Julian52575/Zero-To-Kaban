@@ -126,6 +126,7 @@ function ItemDisplay({
   return (
     <>
       <div
+        role="presentation"
         className="d-flex flex-column gap-2"
         onClick={() => setShowDetails(true)}
         style={{ cursor: "pointer" }}
@@ -192,6 +193,7 @@ function ItemDisplay({
           )}
 
           <div
+            role="presentation"
             className="ms-auto"
             style={{ minWidth: "9rem", maxWidth: "12rem" }}
             onClick={(event) => event.stopPropagation()}

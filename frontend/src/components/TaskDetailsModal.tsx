@@ -169,13 +169,13 @@ function TaskDetailsModal({ item,users, show, onClose, onSave }: Props) {
       </Modal.Body>
 
       <Modal.Footer>
-        <div className="cancel-button" onClick={onClose}>
+        <button type="button" className="cancel-button" onClick={onClose}>
           Cancel
-        </div>
+        </button>
 
-        <div className="save-button" onClick={handleSave}>
+        <button type="button" className="save-button" onClick={handleSave}>
           Save changes
-        </div>
+        </button>
       </Modal.Footer>
     </Modal>
   );

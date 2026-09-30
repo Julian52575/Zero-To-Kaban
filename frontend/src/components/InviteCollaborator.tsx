@@ -48,7 +48,7 @@ function InviteCollaborator({ projectId, ownerId }: InviteCollaboratorProps) {
   }, [projectId, ownerId]);
 
   useEffect(() => {
-    loadOptions();
+    void loadOptions();
   }, [loadOptions]);
 
   const handleClose = () => {
