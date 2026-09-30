@@ -11,7 +11,8 @@ function Footer() {
         <nav className="app-footer-links" aria-label="Legal links">
           <a href="/legal">Legal Notice</a>
           <a href="/privacy">Privacy Policy</a>
-          <a href="/terms">Terms of Use</a>
+          <a href="/terms-of-use">Terms of Use</a>
+          <a href="/accessibility">Accessibility</a>
         </nav>
       </div>
     </footer>
