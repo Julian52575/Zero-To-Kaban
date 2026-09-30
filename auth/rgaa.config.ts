@@ -11,6 +11,7 @@ export default ({
   pages: [
     { path: "/login", name: "Sign in" },
     { path: "/register", name: "Register" },
+    { path: "/privacy-policy", name: "Privacy policy" },
   ],
 
   output: [
