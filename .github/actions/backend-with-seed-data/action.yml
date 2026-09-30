@@ -84,6 +84,7 @@ runs:
         RABBITMQ_USER: ci
         RABBITMQ_PASSWORD: ci-password
         RABBITMQ_HOST: 127.0.0.1
+        AUTH_SERVICE_URL: http://127.0.0.1:4000
       run: |
         node src/server.js &
 
