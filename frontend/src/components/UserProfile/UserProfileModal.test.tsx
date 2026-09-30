@@ -11,7 +11,7 @@ import {
     downloadUserData,
 } from '../../services/userApi';
 
-vi.mock('sweetalert2', () => ({ default: { fire: vi.fn() } }));
+vi.mock('sweetalert2', () => ({ default: { fire: vi.fn(), getInput: vi.fn() } }));
 vi.mock('../../services/userApi', () => ({
     getCurrentUser: vi.fn(),
     updateMe: vi.fn(),
@@ -23,8 +23,10 @@ vi.mock('../../services/userApi', () => ({
 const user = { id: 'u1', username: 'alice', email: 'a@b.c' };
 
 async function renderLoaded() {
-    render(<UserProfileModal show onClose={vi.fn()} />);
+    const onClose = vi.fn();
+    render(<UserProfileModal show onClose={onClose} />);
     await screen.findByDisplayValue('alice');
+    return onClose;
 }
 
 describe('UserProfileModal', () => {
@@ -84,15 +86,6 @@ describe('UserProfileModal', () => {
         expect(updateMe).not.toHaveBeenCalled();
     });
 
-    test('lets the user type a password', async () => {
-        await renderLoaded();
-
-        const password = document.querySelector('input[type="password"]') as HTMLInputElement;
-        await userEvent.type(password, 'secret');
-
-        expect(password).toHaveValue('secret');
-    });
-
     describe('delete account', () => {
         const original = window.location;
 
@@ -103,14 +96,15 @@ describe('UserProfileModal', () => {
             });
         });
 
-        test('deletes the account once confirmed', async () => {
-            vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true } as never);
+        test('deletes the account once the password is confirmed', async () => {
+            vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true, value: 'secret' } as never);
             vi.mocked(deleteMe).mockResolvedValue();
-            await renderLoaded();
+            const onClose = await renderLoaded();
 
             await userEvent.click(screen.getByRole('button', { name: 'Delete account' }));
 
-            await waitFor(() => expect(deleteMe).toHaveBeenCalled());
+            await waitFor(() => expect(deleteMe).toHaveBeenCalledWith('secret'));
+            expect(onClose).toHaveBeenCalled();
             expect(window.location.href).toBe('/');
             Object.defineProperty(window, 'location', { configurable: true, value: original });
         });
@@ -121,18 +115,45 @@ describe('UserProfileModal', () => {
 
             await userEvent.click(screen.getByRole('button', { name: 'Delete account' }));
 
-            await waitFor(() => expect(Swal.fire).toHaveBeenCalled());
+            await waitFor(() => expect(Swal.fire).toHaveBeenCalledWith(
+                expect.objectContaining({ input: 'password' }),
+            ));
             expect(deleteMe).not.toHaveBeenCalled();
         });
 
-        test('shows an error when deletion fails', async () => {
-            vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true } as never);
+        test('focuses the password input and rejects an empty password', async () => {
+            vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: false } as never);
+            const input = document.createElement('input');
+            vi.mocked(Swal.getInput).mockReturnValue(input);
+            await renderLoaded();
+
+            await userEvent.click(screen.getByRole('button', { name: 'Delete account' }));
+
+            await waitFor(() => expect(Swal.fire).toHaveBeenCalled());
+            const options = vi.mocked(Swal.fire).mock.calls[0][0] as {
+                didOpen: () => void;
+                inputValidator: (value: string) => string | undefined;
+            };
+            document.body.append(input);
+            options.didOpen();
+            expect(input).toHaveFocus();
+            expect(options.inputValidator('')).toBe('You need to enter your password!');
+            expect(options.inputValidator('secret')).toBeUndefined();
+
+            vi.mocked(Swal.getInput).mockReturnValue(null);
+            expect(() => options.didOpen()).not.toThrow();
+        });
+
+        test('shows an error alert when deletion fails', async () => {
+            vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true, value: 'wrong' } as never);
             vi.mocked(deleteMe).mockRejectedValue(new Error('down'));
             await renderLoaded();
 
             await userEvent.click(screen.getByRole('button', { name: 'Delete account' }));
 
-            expect(await screen.findByText('Unable to delete your account.')).toBeInTheDocument();
+            await waitFor(() => expect(Swal.fire).toHaveBeenCalledWith(
+                expect.objectContaining({ icon: 'error', title: 'Error' }),
+            ));
         });
     });
 

@@ -30,9 +30,15 @@ export async function updateMe(
     return response.json();
 }
 
-export async function deleteMe(): Promise<void> {
+export async function deleteMe(password: string): Promise<void> {
     const response = await fetch(`/auth/me`, {
         method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            password: password,
+        }),
     });
 
     if (!response.ok) {

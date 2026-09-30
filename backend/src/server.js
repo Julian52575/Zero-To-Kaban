@@ -97,12 +97,13 @@ async function startConsumers() {
   await startConsumeFor(EVENTS.USER_DELETED, async (data, eventId) => {
     const ANONYMOUS_USER_ID = "00000000-0000-0000-0000-000000000000";
 
-    const projects = await db.getProjectsFromUser(data);
+    const userId = data.userId;
+    const projects = await db.getProjectsFromUser(userId);
 
     for (const project of projects) {
       await db.updateDeletedProjectCollaborator(
         project.id,
-        data,
+        userId,
         ANONYMOUS_USER_ID,
       );
     }
