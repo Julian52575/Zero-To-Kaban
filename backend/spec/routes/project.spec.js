@@ -19,7 +19,11 @@ jest.mock('../../src/repositories/projectRepository', () => {
             );
         }),
 
-        getById: jest.fn(async (id) => mockProjects.get(id) ?? null),
+        // Like persistence: a project is only visible to its owner.
+        getById: jest.fn(async (id, userId) => {
+            const project = mockProjects.get(id);
+            return project && project.ownerId === userId ? project : null;
+        }),
         
         getProjectCollaborators: jest.fn(async (projectId) => {
             const project = mockProjects.get(projectId);
@@ -256,68 +260,29 @@ describe('Project routes', () => {
 
         expect(response.status).toBe(401);
     });
-    describe('GET /users/:id/projects', () => {
-        it('should return the projects of the requested user', async () => {
-            await as(OWNER)
-                .post('/projects')
-                .send({
-                    name: 'Projet utilisateur',
-                });
+    describe('GET /projects (current user)', () => {
+        it("should return only the caller's projects", async () => {
+            await as(OWNER).post('/projects').send({ name: 'Projet utilisateur' });
 
-            const response = await as(OWNER)
-                .get(`/users/${OWNER}/projects`);
+            const response = await as(OWNER).get('/projects');
 
             expect(response.status).toBe(200);
-            expect(Array.isArray(response.body)).toBe(true);
-
             expect(
-                response.body.some(
-                    (project) => project.name === 'Projet utilisateur'
-                )
+                response.body.some((project) => project.name === 'Projet utilisateur')
             ).toBe(true);
         });
 
-        it('should return an empty array when the user has no projects', async () => {
-            const response = await as(OWNER)
-                .get(
-                    '/users/00000000-0000-4000-8000-000000000001/projects'
-                );
+        it('should return an empty array for a user without projects', async () => {
+            const response = await as('00000000-0000-4000-8000-000000000001').get('/projects');
 
             expect(response.status).toBe(200);
             expect(response.body).toEqual([]);
         });
 
-        it('should reject an invalid user id', async () => {
-            const response = await as(OWNER)
-                .get('/users/not-a-valid-uuid/projects');
+        it('should no longer expose projects by user id', async () => {
+            const response = await as(OWNER).get(`/users/${OWNER}/projects`);
 
-            expect(response.status).toBe(400);
-        });
-
-        it('should reject an empty user id', async () => {
-            const response = await as(OWNER)
-                .get('/users//projects');
-
-            // Express ne matche normalement pas cette route.
-            expect([400, 404]).toContain(response.status);
-        });
-
-        it('should reject a missing authentication header', async () => {
-            const response = await request(app)
-                .get(`/users/${OWNER}/projects`);
-
-            expect(response.status).toBe(401);
-        });
-
-        it('should accept a valid uuid even when the user has no projects', async () => {
-            const unknownUserId =
-                '00000000-0000-4000-8000-000000000002';
-
-            const response = await as(OWNER)
-                .get(`/users/${unknownUserId}/projects`);
-
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual([]);
+            expect(response.status).toBe(404);
         });
     });
 

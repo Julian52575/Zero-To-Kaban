@@ -1,5 +1,6 @@
 jest.mock('../../src/repositories/projectRepository');
 jest.mock('@prisma/client', () => ({
+    PrismaClient: jest.fn(),
     $Enums: {
         CollaboratorRole: { VIEWER: 'VIEWER' },
         CollaboratorInvitationState: { PENDING: 'PENDING' },

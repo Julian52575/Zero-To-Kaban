@@ -202,9 +202,7 @@ describe('projectController', () => {
             ]);
 
             const req = {
-                params: {
-                    id: OWNER_ID,
-                },
+                userId: OWNER_ID,
             };
 
             const res = mockRes();
@@ -230,9 +228,7 @@ describe('projectController', () => {
             projectService.getUserProjects.mockResolvedValue([]);
 
             const req = {
-                params: {
-                    id: OWNER_ID,
-                },
+                userId: OWNER_ID,
             };
 
             const res = mockRes();
@@ -254,9 +250,7 @@ describe('projectController', () => {
             );
 
             const req = {
-                params: {
-                    id: OWNER_ID,
-                },
+                userId: OWNER_ID,
             };
 
             const res = mockRes();
