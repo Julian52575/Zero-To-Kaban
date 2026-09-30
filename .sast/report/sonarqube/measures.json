@@ -36,17 +36,17 @@
       },
       {
         "metric": "security_rating",
-        "value": "2.0",
-        "bestValue": false
+        "value": "1.0",
+        "bestValue": true
       },
       {
         "metric": "ncloc",
-        "value": "5779"
+        "value": "5783"
       },
       {
         "metric": "vulnerabilities",
-        "value": "1",
-        "bestValue": false
+        "value": "0",
+        "bestValue": true
       },
       {
         "metric": "security_hotspots",
