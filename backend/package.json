@@ -14,13 +14,11 @@
     "prisma:seed": "prisma db seed",
     "lint": "oxlint"
   },
-  "prisma": {
-    "seed": "node prisma/seed.js"
-  },
   "dependencies": {
     "@prisma/client": "^6.5.0",
     "amqplib": "^2.0.1",
     "express": "^5.2.1",
+    "ws": "^8.21.3",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -49,5 +47,8 @@
         }
       ]
     ]
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }

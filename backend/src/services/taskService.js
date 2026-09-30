@@ -1,5 +1,5 @@
 const taskRepository = require("../repositories/taskRepository");
-const { userCanAccessProject } = require("../persistence");
+const { userCanAccessProject, userCanEditProject } = require("../persistence");
 
 async function getTasks(projectId) {
   return taskRepository.getAll(projectId);
@@ -26,6 +26,10 @@ async function deleteTask(id, userId) {
   }
 
   if (!(await userCanAccessProject(userId, task.column.projectId))) {
+    return false;
+  }
+
+  if (!(await userCanEditProject(userId, task.column.projectId))) {
     return false;
   }
 

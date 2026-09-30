@@ -7,7 +7,7 @@
     "measures": [
       {
         "metric": "coverage",
-        "value": "91.9",
+        "value": "91.4",
         "bestValue": false
       },
       {
@@ -26,7 +26,7 @@
       },
       {
         "metric": "code_smells",
-        "value": "22",
+        "value": "48",
         "bestValue": false
       },
       {
@@ -36,17 +36,17 @@
       },
       {
         "metric": "security_rating",
-        "value": "1.0",
-        "bestValue": true
+        "value": "2.0",
+        "bestValue": false
       },
       {
         "metric": "ncloc",
-        "value": "2319"
+        "value": "5779"
       },
       {
         "metric": "vulnerabilities",
-        "value": "0",
-        "bestValue": true
+        "value": "1",
+        "bestValue": false
       },
       {
         "metric": "security_hotspots",

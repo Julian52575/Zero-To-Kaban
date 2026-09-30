@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AddItemForm from './AddItemForm';
 import { createTask } from '../services/taskService';
@@ -43,15 +43,11 @@ describe('AddItemForm', () => {
         expect(screen.getByRole('button', { name: /add item/i })).toBeDisabled();
     });
 
-    test('submitting creates the task and reports it back as an item', async () => {
+    test('submitting creates the task and reports it back', async () => {
         const user = userEvent.setup();
         const onNewItem = vi.fn();
-        mockedCreateTask.mockResolvedValue({
-            id: 't1',
-            title: 'Buy milk',
-            order: 0,
-            columnId: 'c-todo',
-        });
+        const task = { id: 't1', title: 'Buy milk', order: 0, columnId: 'c-todo' };
+        mockedCreateTask.mockResolvedValue(task);
 
         render(<AddItemForm projectId="p1" columnId="c-todo" onNewItem={onNewItem} />);
 
@@ -64,14 +60,7 @@ describe('AddItemForm', () => {
             columnId: 'c-todo',
         });
 
-        await waitFor(() =>
-            expect(onNewItem).toHaveBeenCalledWith({
-                id: 't1',
-                name: 'Buy milk',
-                completed: false,
-                status: 'todo',
-            }),
-        );
+        await waitFor(() => expect(onNewItem).toHaveBeenCalledWith(task));
         expect(screen.getByPlaceholderText('New Item')).toHaveValue('');
     });
 
@@ -104,5 +93,13 @@ describe('AddItemForm', () => {
         expect(onNewItem).not.toHaveBeenCalled();
         expect(screen.getByPlaceholderText('New Item')).toHaveValue('Buy milk');
         expect(screen.getByRole('button', { name: /add item/i })).toBeEnabled();
+    });
+
+    test('submitting without a column does not create anything', () => {
+        render(<AddItemForm projectId="p1" onNewItem={vi.fn()} />);
+
+        fireEvent.submit(screen.getByPlaceholderText('New Item').closest('form')!);
+
+        expect(mockedCreateTask).not.toHaveBeenCalled();
     });
 });

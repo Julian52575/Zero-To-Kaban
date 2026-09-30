@@ -6,9 +6,12 @@ export type Task = z.infer<typeof taskSchema>;
 export type CreateTaskInput = {
   title: string;
   description?: string | null;
-  columnId: string;
   order?: number;
+  dueDate?: Date | null;
+  priority?: "LOW" | "MEDIUM" | "HIGH";
+  columnId: string;
   assigneeId?: string | null;
 };
+
 
 export type UpdateTaskInput = Partial<CreateTaskInput>;
