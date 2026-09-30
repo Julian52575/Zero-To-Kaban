@@ -7,7 +7,7 @@ function LegalNotice() {
         <a className="visually-hidden-focusable" href="#main-content">
           Skip to content
         </a>
-        <div id="main-content">
+        <div id="legal-notice-content">
         <h1 id="legal-notice-title" className="mb-4">Legal Notice</h1>
 
         <p className="text-muted">
