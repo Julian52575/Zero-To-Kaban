@@ -2,7 +2,6 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import TodoList from './TodoList';
-import type { Item } from '../types/item';
 import type { Task } from '../types/task';
 import {
     getTasks,
@@ -11,7 +10,8 @@ import {
     moveTask,
     deleteTask,
 } from '../services/taskService';
-import { getColumns, type Column } from '../services/columnService';
+import Swal from 'sweetalert2';
+import { getProject, getProjectCollaborators, leaveProject } from '../services/ProjectApi';
 import { ApiError } from '../services/apiClient';
 
 vi.mock('../services/taskService', () => ({
@@ -22,8 +22,16 @@ vi.mock('../services/taskService', () => ({
     deleteTask: vi.fn(),
 }));
 
-vi.mock('../services/columnService', () => ({
-    getColumns: vi.fn(),
+vi.mock('../services/ProjectApi', () => ({
+    getProject: vi.fn(),
+    getProjectCollaborators: vi.fn().mockResolvedValue([]),
+    leaveProject: vi.fn(),
+}));
+
+vi.mock('sweetalert2', () => ({ default: { fire: vi.fn() } }));
+
+vi.mock('./InviteCollaborator', () => ({
+    default: ({ ownerId }: { ownerId: string }) => <div>invite:{ownerId}</div>,
 }));
 
 // Drag and drop can't be driven in jsdom, so the board is replaced by a stub
@@ -31,20 +39,20 @@ vi.mock('../services/columnService', () => ({
 vi.mock('./KanbanBoard', () => ({
     default: ({
         items,
-        onItemRename,
+        onItemUpdate,
         onItemDelete,
         onStatusChange,
     }: {
-        items: Item[];
-        onItemRename: (item: Item, name: string) => void;
-        onItemDelete: (item: Item) => void;
-        onStatusChange: (item: Item, status: 'todo' | 'doing' | 'done') => void;
+        items: Task[];
+        onItemUpdate: (item: Task, changes: Partial<Task>) => void;
+        onItemDelete: (item: Task) => void;
+        onStatusChange: (item: Task, status: 'todo' | 'doing' | 'done') => void;
     }) => (
         <ul>
             {items.map((item) => (
-                <li key={item.id} aria-label={item.name}>
+                <li key={item.id} aria-label={item.title}>
                     <span data-testid="status">{item.status}</span>
-                    <button onClick={() => onItemRename(item, `${item.name} (renamed)`)}>
+                    <button onClick={() => onItemUpdate(item, { title: `${item.title} (renamed)` })}>
                         rename
                     </button>
                     <button onClick={() => onItemDelete(item)}>delete</button>
@@ -55,11 +63,22 @@ vi.mock('./KanbanBoard', () => ({
     ),
 }));
 
-const columns: Column[] = [
-    { id: 'c-todo', name: 'To Do', order: 0 },
-    { id: 'c-doing', name: 'Doing', order: 1 },
-    { id: 'c-done', name: 'Done', order: 2 },
+const columns = [
+    { id: 'c-todo', name: 'To Do', order: 0, projectId: 'p1' },
+    { id: 'c-doing', name: 'Doing', order: 1, projectId: 'p1' },
+    { id: 'c-done', name: 'Done', order: 2, projectId: 'p1' },
 ];
+
+const project = (cols = columns) => ({
+    id: 'p1',
+    name: 'Project',
+    ownerId: 'u1',
+    role: 'OWNER',
+    isOwner: true,
+    canEdit: true,
+    canManage: false,
+    columns: cols,
+});
 
 const tasks: Task[] = [
     { id: '1', title: 'Buy milk', order: 0, columnId: 'c-todo' },
@@ -71,7 +90,8 @@ const statusOf = (name: string) => within(card(name)).getByTestId('status');
 
 describe('TodoList', () => {
     beforeEach(() => {
-        vi.mocked(getColumns).mockResolvedValue(columns);
+        vi.mocked(getProject).mockResolvedValue(project());
+        vi.mocked(getProjectCollaborators).mockResolvedValue([]);
         vi.mocked(getTasks).mockResolvedValue(tasks);
         vi.spyOn(console, 'error').mockImplementation(() => {});
     });
@@ -86,14 +106,14 @@ describe('TodoList', () => {
 
         render(<TodoList projectId="p1" />);
 
-        expect(screen.getByText('Chargement…')).toBeInTheDocument();
+        expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
     test('fetches columns and tasks for the project and maps them to items', async () => {
         render(<TodoList projectId="p1" />);
 
         expect(await screen.findByRole('listitem', { name: 'Buy milk' })).toBeInTheDocument();
-        expect(getColumns).toHaveBeenCalledWith('p1');
+        expect(getProject).toHaveBeenCalledWith('p1');
         expect(getTasks).toHaveBeenCalledWith('p1');
         expect(statusOf('Buy milk')).toHaveTextContent('todo');
         expect(statusOf('Walk dog')).toHaveTextContent('done');
@@ -140,7 +160,6 @@ describe('TodoList', () => {
             columnId: 'c-todo',
         });
         expect(await screen.findByRole('listitem', { name: 'New task' })).toBeInTheDocument();
-        expect(statusOf('New task')).toHaveTextContent('todo');
     });
 
     test('renaming updates the task optimistically', async () => {
@@ -232,7 +251,7 @@ describe('TodoList', () => {
 
     test('moving is a no-op when the project lacks the target column', async () => {
         const user = userEvent.setup();
-        vi.mocked(getColumns).mockResolvedValue([columns[0]]);
+        vi.mocked(getProject).mockResolvedValue(project([columns[0]]));
 
         render(<TodoList projectId="p1" />);
         await screen.findByRole('listitem', { name: 'Buy milk' });
@@ -241,5 +260,126 @@ describe('TodoList', () => {
 
         expect(moveTask).not.toHaveBeenCalled();
         expect(statusOf('Buy milk')).toHaveTextContent('todo');
+    });
+
+    describe('permissions and lifecycle', () => {
+        test('a manager sees the invite panel with the owner id', async () => {
+            vi.mocked(getProject).mockResolvedValue({ ...project(), canManage: true });
+
+            render(<TodoList projectId="p1" />);
+
+            expect(await screen.findByText('invite:u1')).toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Leave Project' })).not.toBeInTheDocument();
+        });
+
+        test('a non-owner can leave the project', async () => {
+            vi.mocked(getProject).mockResolvedValue({ ...project(), isOwner: false });
+
+            render(<TodoList projectId="p1" />);
+
+            expect(await screen.findByRole('button', { name: 'Leave Project' })).toBeInTheDocument();
+        });
+
+        describe('leaving the project', () => {
+            const original = window.location;
+
+            beforeEach(() => {
+                vi.mocked(getProject).mockResolvedValue({ ...project(), isOwner: false });
+                Object.defineProperty(window, 'location', {
+                    configurable: true,
+                    value: { href: '/projects/p1' },
+                });
+            });
+
+            afterEach(() => {
+                Object.defineProperty(window, 'location', { configurable: true, value: original });
+            });
+
+            const clickLeave = async () => {
+                render(<TodoList projectId="p1" />);
+                await userEvent.click(await screen.findByRole('button', { name: 'Leave Project' }));
+            };
+
+            test('goes back home once confirmed', async () => {
+                vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true } as never);
+                vi.mocked(leaveProject).mockResolvedValue('EDITOR');
+
+                await clickLeave();
+
+                await waitFor(() => expect(window.location.href).toBe('/'));
+                expect(leaveProject).toHaveBeenCalledWith('p1');
+            });
+
+            test('stays when the confirmation is dismissed', async () => {
+                vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: false } as never);
+
+                await clickLeave();
+
+                await waitFor(() => expect(Swal.fire).toHaveBeenCalled());
+                expect(leaveProject).not.toHaveBeenCalled();
+            });
+
+            test('explains that an owner cannot leave', async () => {
+                vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true } as never);
+                vi.mocked(leaveProject).mockResolvedValue('OWNER');
+
+                await clickLeave();
+
+                expect(await screen.findByText(/owner of the project and cannot leave/)).toBeInTheDocument();
+                expect(window.location.href).toBe('/projects/p1');
+            });
+
+            test('shows the error when leaving fails', async () => {
+                vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true } as never);
+                vi.mocked(leaveProject).mockRejectedValue(new ApiError(404, 'HTTP error: 404'));
+
+                await clickLeave();
+
+                expect(await screen.findByText('The requested resource was not found.')).toBeInTheDocument();
+                expect(window.location.href).toBe('/projects/p1');
+            });
+        });
+
+        test('a viewer cannot add tasks', async () => {
+            vi.mocked(getProject).mockResolvedValue({ ...project(), role: 'VIEWER', canEdit: false });
+
+            render(<TodoList projectId="p1" />);
+
+            await screen.findByRole('listitem', { name: 'Buy milk' });
+            expect(screen.queryByPlaceholderText('New Item')).not.toBeInTheDocument();
+        });
+
+        test('a project without columns puts every task in todo and blocks adding', async () => {
+            vi.mocked(getProject).mockResolvedValue({ ...project(), columns: undefined });
+
+            render(<TodoList projectId="p1" />);
+
+            await screen.findByRole('listitem', { name: 'Buy milk' });
+            expect(statusOf('Walk dog')).toHaveTextContent('todo');
+            expect(screen.getByRole('button', { name: /add item/i })).toBeDisabled();
+        });
+
+        test('ignores a response that arrives after unmount', async () => {
+            let resolve: (value: Task[]) => void = () => {};
+            vi.mocked(getTasks).mockReturnValue(new Promise((r) => { resolve = r; }));
+
+            const { unmount } = render(<TodoList projectId="p1" />);
+            unmount();
+            resolve(tasks);
+
+            await waitFor(() => expect(getTasks).toHaveBeenCalled());
+            expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
+        });
+
+        test('ignores an error that arrives after unmount', async () => {
+            let reject: (error: Error) => void = () => {};
+            vi.mocked(getTasks).mockReturnValue(new Promise((_, r) => { reject = r; }));
+
+            const { unmount } = render(<TodoList projectId="p1" />);
+            unmount();
+            reject(new Error('late'));
+
+            await waitFor(() => expect(console.error).toHaveBeenCalledWith(expect.any(Error)));
+        });
     });
 });

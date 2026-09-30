@@ -4,6 +4,7 @@ const { publishEvent } = require("../events/eventBus");
 const { taskPayload } = require("../events/payloads");
 const {
   userCanAccessProject,
+  userCanEditProject,
   columnBelongsToProject,
   storeTask,
 } = require("../persistence");
@@ -66,6 +67,10 @@ async function createTask(req, res, next) {
       return res.status(400).json({ error: "invalid column" });
     }
 
+    if (!(await userCanEditProject(creatorId, projectId))) {
+      return res.status(403).json({ error: "invalid role" });
+    }
+
     const task = await storeTask(columnId, creatorId, {
       title,
       description,
@@ -105,12 +110,25 @@ async function updateTask(req, res, next) {
       return res.status(400).json({ error: "invalid column" });
     }
 
+    if (!(await userCanEditProject(req.userId, projectId))) {
+      return res.status(400).json({ error: "invalid role" });
+    }
+
+    const lastTask = await taskService.getTask(id);
     const task = await taskService.updateTask(id, req.body);
 
     try {
       await publishEvent(EVENTS.TASK_UPDATED, taskPayload(task, projectId));
     } catch (error) {
       console.error("Failed to publish TASK_UPDATED event:", error);
+    }
+
+    if (lastTask.assigneeId !== task.assigneeId && task.assigneeId !== null && task.assigneeId !== req.userId) {
+      try {
+        await publishEvent(EVENTS.TASK_ASSIGNED, taskPayload(task, projectId));
+      } catch (error) {
+        console.error("Failed to publish TASK_ASSIGNED event:", error);
+      }
     }
 
     res.json(task);

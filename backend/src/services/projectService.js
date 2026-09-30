@@ -1,5 +1,6 @@
 const { randomUUID: uuid } = require("crypto");
 const projectRepository = require("../repositories/projectRepository");
+const { $Enums } = require("@prisma/client");
 
 async function createProject(data) {
   const project = {
@@ -15,13 +16,27 @@ async function getProjects(userId) {
   return projectRepository.getAll(userId);
 }
 
-// Projects belong to their owner: for anyone else they don't exist (null).
+async function getUserProjects(userId) {
+  return projectRepository.getAllFromUser(userId);
+}
+
+async function getProjectCollaborators(projectId) {
+  return projectRepository.getProjectCollaborators(projectId);
+}
+
+async function createProjectCollaborator(projectId, userId) {
+  const collaborator = {
+    projectId,
+    userId,
+    role: $Enums.CollaboratorRole.VIEWER,
+    state: $Enums.CollaboratorInvitationState.PENDING,
+  };
+  return projectRepository.createProjectCollaborator(collaborator);
+}
+
+
 async function getProject(id, userId) {
-  const project = await projectRepository.getById(id);
-  if (!project || project.ownerId !== userId) {
-    return null;
-  }
-  return project;
+  return projectRepository.getById(id, userId);
 }
 
 async function updateProject(id, userId, data) {
@@ -35,6 +50,16 @@ async function updateProject(id, userId, data) {
   return { before, after };
 }
 
+async function updateProjectCollaborator(id, userId, data) {
+  const before = await projectRepository.getProjectCollaborator(id, userId);
+  if (!before) {
+    return null;
+  }
+
+  const after = await projectRepository.updateProjectCollaborator(id, userId, data);
+  return { before, after };
+}
+
 async function deleteProject(id, userId) {
   const project = await getProject(id, userId);
   if (!project) {
@@ -44,10 +69,25 @@ async function deleteProject(id, userId) {
   return projectRepository.deleteProject(id);
 }
 
+async function leaveProject(projectId, userId) {
+  const project = await projectRepository.getProjectOwner(projectId);
+  if (project && project.ownerId === userId) {
+    return "OWNER";
+  }
+
+  const deleted = await projectRepository.deleteProjectCollaborator(projectId, userId);
+  return deleted ? "OK" : "NOT_FOUND";
+}
+
 module.exports = {
   createProject,
+  createProjectCollaborator,
   getProjects,
+  getUserProjects,
+  getProjectCollaborators,
   getProject,
   updateProject,
+  updateProjectCollaborator,
   deleteProject,
+  leaveProject,
 };

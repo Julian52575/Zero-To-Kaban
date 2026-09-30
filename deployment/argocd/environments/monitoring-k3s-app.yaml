@@ -18,16 +18,11 @@
 # keep the URL itself in a Secret (extraSecretMounts / mounted config)
 # rather than inline in this file, since Application manifests live in git.
 #
-# No alerting rules shipped yet either -- add them under
-# `serverFiles.alerting_rules.yml` once there's a concrete signal to watch
-# (e.g. Traefik's error rate/latency, now scraped automatically: Prometheus's
-# default kubernetes_sd_configs picks up the traefik pod in kube-system on
-# its :9100 metrics port with no extra config, the same endpoint
-# deployment/helm/zero-to-kanban/templates/ingressroute.yaml exposes
-# externally at /metrics for out-of-cluster access).
+# Alert rules (ADR, discussion #131) use what Prometheus scrapes with no extra
+# config: Traefik's :9100 metrics port and the kubelet's cAdvisor. The same rules
+# are inlined in monitoring-prod-app.yaml -- keep the two in step.
 #
-# Applied directly, from inside `nix develop ./deployment` (which exports
-# KUBECONFIG) -- not discovered through root-app.yaml, which excludes it:
+# `just up-local` applies it; otherwise apply it by hand from `nix develop ./deployment`:
 #   kubectl apply -n argocd -f deployment/argocd/environments/monitoring-k3s-app.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -70,7 +65,53 @@ spec:
               - name: discard-all-alerts
         serverFiles:
           alerting_rules.yml:
-            groups: []
+            groups:
+              - name: ztk-edge
+                rules:
+                  - alert: TraefikHigh5xxRatio
+                    expr: |
+                      sum by (service) (rate(traefik_service_requests_total{code=~"5.."}[5m]))
+                        / sum by (service) (rate(traefik_service_requests_total[5m])) > 0.05
+                    for: 10m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "{{ $labels.service }} answers more than 5% of requests with a 5xx"
+                      description: "Over the last 5m, {{ $value | humanizePercentage }} of the requests Traefik routed to {{ $labels.service }} failed with a 5xx."
+                  - alert: TraefikHighLatency
+                    expr: |
+                      histogram_quantile(0.95, sum by (le, service) (rate(traefik_service_request_duration_seconds_bucket[5m]))) > 1
+                    for: 10m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "{{ $labels.service }} p95 latency is above 1s"
+                      description: "The 95th percentile of the request duration Traefik measured for {{ $labels.service }} is {{ $value | humanizeDuration }}."
+              - name: ztk-workloads
+                rules:
+                  - alert: ContainerMemoryNearLimit
+                    # max by (...): after a restart cAdvisor briefly exposes two series
+                    # per container, which breaks a plain one-to-one match.
+                    expr: |
+                      max by (namespace, pod, container) (container_memory_working_set_bytes{namespace=~"ztk-.+", container!="", container!="POD"})
+                        / on (namespace, pod, container)
+                      max by (namespace, pod, container) (container_spec_memory_limit_bytes{namespace=~"ztk-.+", container!="", container!="POD"} > 0) > 0.9
+                    for: 10m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "{{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) uses over 90% of its memory limit"
+                      description: "Working set is at {{ $value | humanizePercentage }} of the container's memory limit; it will be OOM-killed if it reaches it."
+              - name: ztk-monitoring
+                rules:
+                  - alert: ScrapeTargetDown
+                    expr: up{job=~"kubernetes-pods|kubernetes-nodes-cadvisor|prometheus"} == 0
+                    for: 5m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "Prometheus cannot scrape {{ $labels.job }} ({{ $labels.instance }})"
+                      description: "The target has been down for 5m, so the alerts that depend on it are blind."
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

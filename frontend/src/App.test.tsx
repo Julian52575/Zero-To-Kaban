@@ -6,10 +6,18 @@ vi.mock('./routes/Projects', () => ({
     default: () => <div>projects-stub</div>,
 }));
 
+vi.mock('./components/NotificationCenter', () => ({ default: () => null }));
+vi.mock('./components/UserProfile/UserProfileButton', () => ({ default: () => null }));
+
 vi.mock('./components/TodoList', () => ({
     default: ({ projectId }: { projectId: string }) => (
         <div>todo-list-stub:{projectId}</div>
     ),
+}));
+
+vi.mock('./provider/useNotificationsProvider', () => ({
+    NotificationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useNotifications: () => ({ unreadNotifications: [], markAllTaskAsRead: vi.fn(), resolveNotification: vi.fn() }),
 }));
 
 import App from './App';
@@ -33,6 +41,17 @@ describe('App', () => {
         renderAt('/projects/42');
 
         expect(screen.getByText('todo-list-stub:42')).toBeInTheDocument();
+    });
+
+    test.each([
+        ['/accessibility', "Déclaration d'accessibilité"],
+        ['/terms-of-use', 'Terms of Use'],
+        ['/privacy', 'Privacy Policy'],
+        ['/legal', 'Legal Notice'],
+    ])('renders %s', (path, heading) => {
+        renderAt(path);
+
+        expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
     });
 
     test('redirects unknown routes to the project list', () => {

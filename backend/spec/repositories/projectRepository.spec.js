@@ -56,11 +56,13 @@ describe('projectRepository', () => {
             db.getProject.mockResolvedValue(project);
 
             const result = await projectRepository.getById(
-                'project-id'
+                'project-id',
+                'owner-id'
             );
 
             expect(db.getProject).toHaveBeenCalledWith(
-                'project-id'
+                'project-id',
+                'owner-id'
             );
 
             expect(result).toEqual(project);
@@ -70,11 +72,13 @@ describe('projectRepository', () => {
             db.getProject.mockResolvedValue(null);
 
             const result = await projectRepository.getById(
-                'unknown-id'
+                'unknown-id',
+                'owner-id'
             );
 
             expect(db.getProject).toHaveBeenCalledWith(
-                'unknown-id'
+                'unknown-id',
+                'owner-id'
             );
 
             expect(result).toBeNull();
@@ -110,6 +114,49 @@ describe('projectRepository', () => {
             expect(db.deleteProject).toHaveBeenCalledWith(
                 'project-id'
             );
+        });
+    });
+    describe('getProjectCollaborators', () => {
+        it('should return the project collaborators', async () => {
+            const collaborators = [
+                {
+                    userId: 'u2',
+                    role: 'EDITOR',
+                    state: 'ACCEPTED',
+                },
+                {
+                    userId: 'u3',
+                    role: 'VIEWER',
+                    state: 'ACCEPTED',
+                },
+            ];
+
+            db.getProjectCollaborators.mockResolvedValue(collaborators);
+
+            const result = await projectRepository.getProjectCollaborators('p1');
+
+            expect(db.getProjectCollaborators).toHaveBeenCalledWith('p1');
+            expect(result).toEqual(collaborators);
+        });
+    });
+
+    describe('passthrough to persistence', () => {
+        it.each([
+            ['createProjectCollaborator', 'createProjectCollaborator', [{ projectId: 'p1' }]],
+            ['getAllFromUser', 'getProjectsFromUser', ['u1']],
+            ['updateProjectCollaborator', 'updateProjectCollaborator', ['p1', 'u1', { role: 'EDITOR' }]],
+            ['getProjectCollaborator', 'getProjectCollaborator', ['p1', 'u1']],
+            ['getColumnsByProject', 'getColumns', ['p1']],
+            ['userCanAccessProject', 'userCanAccessProject', ['u1', 'p1']],
+            ['getProjectOwner', 'getProjectOwner', ['p1']],
+            ['deleteProjectCollaborator', 'deleteProjectCollaborator', ['p1', 'u2']],
+        ])('%s delegates to db.%s', async (method, dbMethod, args) => {
+            db[dbMethod].mockResolvedValue('result');
+
+            const result = await projectRepository[method](...args);
+
+            expect(db[dbMethod]).toHaveBeenCalledWith(...args);
+            expect(result).toBe('result');
         });
     });
 });

@@ -4,12 +4,32 @@ async function create(project) {
     return db.createProject(project);
 }
 
+async function createProjectCollaborator(collaborator) {
+    return db.createProjectCollaborator(collaborator);
+}
+
 async function getAll(userId) {
     return db.getProjects(userId);
 }
 
-async function getById(id) {
-    return db.getProject(id);
+async function getAllFromUser(userId) {
+    return db.getProjectsFromUser(userId);
+}
+
+async function getProjectCollaborators(projectId) {
+    return db.getProjectCollaborators(projectId);
+}
+
+async function updateProjectCollaborator(id, userId, data) {
+    return db.updateProjectCollaborator(id, userId, data);
+}
+
+async function getProjectCollaborator(projectId, userId) {
+  return db.getProjectCollaborator(projectId, userId);
+}
+
+async function getById(id, userId) {
+  return db.getProject(id, userId);
 }
 
 async function update(id, data) {
@@ -28,12 +48,27 @@ async function userCanAccessProject(userId, projectId) {
   return db.userCanAccessProject(userId, projectId);
 }
 
+async function getProjectOwner(projectId) {
+  return db.getProjectOwner(projectId);
+}
+
+async function deleteProjectCollaborator(projectId, userId) {
+    return db.deleteProjectCollaborator(projectId, userId);
+}
+
 module.exports = {
     create,
+    createProjectCollaborator,
     getAll,
+    getAllFromUser,
+    getProjectCollaborators,
     getById,
+    getProjectCollaborator,
     update,
+    updateProjectCollaborator,
     deleteProject,
     getColumnsByProject,
     userCanAccessProject,
+    getProjectOwner,
+    deleteProjectCollaborator,
 };

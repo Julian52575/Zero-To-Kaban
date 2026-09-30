@@ -187,3 +187,24 @@
 .fa-trash:focus-visible {
     color: #c0392b;
 }
+
+.kanban-card-assignee {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.kanban-assignee-label {
+    font-size: 0.8rem;
+    color: #495057;
+}
+
+.kanban-assignee-select {
+    font-size: 0.8rem;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    color: #495057;
+}

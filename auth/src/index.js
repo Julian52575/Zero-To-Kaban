@@ -3,6 +3,11 @@
 const config = require('./config');
 const db = require('./db');
 const { createApp } = require('./app');
+const outbox = require('./outbox');
+
+if (config.rateLimitDisabled) {
+    console.warn('auth: WARNING rate limiting is DISABLED (RATE_LIMIT_DISABLED=true) -- local dev only, never in production');
+}
 
 db.init()
     .then(() => {
@@ -10,9 +15,13 @@ db.init()
             console.log(`auth: listening on port ${config.port}`),
         );
 
+        const stopOutbox = outbox.start();
+
         const gracefulShutdown = () => {
             server.close(() => {
-                db.teardown()
+                stopOutbox()
+                    .catch(() => {})
+                    .then(() => db.teardown())
                     .catch(() => {})
                     .then(() => process.exit());
             });

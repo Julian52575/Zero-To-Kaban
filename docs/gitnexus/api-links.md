@@ -12,16 +12,21 @@ see. Consumers are matched by URL, so they apply to every method on the row.
 
 | route | handler | methods | consumers |
 | --- | --- | --- | --- |
-| /auth/login | auth/src/app.js | POST |  |
+| /auth/login | auth/src/app.js | POST | deployment/scripts/simulate-traffic.py |
 | /auth/logout | auth/src/app.js | POST |  |
-| /auth/logout-all | auth/src/app.js | POST |  |
-| /auth/me | auth/src/app.js | GET |  |
+| /auth/logout-all | auth/src/app.js | POST | frontend/src/services/userApi.ts |
+| /auth/me | auth/src/app.js | DELETE, GET, PATCH | frontend/src/services/userApi.ts |
+| /auth/me/export | auth/src/app.js | GET | frontend/src/services/userApi.ts |
 | /auth/register | auth/src/app.js | POST |  |
-| /healthz | auth/src/app.js | GET |  |
+| /auth/users | auth/src/app.js | GET | frontend/src/services/collaboratorService.ts |
+| /internal/users/lookup | auth/src/app.js | POST |  |
 | /internal/verify | auth/src/app.js | GET |  |
-| /login | auth/src/app.js | GET | auth/src/pages/register.html |
-| /register | auth/src/app.js | GET | auth/src/pages/login.html |
+| /login | auth/src/app.js | GET | auth/src/pages/register.html, deployment/scripts/simulate-traffic.py |
+| /privacy-policy | auth/src/app.js | GET | auth/src/pages/register.html |
+| /register | auth/src/app.js | GET | auth/src/pages/login.html, auth/src/pages/privacy-policy.html |
 | /projects/00000000-0000-0000-0000-000000000000 | backend/spec/routes/project.spec.js | GET |  |
+| /projects/00000000-0000-0000-0000-000000000000/collaborators | backend/spec/routes/project.spec.js | GET |  |
+| /projects/not-a-valid-uuid/collaborators | backend/spec/routes/project.spec.js | GET |  |
 | /projects/p1/tasks | backend/spec/routes/task.spec.js | GET, POST |  |
 | /projects/p1/tasks/nope | backend/spec/routes/task.spec.js | DELETE |  |
 | /projects/p1/tasks/t1 | backend/spec/routes/task.spec.js | DELETE, GET, PUT |  |
@@ -30,8 +35,21 @@ see. Consumers are matched by URL, so they apply to every method on the row.
 | /health | backend/src/app.js | GET |  |
 | /items | backend/src/app.js | GET, POST | backend/spec/app.spec.js |
 | /items/:id | backend/src/app.js | DELETE, GET, PATCH, PUT |  |
+| /notifications | backend/src/app.js | GET |  |
+| /notifications/:id | backend/src/app.js | DELETE |  |
+| /notifications/:id/read | backend/src/app.js | PATCH |  |
+| /notifications/read | backend/src/app.js | PATCH |  |
+| /notifications/unread | backend/src/app.js | GET |  |
 | /projects | backend/src/app.js | GET, POST |  |
 | /projects/:id | backend/src/app.js | DELETE, GET, PATCH, PUT |  |
+| /projects/:id/collaborators | backend/src/app.js | GET |  |
+| /projects/:id/collaborators/me | backend/src/app.js | DELETE |  |
+| /projects/:id/invitation | backend/src/app.js | POST, PUT |  |
 | /projects/:projectId/columns | backend/src/app.js | GET |  |
 | /projects/:projectId/tasks | backend/src/app.js | GET, POST |  |
 | /projects/:projectId/tasks/:id | backend/src/app.js | DELETE, GET, PATCH, PUT |  |
+| / | backend/src/routes/notificationRoutes.js | GET |  |
+| /:id | backend/src/routes/notificationRoutes.js | DELETE |  |
+| /:id/read | backend/src/routes/notificationRoutes.js | PATCH |  |
+| /read-all | backend/src/routes/notificationRoutes.js | PATCH |  |
+| /unread | backend/src/routes/notificationRoutes.js | GET |  |

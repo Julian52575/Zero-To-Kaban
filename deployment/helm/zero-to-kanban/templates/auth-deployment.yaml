@@ -52,15 +52,17 @@ spec:
                   key: {{ .Values.auth.existingSecretKey }}
             - name: COOKIE_SECURE
               value: {{ .Values.auth.cookieSecure | quote }}
+            - name: RATE_LIMIT_DISABLED
+              value: {{ .Values.auth.rateLimitDisabled | quote }}
           readinessProbe:
             httpGet:
-              path: /healthz
+              path: /health
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /healthz
+              path: /health
               port: http
             initialDelaySeconds: 15
             periodSeconds: 20

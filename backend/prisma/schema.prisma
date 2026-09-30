@@ -28,30 +28,80 @@ model Column {
   @@index([projectId])
 }
 
+enum TaskPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
 model Task {
   id          String   @id @default(uuid())
   title       String
   description String?
   order       Int
   createdAt   DateTime @default(now())
+  dueDate     DateTime?
   updatedAt   DateTime @updatedAt
+
+  priority    TaskPriority @default(MEDIUM)
 
   columnId    String
   column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
 
-  creatorId   String
+  creatorId   String?
   assigneeId  String?
 }
 
-model Project {
+enum CollaboratorRole {
+  VIEWER
+  EDITOR
+}
+
+enum CollaboratorInvitationState {
+  PENDING
+  ACCEPTED
+  REFUSED
+}
+
+model ProjectCollaborator {
   id        String  @id @default(uuid())
+  projectId String
+  userId    String
+
+  role      CollaboratorRole @default(VIEWER)
+  state     CollaboratorInvitationState @default(PENDING)
+
+  invitedAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Project {
+  id        String   @id @default(uuid())
   name      String
   createdAt DateTime @default(now())
-  ownerId   String
-  columns   Column[]
+  ownerId   String?
+
+  columns       Column[]
+  collaborators ProjectCollaborator[]
 
   @@map("projects")
   @@index([ownerId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  eventId   String   @unique
+  data      Json
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
 }
 
 model ProcessedEvent {

@@ -58,6 +58,8 @@ spec:
               value: {{ include "zero-to-kanban.rabbitmq.host" . | quote }}
             - name: RABBITMQ_PORT
               value: "5672"
+            - name: AUTH_SERVICE_URL
+              value: "http://{{ include "zero-to-kanban.fullname" . }}-auth:4000"
           readinessProbe:
             httpGet:
               path: /health

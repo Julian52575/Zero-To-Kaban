@@ -1,32 +1,46 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import KanbanBoard, { getStatus } from './KanbanBoard';
-import type { Item } from '../types/item';
+import type { Task } from '../types/task';
+
+vi.mock('../services/ProjectApi', () => ({
+    getProjectCollaborators: vi.fn().mockResolvedValue([]),
+}));
+
+const task = (id: string, title: string, completed: boolean, status?: Task['status']): Task => ({
+    id,
+    title,
+    order: 0,
+    columnId: 'c1',
+    completed,
+    status,
+});
 
 describe('getStatus', () => {
     test('uses the explicit status when there is one', () => {
-        expect(getStatus({ id: '1', name: 'a', completed: true, status: 'doing' })).toBe('doing');
+        expect(getStatus(task('1', 'a', true, 'doing'))).toBe('doing');
     });
 
     test('falls back to "completed" when there is no status', () => {
-        expect(getStatus({ id: '1', name: 'a', completed: true })).toBe('done');
-        expect(getStatus({ id: '1', name: 'a', completed: false })).toBe('todo');
+        expect(getStatus(task('1', 'a', true))).toBe('done');
+        expect(getStatus(task('1', 'a', false))).toBe('todo');
     });
 });
 
 describe('KanbanBoard', () => {
-    const items: Item[] = [
-        { id: '1', name: 'Buy milk', completed: false, status: 'todo' },
-        { id: '2', name: 'Write report', completed: false, status: 'doing' },
-        { id: '3', name: 'Walk dog', completed: true, status: 'done' },
-        { id: '4', name: 'Pay rent', completed: false, status: 'todo' },
+    const items: Task[] = [
+        task('1', 'Buy milk', false, 'todo'),
+        task('2', 'Write report', false, 'doing'),
+        task('3', 'Walk dog', true, 'done'),
+        task('4', 'Pay rent', false, 'todo'),
     ];
 
-    function renderBoard(boardItems: Item[] = items) {
+    function renderBoard(boardItems: Task[] = items) {
         render(
             <KanbanBoard
                 items={boardItems}
-                onItemRename={vi.fn()}
+                projectId="p1"
+                onItemUpdate={vi.fn()}
                 onItemDelete={vi.fn()}
                 onStatusChange={vi.fn()}
             />,

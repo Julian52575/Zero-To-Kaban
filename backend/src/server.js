@@ -1,46 +1,115 @@
 const app = require("./app");
 const db = require("./persistence");
+const http = require("http");
 const { connectRabbitMQ, closeRabbitMQ } = require("./events/rabbitmq");
 const { startConsumeFor } = require("./events/eventBus");
 const { EVENTS } = require("./events/events");
+const { initWebSocket, sendToUser } = require("./events/websocket");
+const notificationRepository = require("./repositories/notificationRepository");
 
 const PORT = 3000;
 
 async function startConsumers() {
-  await startConsumeFor(EVENTS.TASK_CREATED, async (data,eventId) => {
+  await startConsumeFor(EVENTS.TASK_CREATED, async (data, eventId) => {
     console.log(
       `Handling event: ${EVENTS.TASK_CREATED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
-
   });
-  await startConsumeFor(EVENTS.TASK_UPDATED, async (data,eventId) => {
+  await startConsumeFor(EVENTS.TASK_UPDATED, async (data, eventId) => {
     console.log(
       `Handling event: ${EVENTS.TASK_UPDATED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
   });
-  await startConsumeFor(EVENTS.TASK_DELETED, async (data,eventId) => {
+  await startConsumeFor(EVENTS.TASK_DELETED, async (data, eventId) => {
     console.log(
       `Handling event: ${EVENTS.TASK_DELETED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
   });
-  await startConsumeFor(EVENTS.TASK_STATUS_UPDATED, async (data,eventId) => {
+  await startConsumeFor(EVENTS.TASK_STATUS_UPDATED, async (data, eventId) => {
     console.log(
       `Handling event: ${EVENTS.TASK_STATUS_UPDATED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
   });
-  await startConsumeFor(EVENTS.PROJECT_CREATED, async (data,eventId) => {
+  await startConsumeFor(EVENTS.PROJECT_CREATED, async (data, eventId) => {
     console.log(
       `Handling event: ${EVENTS.PROJECT_CREATED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
   });
-  await startConsumeFor(EVENTS.PROJECT_UPDATED, async (data,eventId) => {
+  await startConsumeFor(EVENTS.PROJECT_UPDATED, async (data, eventId) => {
     console.log(
       `Handling event: ${EVENTS.PROJECT_UPDATED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
   });
-  await startConsumeFor(EVENTS.PROJECT_DELETED, async (data,eventId) => {
+  await startConsumeFor(EVENTS.PROJECT_DELETED, async (data, eventId) => {
     console.log(
       `Handling event: ${EVENTS.PROJECT_DELETED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
+    );
+  });
+
+  await startConsumeFor(EVENTS.TASK_ASSIGNED, async (data, eventId,tx) => {
+    console.log(
+      `Handling event: ${EVENTS.TASK_ASSIGNED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
+    );
+    const rep = await notificationRepository.create(
+      {
+        userId: data.assigneeId,
+        type: EVENTS.TASK_ASSIGNED,
+        eventId,
+        data,
+      },
+      tx,
+    );
+    if (!rep) {
+      console.error("Failed to create notification for TASK_ASSIGNED event");
+      return;
+    }
+    sendToUser(data.assigneeId, {
+      type: EVENTS.TASK_ASSIGNED,
+      data,
+      eventId : rep.id
+    });
+  });
+
+  await startConsumeFor(EVENTS.PROJECT_INVITATION, async (data, eventId, tx) => {
+    console.log(
+      `Handling event: ${EVENTS.PROJECT_INVITATION} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
+    );
+    const rep = await notificationRepository.create(
+      {
+        userId: data.userId,
+        type: EVENTS.PROJECT_INVITATION,
+        eventId,
+        data,
+      },
+      tx,
+    );
+    if (!rep) {
+      console.error("Failed to create notification for PROJECT_INVITATION event");
+      return;
+    }
+    sendToUser(data.userId, {
+      type: EVENTS.PROJECT_INVITATION,
+      data,
+      eventId: rep.id
+    });
+  });
+
+  await startConsumeFor(EVENTS.USER_DELETED, async (data, eventId) => {
+    const ANONYMOUS_USER_ID = "00000000-0000-0000-0000-000000000000";
+
+    const userId = data.userId;
+    const projects = await db.getProjectsFromUser(userId);
+
+    for (const project of projects) {
+      await db.updateDeletedProjectCollaborator(
+        project.id,
+        userId,
+        ANONYMOUS_USER_ID,
+      );
+    }
+
+    console.log(
+      `Handling event: ${EVENTS.USER_DELETED} with data: ${JSON.stringify(data)} and eventId: ${eventId}`,
     );
   });
 }
@@ -51,8 +120,9 @@ async function startServer() {
     await connectRabbitMQ();
     await startConsumers();
 
-
-    app.listen(PORT, () => {
+    const server = http.createServer(app);
+    initWebSocket(server);
+    server.listen(PORT, () => {
       console.log(`Listening on port ${PORT}`);
     });
   } catch (err) {
@@ -81,7 +151,8 @@ process.on("SIGUSR2", gracefulShutdown);
 // the entrypoint is exercised by the `stack` CI job.
 /* istanbul ignore next */
 if (require.main === module) {
-    startServer();
+  // startServer handles its own failures (logs + exit(1)), so nothing to catch.
+  void startServer();
 }
 
 module.exports = {

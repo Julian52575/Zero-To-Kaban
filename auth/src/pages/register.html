@@ -4,110 +4,153 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Create account &middot; Zero-To-Kaban</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
     <style>
-      :root { color-scheme: light dark; }
-      * { box-sizing: border-box; }
+      :root {
+        color-scheme: light dark;
+      }
       body {
-        font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-        margin: 0; min-height: 100vh; display: grid; place-items: center;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
       }
-      form {
-        width: min(92vw, 22rem); display: grid; gap: 0.75rem;
-        padding: 2rem; border: 1px solid #8884; border-radius: 0.75rem;
+      .auth-card {
+        width: min(92vw, 24rem);
       }
-      h1 { margin: 0 0 0.25rem; font-size: 1.25rem; }
-      p.hint { margin: 0; font-size: 0.8125rem; opacity: 0.7; }
-      label { display: grid; gap: 0.25rem; font-size: 0.875rem; }
-      input {
-        padding: 0.5rem 0.625rem; font: inherit;
-        border: 1px solid #8886; border-radius: 0.375rem; background: transparent; color: inherit;
+      .skip-link {
+        position: absolute;
+        top: 0;
+        left: 0;
       }
-      button {
-        margin-top: 0.25rem; padding: 0.55rem; font: inherit; font-weight: 600;
-        border: 0; border-radius: 0.375rem; cursor: pointer;
-      }
-      .error { color: #c0392b; font-size: 0.875rem; min-height: 1.25rem; }
-      .switch { text-align: center; font-size: 0.875rem; margin-top: 0.5rem; }
     </style>
+    
   </head>
   <body>
-    <form id="form" novalidate>
-      <h1>Create account</h1>
-      <p class="hint">Username: 3-32 characters, letters, digits, "-" or "_". Password: 8+ characters.</p>
-      <label>Username
-        <input
-          type="text"
-          name="username"
-          autocomplete="username"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
-          pattern="[A-Za-z0-9_-]{3,32}"
-          autofocus
-          required
-        />
-      </label>
-      <label>Password
-        <input
-          type="password"
-          name="password"
-          autocomplete="new-password"
-          minlength="8"
-          maxlength="72"
-          required
-        />
-      </label>
-      <label>Confirm password
-        <input
-          type="password"
-          name="passwordConfirm"
-          autocomplete="new-password"
-          minlength="8"
-          maxlength="72"
-          required
-        />
-      </label>
-      <div class="error" id="error" role="alert"></div>
-      <button type="submit">Create account</button>
-      <p class="switch">Already have an account? <a id="login-link" href="/login">Sign in</a></p>
-    </form>
+    <a class="skip-link btn btn-primary" href="#main-content"
+      >Skip to main content</a
+    >
+    <main id="main-content" class="auth-card" tabindex="-1">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form id="form" novalidate>
+            <h1 class="h5 mb-2">Create account</h1>
+            <p class="form-text mb-3">
+              Username: 3-32 characters, letters, digits, "-" or "_". Password:
+              8+ characters. Your username is visible to other users: avoid
+              using your real name.
+            </p>
+
+            <div class="mb-3">
+              <label for="username" class="form-label">Username</label>
+              <input
+                type="text"
+                class="form-control"
+                id="username"
+                name="username"
+                autocomplete="username"
+                autocapitalize="none"
+                autocorrect="off"
+                spellcheck="false"
+                pattern="[A-Za-z0-9_-]{3,32}"
+                autofocus
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input
+                type="password"
+                class="form-control"
+                id="password"
+                name="password"
+                autocomplete="new-password"
+                minlength="8"
+                maxlength="72"
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="passwordConfirm" class="form-label"
+                >Confirm password</label
+              >
+              <input
+                type="password"
+                class="form-control"
+                id="passwordConfirm"
+                name="passwordConfirm"
+                autocomplete="new-password"
+                minlength="8"
+                maxlength="72"
+                required
+              />
+            </div>
+
+            <div class="text-danger small mb-3" id="error" role="alert"></div>
+
+            <p class="form-text mb-3">
+              By creating an account, you acknowledge our
+              <a href="/privacy-policy" target="_blank" rel="noopener"
+                >privacy policy</a
+              >.
+            </p>
+
+            <button type="submit" class="btn btn-primary w-100">
+              Create account
+            </button>
+
+            <p class="text-center small mt-3 mb-0">
+              Already have an account?
+              <a id="login-link" href="/login">Sign in</a>
+            </p>
+          </form>
+        </div>
+      </div>
+    </main>
 
     <script>
       const params = new URLSearchParams(location.search);
       // Keep only same-site absolute paths (the server enforces this too).
       const raw = params.get("next") || "/";
       const next = /^\/(?!\/)/.test(raw) ? raw : "/";
-      document.getElementById("login-link").href = "/login?next=" + encodeURIComponent(next);
+      document.getElementById("login-link").href =
+        "/login?next=" + encodeURIComponent(next);
 
-      document.getElementById("form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const error = document.getElementById("error");
-        error.textContent = "";
+      document
+        .getElementById("form")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const error = document.getElementById("error");
+          error.textContent = "";
 
-        const form = event.currentTarget;
-        if (form.password.value !== form.passwordConfirm.value) {
-          error.textContent = "Passwords do not match";
-          return;
-        }
+          const form = event.currentTarget;
+          if (form.password.value !== form.passwordConfirm.value) {
+            error.textContent = "Passwords do not match";
+            return;
+          }
 
-        const res = await fetch("/auth/register", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            username: form.username.value,
-            password: form.password.value,
-            next,
-          }),
-        });
+          const res = await fetch("/auth/register", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              username: form.username.value,
+              password: form.password.value,
+              next,
+            }),
+          });
 
-        if (res.ok) {
+          if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            location.assign(data.next || next);
+            return;
+          }
           const data = await res.json().catch(() => ({}));
-          location.assign(data.next || next);
-          return;
-        }
-        const data = await res.json().catch(() => ({}));
-        error.textContent = data.error || "Registration failed";
-      });
+          error.textContent = data.error || "Registration failed";
+        });
     </script>
   </body>
 </html>

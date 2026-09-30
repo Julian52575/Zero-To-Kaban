@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -13,6 +13,8 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import type { Item, ItemStatus } from "../types/item";
 import ItemDisplay from "./ItemDisplay";
 import "./KanbanBoard.css";
+import { Task } from "../types/task";
+import { getProjectCollaborators } from "../services/ProjectApi";
 
 const COLUMNS: { id: ItemStatus; title: string }[] = [
   { id: "todo", title: "To Do" },
@@ -20,27 +22,29 @@ const COLUMNS: { id: ItemStatus; title: string }[] = [
   { id: "done", title: "Done" },
 ];
 
-// Si l'item n'a pas encore de statut, on le déduit de "completed"
-export function getStatus(item: Item): ItemStatus {
+export function getStatus(item: Task): ItemStatus {
   if (item.status) return item.status;
   return item.completed ? "done" : "todo";
 }
 
 interface KanbanBoardProps {
-  items: Item[];
-  onItemRename: (item: Item, name: string) => void;
-  onItemDelete: (item: Item) => void;
-  onStatusChange: (item: Item, status: ItemStatus) => void;
+  items: Task[];
+  projectId: string;
+  onItemUpdate: (item: Task, changes: Partial<Task>) => void;
+  onItemDelete: (item: Task) => void;
+  onStatusChange: (item: Task, status: ItemStatus) => void;
 }
 
 function KanbanCard({
   item,
-  onItemRename,
+  members,
   onItemDelete,
+  onItemUpdate,
 }: {
-  item: Item;
-  onItemRename: (item: Item, name: string) => void;
-  onItemDelete: (item: Item) => void;
+  item: Task;
+  members: { id: string; pseudo: string }[];
+  onItemDelete: (item: Task) => void;
+  onItemUpdate?: (item: Task, changes: Partial<Task>) => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.id,
@@ -54,17 +58,19 @@ function KanbanCard({
       <button
         type="button"
         className="kanban-handle"
-        aria-label={`Déplacer "${item.name}"`}
+        aria-label={`Déplacer "${item.title}"`}
         {...listeners}
         {...attributes}
       >
         ⠿
       </button>
+
       <div className="kanban-card-body">
         <ItemDisplay
           item={item}
-          onRename={onItemRename}
+          members={members}
           onDelete={onItemDelete}
+          onUpdate={onItemUpdate}
         />
       </div>
     </div>
@@ -104,13 +110,25 @@ function KanbanColumn({
 
 function KanbanBoard({
   items,
-  onItemRename,
+  projectId,
+  onItemUpdate,
   onItemDelete,
   onStatusChange,
 }: KanbanBoardProps) {
   const [activeId, setActiveId] = React.useState<Item["id"] | null>(null);
+  const [members, setMembers] = React.useState<
+    { id: string; pseudo: string }[]
+  >([]);
+  useEffect(() => {
+    getProjectCollaborators(projectId)
+      .then((collaborators) => {
+        setMembers(collaborators);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch project collaborators:", error);
+      });
+  }, []);
 
-  // distance: 6 évite de déclencher un drag lors d'un simple clic
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor),
@@ -158,7 +176,8 @@ function KanbanBoard({
                 <KanbanCard
                   key={item.id}
                   item={item}
-                  onItemRename={onItemRename}
+                  members={members}
+                  onItemUpdate={onItemUpdate}
                   onItemDelete={onItemDelete}
                 />
               ))}
@@ -173,7 +192,7 @@ function KanbanBoard({
             <span className="kanban-handle" aria-hidden="true">
               ⠿
             </span>
-            <div className="kanban-card-body">{activeItem.name}</div>
+            <div className="kanban-card-body">{activeItem.title}</div>
           </div>
         )}
       </DragOverlay>

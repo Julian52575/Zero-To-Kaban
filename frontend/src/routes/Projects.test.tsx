@@ -1,9 +1,27 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import Projects from './Projects';
+import Swal from 'sweetalert2';
 import { getProjects, createProject, deleteProject } from '../services/ProjectApi';
+
+vi.mock('sweetalert2', () => ({ default: { fire: vi.fn() } }));
+vi.mock('../components/UserProfile/UserProfileButton', () => ({ default: () => null }));
+vi.mock('../components/NotificationCenter', () => ({
+    default: ({ onProjectAccepted }: { onProjectAccepted: (project: unknown) => void }) => (
+        <button
+            onClick={() => onProjectAccepted({
+                id: '9', name: 'Joined', role: 'EDITOR', isOwner: false, canEdit: false, canManage: false,
+            })}
+        >
+            simulate accepted invitation
+        </button>
+    ),
+}));
+
+const confirmDialog = (isConfirmed: boolean) =>
+    vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed } as never);
 
 vi.mock('../services/ProjectApi', () => ({
     getProjects: vi.fn(),
@@ -12,8 +30,8 @@ vi.mock('../services/ProjectApi', () => ({
 }));
 
 const projects = [
-    { id: '1', name: 'Alpha' },
-    { id: '2', name: 'Beta' },
+    { id: '1', name: 'Alpha', role: 'OWNER', isOwner: true, canEdit: true, canManage: true },
+    { id: '2', name: 'Beta', role: 'OWNER', isOwner: true, canEdit: true, canManage: true },
 ];
 
 function renderProjects() {
@@ -41,15 +59,25 @@ describe('Projects', () => {
         vi.mocked(getProjects).mockResolvedValue(projects);
         renderProjects();
 
-        expect(await screen.findByText('Alpha')).toBeInTheDocument();
-        expect(screen.getByText('Beta')).toBeInTheDocument();
+        expect(await screen.findByText(/Alpha/)).toBeInTheDocument();
+        expect(screen.getByText(/Beta/)).toBeInTheDocument();
+    });
+
+    test('adds a project whose invitation was just accepted', async () => {
+        vi.mocked(getProjects).mockResolvedValue(projects);
+        renderProjects();
+        await screen.findByText(/Alpha/);
+
+        await userEvent.click(screen.getByRole('button', { name: 'simulate accepted invitation' }));
+
+        expect(screen.getByText(/Joined/)).toBeInTheDocument();
     });
 
     test('shows an empty state when there are no projects', async () => {
         vi.mocked(getProjects).mockResolvedValue([]);
         renderProjects();
 
-        expect(await screen.findByText('Aucun projet pour le moment.')).toBeInTheDocument();
+        expect(await screen.findByText('No projects at the moment.')).toBeInTheDocument();
     });
 
     test('shows an error when fetching fails', async () => {
@@ -57,21 +85,52 @@ describe('Projects', () => {
         renderProjects();
 
         expect(
-            await screen.findByText('Impossible de récupérer les projets. Veuillez réessayer plus tard.'),
+            await screen.findByText('Unable to retrieve the projects. Please try again later.'),
         ).toBeInTheDocument();
+    });
+
+    test('shows the first validation message when fetching returns issues', async () => {
+        vi.mocked(getProjects).mockRejectedValue([{ message: 'Invalid project data' }]);
+        renderProjects();
+
+        expect(await screen.findByText('Invalid project data')).toBeInTheDocument();
+    });
+
+    test('a blank name submitted directly is ignored', async () => {
+        vi.mocked(getProjects).mockResolvedValue([]);
+        renderProjects();
+
+        fireEvent.submit(screen.getByPlaceholderText('Name of the new project').closest('form')!);
+
+        expect(createProject).not.toHaveBeenCalled();
+        expect(screen.queryByText(/at least 2 characters/)).not.toBeInTheDocument();
+    });
+
+    test('rejects a one-character name even when the form is submitted directly', async () => {
+        vi.mocked(getProjects).mockResolvedValue([]);
+        renderProjects();
+
+        const input = screen.getByPlaceholderText('Name of the new project');
+        await userEvent.type(input, 'G');
+        fireEvent.submit(input.closest('form')!);
+
+        expect(
+            screen.getByText('Project name must be at least 2 characters long.'),
+        ).toBeInTheDocument();
+        expect(createProject).not.toHaveBeenCalled();
     });
 
     test('creates a project and clears the input', async () => {
         vi.mocked(getProjects).mockResolvedValue([]);
-        vi.mocked(createProject).mockResolvedValue({ id: '3', name: 'Gamma' });
+        vi.mocked(createProject).mockResolvedValue({ id: '3', name: 'Gamma', role: 'OWNER', isOwner: true, canEdit: true, canManage: true });
         renderProjects();
 
-        const input = screen.getByPlaceholderText('Nom du nouveau projet');
+        const input = screen.getByPlaceholderText('Name of the new project');
         await userEvent.type(input, '  Gamma  ');
-        await userEvent.click(screen.getByRole('button', { name: 'Créer' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
         expect(createProject).toHaveBeenCalledWith('Gamma');
-        expect(await screen.findByText('Gamma')).toBeInTheDocument();
+        expect(await screen.findByText(/Gamma/)).toBeInTheDocument();
         expect(input).toHaveValue('');
     });
 
@@ -79,8 +138,8 @@ describe('Projects', () => {
         vi.mocked(getProjects).mockResolvedValue([]);
         renderProjects();
 
-        await userEvent.type(screen.getByPlaceholderText('Nom du nouveau projet'), '   ');
-        await userEvent.click(screen.getByRole('button', { name: 'Créer' }));
+        await userEvent.type(screen.getByPlaceholderText('Name of the new project'), '   ');
+        await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
         expect(createProject).not.toHaveBeenCalled();
     });
@@ -90,53 +149,53 @@ describe('Projects', () => {
         vi.mocked(createProject).mockRejectedValue(new Error('down'));
         renderProjects();
 
-        await userEvent.type(screen.getByPlaceholderText('Nom du nouveau projet'), 'Gamma');
-        await userEvent.click(screen.getByRole('button', { name: 'Créer' }));
+        await userEvent.type(screen.getByPlaceholderText('Name of the new project'), 'Gamma');
+        await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
         expect(
-            await screen.findByText('Impossible de créer le projet. Veuillez réessayer plus tard.'),
+            await screen.findByText('Unable to create the project. Please try again later.'),
         ).toBeInTheDocument();
     });
 
     test('deletes a project after confirmation', async () => {
         vi.mocked(getProjects).mockResolvedValue(projects);
         vi.mocked(deleteProject).mockResolvedValue(undefined);
-        vi.spyOn(window, 'confirm').mockReturnValue(true);
+        confirmDialog(true);
         renderProjects();
 
-        await screen.findByText('Alpha');
-        await userEvent.click(screen.getAllByRole('button', { name: 'Supprimer' })[0]);
+        await screen.findByText(/Alpha/);
+        await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
         expect(deleteProject).toHaveBeenCalledWith('1');
-        await waitFor(() => expect(screen.queryByText('Alpha')).not.toBeInTheDocument());
-        expect(screen.getByText('Beta')).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByText(/Alpha/)).not.toBeInTheDocument());
+        expect(screen.getByText(/Beta/)).toBeInTheDocument();
         // stopPropagation keeps the row click from navigating away
         expect(screen.queryByText('Project page')).not.toBeInTheDocument();
     });
 
     test('keeps the project when deletion is not confirmed', async () => {
         vi.mocked(getProjects).mockResolvedValue(projects);
-        vi.spyOn(window, 'confirm').mockReturnValue(false);
+        confirmDialog(false);
         renderProjects();
 
-        await screen.findByText('Alpha');
-        await userEvent.click(screen.getAllByRole('button', { name: 'Supprimer' })[0]);
+        await screen.findByText(/Alpha/);
+        await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
         expect(deleteProject).not.toHaveBeenCalled();
-        expect(screen.getByText('Alpha')).toBeInTheDocument();
+        expect(screen.getByText(/Alpha/)).toBeInTheDocument();
     });
 
     test('shows an error when deleting fails', async () => {
         vi.mocked(getProjects).mockResolvedValue(projects);
         vi.mocked(deleteProject).mockRejectedValue(new Error('down'));
-        vi.spyOn(window, 'confirm').mockReturnValue(true);
+        confirmDialog(true);
         renderProjects();
 
-        await screen.findByText('Alpha');
-        await userEvent.click(screen.getAllByRole('button', { name: 'Supprimer' })[0]);
+        await screen.findByText(/Alpha/);
+        await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
 
         expect(
-            await screen.findByText('Impossible de supprimer le projet. Veuillez réessayer plus tard.'),
+            await screen.findByText('Unable to delete the project. Please try again later.'),
         ).toBeInTheDocument();
     });
 
@@ -144,7 +203,7 @@ describe('Projects', () => {
         vi.mocked(getProjects).mockResolvedValue(projects);
         renderProjects();
 
-        await userEvent.click(await screen.findByText('Alpha'));
+        await userEvent.click(await screen.findByText(/Alpha/));
 
         expect(await screen.findByText('Project page')).toBeInTheDocument();
     });
