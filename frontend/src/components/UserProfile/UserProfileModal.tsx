@@ -107,7 +107,7 @@ function UserProfileModal({ show, onClose }: UserProfileModalProps) {
       await deleteMe(passwordPrompte.value);
       window.location.href = "/";
     } catch {
-      Swal.fire({
+      await Swal.fire({
         title: "Error",
         text: "Unable to delete your account. Please check your password and try again.",
         icon: "error",
