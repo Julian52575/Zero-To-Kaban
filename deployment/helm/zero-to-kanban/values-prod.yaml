@@ -10,7 +10,7 @@
 
 backend:
   image:
-    tag: 2.2.0
+    tag: 2.3.0
   replicaCount: 1
   resources:
     requests:
@@ -21,7 +21,7 @@ backend:
       memory: 256Mi
 auth:
   image:
-    tag: 2.2.0
+    tag: 2.3.0
   replicaCount: 1
   cookieSecure: "true"
   existingSecret: zero-to-kanban-prod-auth
@@ -34,7 +34,7 @@ auth:
       memory: 256Mi
 frontend:
   image:
-    tag: 2.2.0
+    tag: 2.3.0
   replicaCount: 1
   resources:
     requests:
