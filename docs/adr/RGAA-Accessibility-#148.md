@@ -4,7 +4,7 @@
 - **Category:** Architecture Decision Records
 - **Original poster:** @Julian52575
 - **Opened:** 2026-09-28 12:00Z
-- **Closed:** 2026-09-28 21:48Z
+- **Closed:** 2026-10-02 14:43Z
 
 ### Discussion
 
@@ -90,5 +90,11 @@ _No response_
 ---
 ## Comments
 
-_No comments._
+#### @Julian52575 -- 2026-09-28 21:48Z
+
+This discussion was committed into `153-feature-accessibility-tests-workflow`: [a52ba73](https://github.com/Julian52575/Zero-To-Kanban/commit/a52ba73f10561572baa41f3efbc125530c7ad884)
+
+#### @Julian52575 -- 2026-10-02 14:43Z
+
+/commit adr-catch-up
 
